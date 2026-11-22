@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="24dp"
+    android:viewportWidth="640"
+    android:viewportHeight="480">
+    <path android:fillColor="#ffffff" android:pathData="M0 0 L640 0 L640 480 L0 480 Z"/>
+    <path android:fillColor="#009543" android:pathData="M0 336 L640 336 L640 480 L0 480 Z"/>
+    <path android:fillColor="#00209f" android:pathData="M0 0 L640 0 L640 144 L0 144 Z"/>
+    <path android:fillColor="#000000" android:strokeColor="#000000" android:strokeWidth="1.6" android:strokeLineCap="square" android:pathData="M319.6 153 C316.9 153 314.2 156 314.2 156 L314.5 188.4 L304.2 199.1 L312.5 199.1 L312.5 217.6 L263.5 283.6 L256.3 281 L243.6 308 C243.6 308 274.9 327.6 320.3 327 C370.1 326.5 397.2 307.1 397.2 307.1 L384.2 280.5 L377.7 283.3 L328.1 217.7 L328.1 198.6 L336.3 198.6 L325.1 188 L325.1 155.8 C325.1 155.8 322.4 152.8 319.6 152.9 Z"/>
+    <path android:strokeColor="#000000" android:strokeWidth="8" android:strokeLineCap="square" android:pathData="M336.7 230.4 L302.8 230.4 C302.8 230.4 290.6 204.5 292.5 186.4 C294.5 168 305.1 159.3 319.1 159.1 C335.7 159 344.3 167.2 346.9 185.7 C349.5 204 336.7 230.4 336.7 230.4 Z"/>
+    <path android:fillColor="#ffffff" android:pathData="M260.5 292.1 C259.9 292.8 255.8 301 255.8 301 L262.8 299.5 Z M264.5 302.6 L257.1 305 L266 308.5 Z M267.8 292.3 L271.5 303.2 L280.5 300.6 L278.2 295.4 Z M273.6 307.1 L274.8 311.5 L286.8 314.5 L282 304.3 Z M286.8 297.8 L291.1 308 L300.1 304.5 L297.1 300 Z M292.8 311.7 L294.2 315.5 L308.2 317.5 L302.3 308.3 L292.7 311.7 Z M306.2 300.7 L311.4 309.8 L324.4 305 L323 301.5 L306.2 300.8 Z M313.8 313.1 L316.5 317.9 L332.7 317.4 L326.7 308.4 L313.7 313.1 Z M330.9 301.1 L335.3 308.7 L345.7 303.7 L342.9 299.7 Z M347.9 306.9 L337.6 312 L340.3 316.5 L354.1 314.3 Z M351.2 298.9 L356.5 305.6 L365.2 298.7 L362.2 295.7 Z M367.1 302.4 L358.8 308.7 L361 312.6 L372.4 309.6 Z M378.5 289.4 L380.5 292.3 L374.8 300.8 L368.9 293.2 Z M382.4 296.7 L385.9 303.7 L378.9 306.1 L378.3 302.8 L382.3 296.8 Z"/>
+</vector>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- (1.0.20, Model A): home-screen widget provider info. A slim 4x1 bar
+     (250dp x 40dp); it never polls (updatePeriodMillis=0) — the app pushes
+     state into it whenever the tunnel state changes. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_loading"
+    android:previewLayout="@layout/widget_loading"
+    android:description="@string/widget_description"
+    android:resizeMode="horizontal"
+    android:widgetCategory="home_screen" />

@@ -1,0 +1,7 @@
+Copy `unbar-core.aar` from your Unbar release/ZIP bundle into this directory:
+  android/app/libs/unbar-core.aar
+
+Then click "Sync Project with Gradle Files" in Android Studio and build:
+  Build -> Build App Bundle(s) / APK(s) -> Build APK(s)
+or run:
+  ./gradlew assembleDebug

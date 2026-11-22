@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Two-tone Home stat icon (dns, outline): blue #0B4F9E + orange #FF7A1A.
+     Same language as ic_stat_magnifier_check: 1.8 blue strokes, 2.2 orange accent, round caps. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:fillColor="#00000000"
+        android:strokeColor="@color/unbar_blue"
+        android:strokeWidth="1.8"
+        android:strokeLineJoin="round"
+        android:pathData="M5 3 L19 3 C20.1 3 21 3.9 21 5 L21 9 C21 10.1 20.1 11 19 11 L5 11 C3.9 11 3 10.1 3 9 L3 5 C3 3.9 3.9 3 5 3 Z" />
+    <path android:fillColor="#00000000"
+        android:strokeColor="@color/unbar_orange"
+        android:strokeWidth="2.2"
+        android:strokeLineJoin="round"
+        android:pathData="M5 13 L19 13 C20.1 13 21 13.9 21 15 L21 19 C21 20.1 20.1 21 19 21 L5 21 C3.9 21 3 20.1 3 19 L3 15 C3 13.9 3.9 13 5 13 Z" />
+    <path android:fillColor="@color/unbar_blue"
+        android:pathData="M7 7 m-1.4 0 a1.4 1.4 0 1 0 2.8 0 a1.4 1.4 0 1 0 -2.8 0" />
+    <path android:fillColor="@color/unbar_orange"
+        android:pathData="M7 17 m-1.4 0 a1.4 1.4 0 1 0 2.8 0 a1.4 1.4 0 1 0 -2.8 0" />
+</vector>

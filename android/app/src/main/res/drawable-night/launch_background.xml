@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Branded launching window (dark theme): the Unbar logo centered on
+     the dark brand background, so the window shows the logo from the
+     very first moment — no blank screen while the process starts and
+     Compose draws its first frame. Sized and positioned to match the
+     Compose splash (64dp tall, 30dp above center), so the handoff to
+     the splash (logo + spinner) is seamless. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/unbar_dark_bg" />
+    <item
+        android:width="164dp"
+        android:height="64dp"
+        android:gravity="center"
+        android:bottom="60dp"
+        android:drawable="@drawable/unbar_logo_dark" />
+</layer-list>

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">آنبار</string>
+    <string name="tagline">از Break The Barriers</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">خانه</string>
+    <string name="nav_servers">سرورها</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="nav_about">درباره</string>
+
+    <!-- Status Card (Model B) -->
+    <string name="status_not_protected">شما محافظت نمی‌شوید!</string>
+    <string name="status_protected">شما محافظت می‌شوید.</string>
+    <string name="status_connecting">در حال برقراری تونل DNS…</string>
+    <string name="status_disconnecting">در حال قطع اتصال…</string>
+    <string name="status_error">اتصال ناموفق بود</string>
+    <string name="no_server_configured">هیچ سروری پیکربندی نشده است. ابتدا سرور خود را اضافه کنید.</string>
+    <string name="add_server_cta">افزودن سرور</string>
+    <string name="add_sheet_title">افزودن</string>
+    <string name="add_card_import_subtitle">لینک unbar:// یا JSON را بچسبانید یا کد QR را اسکن کنید.</string>
+    <string name="add_card_server_subtitle">نام سرور، zone و کلید عمومی را تایپ کنید.</string>
+    <string name="add_card_subscription_subtitle">لینک اشتراک اضافه کنید تا سرورها به‌روز بمانند.</string>
+    <string name="add_action">افزودن</string>
+    <string name="back">بازگشت</string>
+
+    <!-- Actions -->
+    <string name="connect">اتصال</string>
+    <string name="disconnect">قطع اتصال</string>
+    <string name="cancel">لغو</string>
+    <string name="save">ذخیره</string>
+    <string name="delete">حذف</string>
+    <string name="edit">ویرایش</string>
+    <string name="test">تست</string>
+    <string name="clear">پاک کردن</string>
+    <string name="copy">کپی</string>
+    <string name="share">اشتراک‌گذاری</string>
+    <string name="close">بستن</string>
+
+    <!-- Live Stats -->
+    <string name="speed_upload">آپلود</string>
+    <string name="speed_download">دانلود</string>
+    <string name="latency_label">تأخیر</string>
+    <string name="resolver_health_label">ریزالورهای فعال</string>
+    <string name="usage_daily">مصرف امروز</string>
+    <string name="usage_monthly">مصرف این ماه</string>
+    <string name="connection_time_label">زمان اتصال</string>
+    <string name="session_total_label">مجموع نشست</string>
+    <string name="streams_label">استریم‌ها</string>
+    <string name="connection_quality_label">کیفیت اتصال</string>
+    <string name="quality_excellent">عالی</string>
+    <string name="quality_good">خوب</string>
+    <string name="quality_fair">متوسط</string>
+    <string name="quality_poor">ضعیف</string>
+    <string name="quality_score_of">%1$d از ۱۰۰</string>
+    <string name="latency_probe_dial">(dial)</string>
+    <string name="mode_vpn">حالت VPN</string>
+    <string name="mode_socks">حالت SOCKS</string>
+    <!-- (1.0.52): short labels for the status-card mode switcher — the
+         full "حالت VPN" / "حالت SOCKS" strings do not fit the badge slot. -->
+    <string name="mode_short_vpn">VPN</string>
+    <string name="mode_short_proxy">پروکسی</string>
+
+    <!-- Connection history (1.0.15, C8) -->
+    <string name="history_title">سابقه‌ی اتصال</string>
+    <string name="history_empty">هنوز نشستی ثبت نشده است. یک بار وصل شوید تا نشست اینجا نمایش داده شود.</string>
+
+    <!-- Quick Settings tile (1.0.15, C1) and home-screen widget (C7) -->
+    <string name="tile_label">آنبار</string>
+    <string name="widget_label">آنبار</string>
+    <string name="widget_description">اتصال یا قطع تونل آنبار از صفحه‌ی اصلی.</string>
+
+    <!-- Brand tagline on the Home top bar — always English, in both languages -->
+    <string name="brand_tagline">by Break The Barriers</string>
+
+    <!-- Servers -->
+    <string name="servers_title">سرورها</string>
+    <string name="servers_empty_title">هیچ سروری اضافه نشده است</string>
+    <string name="servers_empty_body">آنبار بدون هیچ سرور پیش‌فرضی عرضه می‌شود. برای اتصال، سرور خودتان (zone و کلید عمومی Ed25519) را اضافه کنید.</string>
+    <string name="auto_select_fastest">انتخاب خودکار</string>
+    <string name="import_config">ورودی تنظیمات</string>
+    <string name="scan_qr_code">اسکن کد QR</string>
+    <string name="scan_qr_hint">دوربین را روی کد QR تنظیمات بگیرید</string>
+    <string name="scan_qr_no_permission">برای اسکن کد QR به دسترسی دوربین نیاز است</string>
+    <string name="export_config">خروجی تنظیمات</string>
+    <string name="server_name">نام سرور</string>
+    <string name="server_zone">Zone (مثلاً t.example.com)</string>
+    <string name="server_pubkey">کلید عمومی سرور (Base64 Ed25519)</string>
+    <string name="export_security_note">رمز پراکسی SOCKS محلی هرگز در خروجی تنظیمات یا کد QR قرار نمی‌گیرد.</string>
+
+    <!-- Subscriptions -->
+    <string name="subscription_title">اشتراک</string>
+    <string name="subscription_badge">اشتراک</string>
+    <string name="subscription_url_label">لینک اشتراک</string>
+    <string name="subscription_paste">چسباندن</string>
+    <string name="subscription_update">به‌روزرسانی</string>
+    <string name="subscription_never_updated">هرگز به‌روزرسانی نشده</string>
+    <string name="subscription_updating">در حال به‌روزرسانی…</string>
+    <string name="subscription_status_updated">به‌روزرسانی شد · %1$d سرور از اشتراک</string>
+    <string name="subscription_status_pill">به‌روزرسانی شد · %1$d سرور</string>
+    <string name="subscription_status_updated_skipped">به‌روزرسانی شد · %1$d سرور، %2$d مورد رد شد</string>
+    <string name="subscription_auto_update">به‌روزرسانی خودکار هنگام باز شدن برنامه</string>
+    <string name="subscription_https_note">فقط لینک‌های HTTPS پذیرفته می‌شوند.</string>
+    <string name="subscription_last_updated">آخرین به‌روزرسانی: %1$s</string>
+    <string name="subscription_server_count">%1$d سرور</string>
+    <string name="subscription_refresh">تازه‌سازی</string>
+    <string name="subscription_error_empty_url">لینک اشتراک را وارد کنید.</string>
+    <string name="subscription_error_http_scheme">فقط لینک‌های HTTPS پذیرفته می‌شوند — این لینک با http:// شروع می‌شود.</string>
+    <string name="subscription_error_https_only">فقط لینک‌های HTTPS پذیرفته می‌شوند.</string>
+    <string name="subscription_error_invalid_url">لینک اشتراک نامعتبر است.</string>
+    <string name="subscription_error_http_status">سرور خطای HTTP %1$s برگرداند.</string>
+    <string name="subscription_error_invalid_format">امکان خواندن سرورها از این اشتراک وجود ندارد.</string>
+    <string name="subscription_error_network">خطا در به‌روزرسانی اشتراک: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">تنظیمات</string>
+    <string name="section_connection">اتصال</string>
+    <string name="section_resolvers">ریزالورها</string>
+    <string name="section_proxy">پراکسی SOCKS محلی</string>
+    <string name="section_bandwidth">محدودیت پهنای باند</string>
+    <string name="bandwidth_upload_kbps">سقف ارسال (کیلوبایت/ثانیه، ۰ = نامحدود)</string>
+    <string name="bandwidth_download_kbps">سقف دریافت (کیلوبایت/ثانیه، ۰ = نامحدود)</string>
+    <string name="section_routing">مسیریابی</string>
+    <string name="section_appearance">ظاهر و زبان</string>
+    <string name="section_diagnostics">سیستم و عیب‌یابی</string>
+
+    <string name="discovery_builtin">داخلی</string>
+    <string name="discovery_custom">سفارشی</string>
+    <string name="discovery_builtin_note">از لیست داخلی رنج آی‌پی‌های ایران استفاده می‌شود.</string>
+    <string name="custom_resolvers_label">ریزالورهای سفارشی</string>
+    <string name="custom_resolvers_count">%1$d ریزالور</string>
+    <string name="custom_resolvers_ignored">نادیده گرفته شد (فقط ریزالور IPv4): %1$s</string>
+    <string name="custom_resolvers_range_too_large">بازه خیلی بزرگ است و اسکن نمی‌شود (حداکثر /20، ۴۰۹۶ آدرس): %1$s</string>
+    <string name="custom_resolvers_format_note">ریزالورها را با هر فرمتی تایپ کنید، اپلیکیشن خودش آن‌ها را استاندارد می‌کند (:53 اضافه می‌کند، فاصله‌ها و نمادهای اضافی را حذف می‌کند) و به‌صورت خودکار ذخیره می‌کند.</string>
+    <string name="test_resolvers">اسکن ریزالورها</string>
+    <string name="stop_scan">توقف</string>
+    <string name="pause_scan">مکث</string>
+    <string name="resume_scan">ادامه</string>
+    <string name="testing_resolvers">در حال اسکن…</string>
+    <string name="test_resolvers_button">اسکن</string>
+    <string name="resolvers_responding">پاسخ‌دهنده: %1$d</string>
+    <string name="resolvers_verified">تأییدشده: %1$d</string>
+    <string name="remembered_resolvers_title">ریزالورهای سالم ذخیره‌شده</string>
+    <string name="remembered_resolvers_more">و %1$d مورد دیگر در استخر</string>
+    <string name="resolvers_spread_note">Soar می‌تواند ترافیک را روی %1$d ریزالور سالم پخش کند.</string>
+    <string name="copy_all_resolvers">کپی همه‌ی %1$d</string>
+    <string name="scan_stage_screening">غربال DNS و RTT</string>
+    <string name="scan_stage_handshake">هندشیک Soar</string>
+    <string name="scan_stage_ranking">رتبه‌بندی و ذخیره تأییدشده‌ها</string>
+    <string name="scan_tested">اسکن‌شده: %1$d از %2$d</string>
+    <string name="scan_saved">ذخیره‌شده: %1$d</string>
+    <string name="custom_resolvers_cidr_note">بازه‌های CIDR هم پشتیبانی می‌شوند — مثلاً 0.0.0.0/24 کل بازه را اسکن می‌کند.</string>
+    <string name="tcp_mode_explanation">کوئری‌های DNS را به‌جای UDP/53 از TCP/53 می‌فرستد. فقط وقتی از آن استفاده کنید که UDP مسدود است، چون کندتر است. در حالت خاموش هم TCP همان‌جا که UDP جواب ندهد به کار می‌رود.</string>
+    <string name="mtu_label">MTU (فقط حالت VPN)</string>
+    <string name="mtu_auto">خودکار</string>
+    <string name="mtu_explanation">حداکثر اندازه‌ی بسته برای تونل VPN. «خودکار» شبکه‌ی شما را اندازه می‌گیرد و بهترین اندازه را انتخاب می‌کند. اگر صفحه‌ها گیر می‌کنند یا کند باز می‌شوند ۱۲۸۰ را امتحان کنید، و برای دانلود سریع‌تر در یک اتصال پایدار ۱۵۰۰ را.</string>
+    <string name="dns_answer_size_label">سایز جواب DNS</string>
+    <string name="dns_answer_size_explanation">حداکثر داده‌ی دان‌استریم که یک جواب DNS می‌تواند حمل کند. «خودکار» به برنامه اجازه می‌دهد تا ۱۲۳۲ بایت را امتحان کند. اگر در شبکه‌ای با لاس بالا اپ‌ها گیر می‌کنند یا کند باز می‌شوند، مقدار کوچک‌تری را امتحان کنید.</string>
+    <string name="dns_answer_size_auto">خودکار</string>
+    <string name="applies_on_reconnect">تغییرات اتصال با اتصال بعدی اعمال می‌شوند.</string>
+    <string name="iran_geo_bypass">عبور مستقیم ایران (‎.ir و IPهای ایران)</string>
+    <string name="custom_bypass_list">لیست عبور سفارشی</string>
+    <string name="per_app_routing">مسیریابی به‌ازای هر برنامه</string>
+    <string name="battery_optimization">غیرفعال‌سازی بهینه‌سازی باتری</string>
+    <string name="status_exempted">معاف شده</string>
+    <string name="notification_permission">دسترسی اعلان‌ها</string>
+    <string name="status_allowed">مجاز</string>
+    <string name="status_not_allowed">مجاز نیست</string>
+    <string name="speeds_in_notification">سرعت در اعلان</string>
+    <string name="diagnostic_logs">لاگ‌های عیب‌یابی</string>
+    <string name="diagnostic_logs_note">لاگ‌های دقیق برای عیب‌یابی. برای صرفه‌جویی در باتری و منابع خاموش کنید.</string>
+    <string name="view_logs">مشاهده‌ی لاگ‌ها</string>
+    <string name="logs_show_details">نمایش جزئیات</string>
+
+    <!-- بررسی به‌روزرسانی -->
+    <string name="update_check">بررسی به‌روزرسانی</string>
+    <string name="update_latest">شما از آخرین نسخه استفاده می‌کنید.</string>
+    <string name="update_available_title">به‌روزرسانی جدید</string>
+    <string name="update_available_body">نسخهٔ %1$s منتشر شده است.</string>
+    <string name="update_download">دانلود</string>
+    <string name="update_later">بعداً</string>
+    <string name="update_check_failed">بررسی به‌روزرسانی ممکن نشد. اتصال را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="update_no_apk">این نسخه فایل قابل‌نصب ندارد.</string>
+    <string name="update_downloading">در حال دانلود به‌روزرسانی…</string>
+    <string name="update_download_failed">دانلود ناموفق بود. دوباره تلاش کنید.</string>
+    <string name="update_allow_install">برای نصب به‌روزرسانی، اجازهٔ نصب برنامه‌های ناشناس را به Unbar بدهید.</string>
+
+    <!-- About (Formal Persian) -->
+    <string name="about_title">درباره‌ی آنبار</string>
+    <string name="about_line_1">کلاینت VPN تونل DNS بر پایهٔ Soar،\nاز Break The Barriers.</string>
+    <string name="about_line_2">ساخته‌شده برای قطعی‌های کامل اینترنت،\nزمانی که DNS تنها راه خروج است.</string>
+    <string name="about_soar_version">نسخه‌ی پروتکل تونل Soar: v0.2.5</string>
+    <string name="about_license">منتشرشده تحت مجوز Apache License 2.0</string>
+    <string name="about_telegram_channel">کانال تلگرام @Break_The_Barriers</string>
+    <string name="donate_title">حمایت مالی</string>
+    <string name="donate_text">اگر آنبار برایتان مفید بود، با یک حمایت کوچک به ادامه‌ی آن کمک کنید.</string>
+    <string name="donate_usdt_bep20">USDT (BEP20)</string>
+    <string name="donate_ton">TON</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_name">سرویس تونل آنبار</string>
+    <string name="notif_channel_desc">سرویس تونل DNS آنبار را در پس‌زمینه فعال نگه می‌دارد</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_title">آموزش</string>
+    <string name="guide_title">راهنما</string>
+
+    <!-- Servers Tutorial -->
+    <string name="tutorial_servers_add_title">افزودن سرور</string>
+    <string name="tutorial_servers_add_body">از دکمه + سرور جدید اضافه کنید: نام، zone و کلید عمومی سرور را وارد کنید. بدون سرور نمی‌توانید وصل شوید.</string>
+    <string name="tutorial_servers_import_title">ایمپورت کانفیگ و QR</string>
+    <string name="tutorial_servers_import_body">به‌جای وارد کردن دستی، لینک unbar:// را ایمپورت کنید یا QR کانفیگ را اسکن کنید؛ سرور خودکار اضافه می‌شود.</string>
+    <string name="tutorial_servers_subscription_title">اشتراک</string>
+    <string name="tutorial_servers_subscription_body">آدرس اشتراک را وارد کنید تا لیست سرورها خودکار از آن آدرس به‌روز شود. سرورهای دستی دست نمی‌خورند.</string>
+    <string name="tutorial_servers_latency_title">تست تأخیر و انتخاب سرور</string>
+    <string name="tutorial_servers_latency_body">با تست تأخیر سرعت پاسخ هر سرور را بسنجید. انتخاب خودکار سریع‌ترین سرور را برای اتصال انتخاب می‌کند.</string>
+    <string name="tutorial_servers_edit_title">ویرایش، حذف و خروجی</string>
+    <string name="tutorial_servers_edit_body">روی هر سرور بزنید تا ویرایش یا حذفش کنید. خروجی تنظیمات کانفیگ سرور را به‌صورت لینک یا QR برای اشتراک‌گذاری صادر می‌کند.</string>
+
+    <!-- Settings Tutorial -->
+    <string name="tutorial_settings_group_connection">اتصال</string>
+    <string name="tutorial_settings_group_resolvers">ریزالورها</string>
+    <string name="tutorial_settings_group_proxy">پروکسی و پهنای باند</string>
+    <string name="tutorial_settings_group_routing">مسیریابی</string>
+    <string name="tutorial_settings_group_system">سیستم و عیب‌یابی</string>
+    <string name="tutorial_settings_mode_title">حالت VPN / SOCKS</string>
+    <string name="tutorial_settings_mode_body">حالت VPN همه ترافیک گوشی را از تونل می‌گذراند؛ حالت SOCKS فقط برنامه‌هایی که پروکسی را تنظیم کرده‌اند. از کارت وضعیت در صفحهٔ اصلی هم می‌توانید عوضش کنید — عوض کردن موقع وصل بودن در حالت جدید دوباره وصل می‌شود. برای استفاده روزمره VPN را انتخاب کنید.</string>
+    <string name="tutorial_settings_tcp_title">حالت TCP</string>
+    <string name="tutorial_settings_tcp_body">کوئری‌های DNS را به‌جای UDP/53 از TCP/53 می‌فرستد. فقط وقتی از آن استفاده کنید که UDP مسدود است، چون کندتر است. در حالت خاموش هم TCP همان‌جا که UDP جواب ندهد به کار می‌رود.</string>
+    <string name="tutorial_settings_mtu_title">MTU</string>
+    <string name="tutorial_settings_mtu_body">MTU اندازه بسته‌های شبکه روی تونل است (پیش‌فرض خودکار). در حالت خودکار، MTU اینترفیس فعال اندازه‌گیری و ۲۰۰ بایت کم می‌شود (بین ۱۲۸۰ تا ۱۵۰۰)؛ مقدار جدید روی اتصال بعدی اعمال می‌شود. معمولاً نیازی به تغییر نیست.</string>
+    <string name="tutorial_settings_answer_title">اندازه پاسخ DNS</string>
+    <string name="tutorial_settings_answer_body">حداکثر حجم هر پاسخ DNS است (پیش‌فرض خودکار). گزینه خودکار بهترین مقدار را انتخاب می‌کند؛ فقط در صورت مشکل آن را تغییر دهید.</string>
+    <string name="tutorial_settings_resolvers_title">ریزالورها</string>
+    <string name="tutorial_settings_resolvers_body">ریزالورها سرورهای DNS هستند که تونل از آن‌ها استفاده می‌کند. حالت داخلی از لیست داخلی ریزالورهای ایرانی استفاده می‌کند؛ در حالت سفارشی فقط ریزالورهایی که خودتان وارد کرده‌اید به کار می‌روند.</string>
+    <string name="tutorial_settings_test_title">اسکن ریزالورها و سلامت</string>
+    <string name="tutorial_settings_test_body">دکمه اسکن ریزالورها در سه مرحله ریزالورها را بررسی می‌کند: اول غربال DNS و RTT، بعد هندشیک Soar روی همه جواب‌دهنده‌های مرحله اول (شمارنده تأییدشده‌ها زنده بالا می‌رود و حتی قبل از وصل شدن کار می‌کند)، و در آخر رتبه‌بندی و ذخیره همه ریزالورهای تأییدشده در یک استخر. کارت ریزالورهای فعال نشان می‌دهد چند ریزالور در حال حاضر ترافیک را حمل می‌کنند؛ ریزالورهای ازکارافتاده خودکار جایگزین می‌شوند و نیازی به اسکن دوباره نیست.</string>
+    <string name="tutorial_settings_proxy_title">پروکسی SOCKS محلی</string>
+    <string name="tutorial_settings_proxy_body">وقتی VPN وصل است، یک پروکسی SOCKS هم روی گوشی اجرا می‌شود (پیش‌فرض پورت 1080). آن را در مرورگر یا برنامه‌های دیگر تنظیم کنید تا فقط آن برنامه از تونل استفاده کند.</string>
+    <string name="tutorial_settings_bandwidth_title">محدودیت پهنای باند</string>
+    <string name="tutorial_settings_bandwidth_body">حداکثر سرعت آپلود و دانلود تونل را بر حسب KB/s محدود می‌کند. صفر یعنی بدون محدودیت.</string>
+    <string name="tutorial_settings_bypass_title">عبور مستقیم ایران</string>
+    <string name="tutorial_settings_bypass_body">دامنه‌ها و IPهای ایرانی را مستقیم وصل می‌کند و از تونل رد نمی‌کند، تا سایت‌های داخلی سریع‌تر باز شوند. اگر اتصال مستقیم در ۵ ثانیه جواب ندهد، به تونل برمی‌گردد.</string>
+    <string name="tutorial_settings_bypass_list_title">لیست عبور سفارشی</string>
+    <string name="tutorial_settings_bypass_list_body">دامنه یا IPهایی که می‌خواهید از تونل رد نشوند را اینجا بنویسید؛ هر کدام در یک خط.</string>
+    <string name="tutorial_settings_per_app_title">مسیریابی به‌ازای هر برنامه</string>
+    <string name="tutorial_settings_per_app_body">مشخص می‌کند کدام برنامه‌ها از VPN استفاده کنند و کدام نه. مثلاً می‌توانید فقط مرورگر را از تونل رد کنید.</string>
+    <string name="tutorial_settings_update_title">بررسی به‌روزرسانی</string>
+    <string name="tutorial_settings_update_body">بررسی می‌کند نسخهٔ جدیدی منتشر شده یا نه. اگر از آخرین نسخه استفاده می‌کنید، یک پیام تأیید می‌بینید؛ اگر نسخهٔ جدیدی باشد، یک پنجره شمارهٔ نسخه و تغییرات را نشان می‌دهد. «دانلود» را بزنید تا APK دانلود و نصب شود — ممکن است اول لازم باشد اجازهٔ نصب برنامه‌های ناشناس را به آنبار بدهید.</string>
+    <string name="tutorial_settings_logs_title">لاگ‌ها</string>
+    <string name="tutorial_settings_logs_body">صفحهٔ لاگ (تنظیمات &gt; سیستم و عیب‌یابی &gt; مشاهدهٔ لاگ‌ها) به‌طور پیش‌فرض فقط مواردی را نشان می‌دهد که به آن‌ها نیاز دارید — رویدادهای اتصال، خطاها، هشدارها، کارهای خودتان و نتیجهٔ اسکن. خط‌های فنی تکراری که هر ۲۰ ثانیه می‌آیند پنهان‌اند؛ «نمایش جزئیات» را روشن کنید تا آن‌ها را هم ببینید. کپی کردن لاگ هنوز همهٔ موارد را کپی می‌کند.</string>
+    <string name="tutorial_home_status_title">کارت وضعیت و اتصال</string>
+    <string name="tutorial_home_status_body">کارت وضعیت نشان می‌دهد تونل وصل است یا نه و روی کدام سرور هستید. با زدن فوتر وصل یا قطع می‌شوید. اگر سروری پیکربندی نشده، اول سرور خودتان را اضافه کنید — اپ بدون سرور پیش‌فرض عرضه می‌شود.</string>
+    <string name="tutorial_home_server_ip_title">سرور و IP</string>
+    <string name="tutorial_home_server_ip_body">موقع وصل بودن، کارت IP و کشور سرور را نشان می‌دهد. کشور از روی IP سرور پیدا می‌شود، پس می‌گوید ترافیک شما از کجا خارج می‌شود.</string>
+    <string name="tutorial_home_mode_title">حالت VPN / پروکسی</string>
+    <string name="tutorial_home_mode_body">حالت VPN همه ترافیک گوشی را از تونل می‌گذراند؛ حالت پروکسی فقط برنامه‌هایی که پروکسی را تنظیم کرده‌اند. عوض کردن حالت موقع وصل بودن حدود ۱۰ ثانیه طول می‌کشد: تونل قطع می‌شود، ۶ ثانیه صبر می‌کند تا سرویس قبلی کاملاً متوقف شود، بعد در حالت جدید وصل می‌شود. موقع قطع بودن، عوض کردن حالت فقط برای اتصال بعدی ذخیره می‌شود. برای استفاده روزمره VPN را انتخاب کنید.</string>
+    <string name="tutorial_home_download_upload_title">دانلود و آپلود</string>
+    <string name="tutorial_home_download_upload_body">سرعت زنده روی سیم، همان‌طور که واقعاً از تونل رد می‌شود.</string>
+    <string name="tutorial_home_latency_title">تأخیر</string>
+    <string name="tutorial_home_latency_body">تأخیر زمان رفت‌وبرگشت تا سرور از داخل تونل است. کمتر بهتر است؛ زیر ۲۰۰ میلی‌ثانیه سریع حس می‌شود.</string>
+    <string name="tutorial_home_quality_title">کیفیت اتصال</string>
+    <string name="tutorial_home_quality_body">امتیازی از ۰ تا ۱۰۰ بر اساس سلامت مسیرها، تأخیر و لاس. شیلد همان امتیاز را با پنج نوار نشان می‌دهد: هرچه نوار روشن بیشتر، اتصال بهتر.</string>
+    <string name="tutorial_home_active_resolvers_title">ریزالورهای فعال</string>
+    <string name="tutorial_home_active_resolvers_body">چند ریزالور در حال حاضر ترافیک را حمل می‌کنند. خراب‌ها خودکار جایگزین می‌شوند و نیازی به اسکن دوباره نیست.</string>
+    <string name="tutorial_home_scan_title">اسکن ریزالورها</string>
+    <string name="tutorial_home_scan_body">ریزالورها را در سه مرحله بررسی می‌کند: غربال DNS و RTT، هندشیک Soar روی همه جواب‌دهنده‌ها، و ذخیره همه تأییدشده‌ها در یک استخر.</string>
+    <string name="tutorial_home_today_title">امروز</string>
+    <string name="tutorial_home_today_body">تونل امروز چقدر داده جابه‌جا کرده است. شمارنده نیمه‌شب صفر می‌شود.</string>
+    <string name="tutorial_home_session_total_title">مجموع نشست</string>
+    <string name="tutorial_home_session_total_body">این نشست چقدر داده جابه‌جا کرده است، ارسال و دریافت با هم. با قطع و وصل دوباره صفر نمی‌شود.</string>
+    <string name="tutorial_home_connection_time_title">زمان اتصال</string>
+    <string name="tutorial_home_connection_time_body">نشست فعلی چقدر وصل بوده است. با هر بار وصل شدن دوباره از اول شروع می‌شود.</string>
+    <string name="tutorial_home_streams_title">استریم‌ها</string>
+    <string name="tutorial_home_streams_body">تونل در حال حاضر چند استریم را حمل می‌کند. استریم بیشتر معمولاً یعنی برنامه یا دانلود فعال بیشتر.</string>
+</resources>

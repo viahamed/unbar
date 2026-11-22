@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Unbar</string>
+    <string name="tagline">by Break The Barriers</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_servers">Servers</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_about">About</string>
+
+    <!-- Status Card (Model B) -->
+    <string name="status_not_protected">You are not protected!</string>
+    <string name="status_protected">You are protected.</string>
+    <string name="status_connecting">Establishing DNS tunnel…</string>
+    <string name="status_disconnecting">Disconnecting…</string>
+    <string name="status_error">Connection failed</string>
+    <string name="no_server_configured">No server configured. Add your own server first.</string>
+    <string name="add_server_cta">Add server</string>
+    <string name="add_sheet_title">Add</string>
+    <string name="add_card_import_subtitle">Paste an unbar:// link or JSON, or scan a QR code.</string>
+    <string name="add_card_server_subtitle">Type the server name, zone and public key.</string>
+    <string name="add_card_subscription_subtitle">Add a subscription link to keep servers updated.</string>
+    <string name="add_action">Add</string>
+    <string name="back">Back</string>
+
+    <!-- Actions -->
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="test">Test</string>
+    <string name="clear">Clear</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="close">Close</string>
+
+    <!-- Live Stats -->
+    <string name="speed_upload">Upload</string>
+    <string name="speed_download">Download</string>
+    <string name="latency_label">Latency</string>
+    <string name="resolver_health_label">Active resolvers</string>
+    <string name="usage_daily">Today</string>
+    <string name="usage_monthly">This month</string>
+    <string name="connection_time_label">Connection time</string>
+    <string name="session_total_label">Session total</string>
+    <string name="streams_label">Streams</string>
+    <string name="connection_quality_label">Connection quality</string>
+    <string name="quality_excellent">Excellent</string>
+    <string name="quality_good">Good</string>
+    <string name="quality_fair">Fair</string>
+    <string name="quality_poor">Poor</string>
+    <string name="quality_score_of">%1$d / 100</string>
+    <string name="latency_probe_dial">(dial)</string>
+    <string name="mode_vpn">VPN mode</string>
+    <string name="mode_socks">SOCKS mode</string>
+    <!-- (1.0.52): short labels for the status-card mode switcher — the
+         full "VPN Mode" / "SOCKS Mode" strings do not fit the badge slot. -->
+    <string name="mode_short_vpn">VPN</string>
+    <string name="mode_short_proxy">Proxy</string>
+
+    <!-- Connection history (1.0.15, C8) -->
+    <string name="history_title">Connection history</string>
+    <string name="history_empty">No sessions yet. Connect once and the session will appear here.</string>
+
+    <!-- Quick Settings tile (1.0.15, C1) and home-screen widget (C7) -->
+    <string name="tile_label">Unbar</string>
+    <string name="widget_label">Unbar</string>
+    <string name="widget_description">Connect or disconnect the Unbar tunnel from the home screen.</string>
+
+    <!-- Brand tagline on the Home top bar — always English, in both languages -->
+    <string name="brand_tagline">by Break The Barriers</string>
+
+    <!-- Servers -->
+    <string name="servers_title">Servers</string>
+    <string name="servers_empty_title">No servers added</string>
+    <string name="servers_empty_body">Unbar ships with no pre-configured server. Add your own server (zone + Ed25519 public key) to connect.</string>
+    <string name="auto_select_fastest">Auto-select</string>
+    <string name="import_config">Import config</string>
+    <string name="scan_qr_code">Scan QR code</string>
+    <string name="scan_qr_hint">Point the camera at a config QR code</string>
+    <string name="scan_qr_no_permission">Camera permission is needed to scan a QR code</string>
+    <string name="export_config">Export config</string>
+    <string name="server_name">Server name</string>
+    <string name="server_zone">Zone (e.g. t.example.com)</string>
+    <string name="server_pubkey">Server public key (Base64 Ed25519)</string>
+    <string name="export_security_note">Local SOCKS credentials are never included in exported configs or QR codes.</string>
+
+    <!-- Subscriptions -->
+    <string name="subscription_title">Subscription</string>
+    <string name="subscription_badge">Subscription</string>
+    <string name="subscription_url_label">Subscription link</string>
+    <string name="subscription_paste">Paste</string>
+    <string name="subscription_update">Update</string>
+    <string name="subscription_never_updated">Never updated</string>
+    <string name="subscription_updating">Updating…</string>
+    <string name="subscription_status_updated">Updated · %1$d servers from subscription</string>
+    <string name="subscription_status_pill">Updated · %1$d servers</string>
+    <string name="subscription_status_updated_skipped">Updated · %1$d servers, %2$d skipped</string>
+    <string name="subscription_auto_update">Auto-update when the app opens</string>
+    <string name="subscription_https_note">Only HTTPS links are accepted.</string>
+    <string name="subscription_last_updated">Last updated: %1$s</string>
+    <string name="subscription_server_count">%1$d servers</string>
+    <string name="subscription_refresh">Refresh</string>
+    <string name="subscription_error_empty_url">Enter a subscription link.</string>
+    <string name="subscription_error_http_scheme">Only HTTPS links are accepted — this link starts with http://.</string>
+    <string name="subscription_error_https_only">Only HTTPS links are accepted.</string>
+    <string name="subscription_error_invalid_url">Invalid subscription link.</string>
+    <string name="subscription_error_http_status">Server returned HTTP %1$s.</string>
+    <string name="subscription_error_invalid_format">Could not read servers from this subscription.</string>
+    <string name="subscription_error_network">Failed to update subscription: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="section_connection">Connection</string>
+    <string name="section_resolvers">Resolvers</string>
+    <string name="section_proxy">Local SOCKS proxy</string>
+    <string name="section_bandwidth">Bandwidth limit</string>
+    <string name="bandwidth_upload_kbps">Upload limit (KB/s, 0 = unlimited)</string>
+    <string name="bandwidth_download_kbps">Download limit (KB/s, 0 = unlimited)</string>
+    <string name="section_routing">Routing</string>
+    <string name="section_appearance">Appearance &amp; language</string>
+    <string name="section_diagnostics">System &amp; diagnostics</string>
+
+    <string name="discovery_builtin">Built-in</string>
+    <string name="discovery_custom">Custom</string>
+    <string name="discovery_builtin_note">Uses the built-in Iran IP ranges list.</string>
+    <string name="custom_resolvers_label">Custom resolvers</string>
+    <string name="custom_resolvers_count">%1$d resolvers</string>
+    <string name="custom_resolvers_ignored">Ignored (IPv4 resolvers only): %1$s</string>
+    <string name="custom_resolvers_range_too_large">Range too large to scan (max /20, 4096 addresses): %1$s</string>
+    <string name="custom_resolvers_format_note">Type resolvers in any format, the app standardizes them (adds :53, removes extra spaces and symbols) and saves automatically.</string>
+    <string name="test_resolvers">Scan resolvers</string>
+    <string name="stop_scan">Stop</string>
+    <string name="pause_scan">Pause</string>
+    <string name="resume_scan">Resume</string>
+    <string name="testing_resolvers">Scanning…</string>
+    <string name="test_resolvers_button">Scan</string>
+    <string name="resolvers_responding">Responding: %1$d</string>
+    <string name="resolvers_verified">Soar-verified: %1$d</string>
+    <string name="remembered_resolvers_title">Remembered healthy resolvers</string>
+    <string name="remembered_resolvers_more">and %1$d more in the pool</string>
+    <string name="resolvers_spread_note">Soar can spread traffic over %1$d healthy resolvers.</string>
+    <string name="copy_all_resolvers">Copy all %1$d</string>
+    <string name="scan_stage_screening">DNS + RTT screening</string>
+    <string name="scan_stage_handshake">Soar handshake vetting</string>
+    <string name="scan_stage_ranking">Ranking + saving verified resolvers</string>
+    <string name="scan_tested">Scanned: %1$d / %2$d</string>
+    <string name="scan_saved">Saved: %1$d</string>
+    <string name="custom_resolvers_cidr_note">CIDR ranges are supported too — e.g. 0.0.0.0/24 scans the whole range.</string>
+    <string name="tcp_mode_explanation">Forces DNS queries over TCP/53 instead of UDP/53. Use it only when UDP is blocked, as it is slower. When off, TCP is still used where UDP fails.</string>
+    <string name="mtu_label">MTU (VPN mode only)</string>
+    <string name="mtu_auto">Auto</string>
+    <string name="mtu_explanation">Maximum packet size for the VPN tunnel. Auto measures your network and picks the best size. Try 1280 if pages stall or load slowly, or 1500 for faster downloads on a stable connection.</string>
+    <string name="dns_answer_size_label">DNS answer size</string>
+    <string name="dns_answer_size_explanation">Maximum downstream data one DNS answer may carry. Auto lets the app probe up to 1232 bytes. Try a smaller value if apps stall or load slowly on a lossy network.</string>
+    <string name="dns_answer_size_auto">Auto</string>
+    <string name="applies_on_reconnect">Connection changes apply on the next connect.</string>
+    <string name="iran_geo_bypass">Iran geo bypass (.ir &amp; IR IPs)</string>
+    <string name="custom_bypass_list">Custom bypass list</string>
+    <string name="per_app_routing">Per-app routing</string>
+    <string name="battery_optimization">Disable battery optimization</string>
+    <string name="status_exempted">Exempted</string>
+    <string name="notification_permission">Notification permission</string>
+    <string name="status_allowed">Allowed</string>
+    <string name="status_not_allowed">Not allowed</string>
+    <string name="speeds_in_notification">Speeds in notification</string>
+    <string name="diagnostic_logs">Diagnostic logs</string>
+    <string name="diagnostic_logs_note">Detailed logs for troubleshooting. Turn off to save battery and resources.</string>
+    <string name="view_logs">View logs</string>
+    <string name="logs_show_details">Show details</string>
+
+    <!-- Check for update -->
+    <string name="update_check">Check for update</string>
+    <string name="update_latest">You\'re on the latest version.</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_body">Version %1$s is available.</string>
+    <string name="update_download">Download</string>
+    <string name="update_later">Later</string>
+    <string name="update_check_failed">Couldn\'t check for updates. Check your connection and try again.</string>
+    <string name="update_no_apk">This release has no installable file.</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_download_failed">Download failed. Try again.</string>
+    <string name="update_allow_install">To install updates, allow Unbar to install unknown apps.</string>
+
+    <!-- About (Exact Approved Texts) -->
+    <string name="about_title">About Unbar</string>
+    <string name="about_line_1">A DNS-tunnel VPN client based on Soar,\nby Break The Barriers.</string>
+    <string name="about_line_2">Built for total blackouts,\nwhen DNS is the only way out.</string>
+    <string name="about_soar_version">Soar tunnel protocol version: v0.2.5</string>
+    <string name="about_license">Licensed under Apache License 2.0</string>
+    <string name="about_telegram_channel">Telegram channel @Break_The_Barriers</string>
+    <string name="donate_title">Donation</string>
+    <string name="donate_text">If Unbar helped you, a small donation keeps it going.</string>
+    <string name="donate_usdt_bep20">USDT (BEP20)</string>
+    <string name="donate_ton">TON</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_name">Unbar tunnel service</string>
+    <string name="notif_channel_desc">Keeps the Unbar DNS tunnel active in the background</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_title">Tutorial</string>
+    <string name="guide_title">Guide</string>
+
+    <!-- Servers Tutorial -->
+    <string name="tutorial_servers_add_title">Add server</string>
+    <string name="tutorial_servers_add_body">Tap + to add a new server: enter the server name, zone, and the server\'s public key. Without a server, you cannot connect.</string>
+    <string name="tutorial_servers_import_title">Import config and QR</string>
+    <string name="tutorial_servers_import_body">Instead of entering the details by hand, import an unbar:// link or scan a QR code of the config; the server is added automatically.</string>
+    <string name="tutorial_servers_subscription_title">Subscription</string>
+    <string name="tutorial_servers_subscription_body">Enter a subscription link and the server list will update automatically from that link. Servers you added by hand are left untouched.</string>
+    <string name="tutorial_servers_latency_title">Latency test and server selection</string>
+    <string name="tutorial_servers_latency_body">The latency test measures how fast each server responds. Auto-select picks the fastest server for the connection.</string>
+    <string name="tutorial_servers_edit_title">Edit, delete, and export</string>
+    <string name="tutorial_servers_edit_body">Tap a server to edit or delete it. Export config shares a server\'s config as a link or a QR code.</string>
+
+    <!-- Settings Tutorial -->
+    <string name="tutorial_settings_group_connection">Connection</string>
+    <string name="tutorial_settings_group_resolvers">Resolvers</string>
+    <string name="tutorial_settings_group_proxy">Local SOCKS proxy and bandwidth limit</string>
+    <string name="tutorial_settings_group_routing">Routing</string>
+    <string name="tutorial_settings_group_system">System &amp; diagnostics</string>
+    <string name="tutorial_settings_mode_title">VPN mode / SOCKS mode</string>
+    <string name="tutorial_settings_mode_body">VPN mode routes all of the phone\'s traffic through the tunnel; SOCKS mode only serves apps that have the proxy configured. You can also switch it from the status card on Home — switching while connected reconnects in the new mode. For everyday use, choose VPN mode.</string>
+    <string name="tutorial_settings_tcp_title">TCP mode</string>
+    <string name="tutorial_settings_tcp_body">Forces DNS queries over TCP/53 instead of UDP/53. Use it only when UDP is blocked, as it is slower. When off, TCP is still used where UDP fails.</string>
+    <string name="tutorial_settings_mtu_title">MTU</string>
+    <string name="tutorial_settings_mtu_body">MTU is the size of network packets on the tunnel (default Auto). In Auto, the active interface MTU is measured and 200 bytes are subtracted (clamped to 1280–1500); the new value applies on the next connection. Usually there is no need to change it.</string>
+    <string name="tutorial_settings_answer_title">DNS answer size</string>
+    <string name="tutorial_settings_answer_body">The maximum size of each DNS answer (default Auto). Auto picks the best value; change it only if you have a problem.</string>
+    <string name="tutorial_settings_resolvers_title">Resolvers</string>
+    <string name="tutorial_settings_resolvers_body">Resolvers are the DNS servers the tunnel uses. Built-in uses the built-in list of Iranian resolvers; in Custom mode only the resolvers you entered yourself are used.</string>
+    <string name="tutorial_settings_test_title">Scan resolvers and health</string>
+    <string name="tutorial_settings_test_body">The Scan resolvers button checks the resolvers in three stages: first DNS and RTT screening, then a Soar handshake on all stage-1 responders (the verified count rises live and it works even before connecting), and finally ranking and saving every verified resolver into one pool. The Active resolvers card shows how many resolvers are currently carrying traffic — dead ones are replaced automatically, so there is no need to scan again.</string>
+    <string name="tutorial_settings_proxy_title">Local SOCKS proxy</string>
+    <string name="tutorial_settings_proxy_body">While the VPN is connected, a SOCKS proxy also runs on the phone (default port 1080). Set it in your browser or other apps so that only that app uses the tunnel.</string>
+    <string name="tutorial_settings_bandwidth_title">Bandwidth limit</string>
+    <string name="tutorial_settings_bandwidth_body">Limits the maximum upload and download speed of the tunnel, in KB/s. 0 means no limit.</string>
+    <string name="tutorial_settings_bypass_title">Iran geo bypass (.ir &amp; IR IPs)</string>
+    <string name="tutorial_settings_bypass_body">Connects Iranian domains and IPs directly, without sending them through the tunnel, so domestic sites open faster. If the direct connection fails within 5 seconds, it falls back to the tunnel.</string>
+    <string name="tutorial_settings_bypass_list_title">Custom bypass list</string>
+    <string name="tutorial_settings_bypass_list_body">Write the domains or IPs you want to keep out of the tunnel here, one per line.</string>
+    <string name="tutorial_settings_per_app_title">Per-app routing</string>
+    <string name="tutorial_settings_per_app_body">Chooses which apps use the VPN and which do not. For example, you can route only the browser through the tunnel.</string>
+    <string name="tutorial_settings_update_title">Check for update</string>
+    <string name="tutorial_settings_update_body">Checks whether a newer release is available. If you are on the latest version, you will see a confirmation; if a newer version is available, a dialog shows the version and what\'s new. Tap Download to fetch the APK and install it — you may first need to allow Unbar to install unknown apps.</string>
+    <string name="tutorial_settings_logs_title">Logs</string>
+    <string name="tutorial_settings_logs_body">The log page (Settings &gt; System &amp; diagnostics &gt; View logs) shows only the entries you need by default — connection events, errors, warnings, your own actions, and scan results. The repeating technical lines that arrive every 20 seconds are hidden; turn on "Show details" to see them. Copying the log still copies everything.</string>
+    <string name="tutorial_home_status_title">Status card and connection</string>
+    <string name="tutorial_home_status_body">The status card shows whether the tunnel is up and which server you are on. Tap the footer to connect or disconnect. If no server is configured, add your own server first — the app ships with none.</string>
+    <string name="tutorial_home_server_ip_title">Server and IP</string>
+    <string name="tutorial_home_server_ip_body">While connected, the card shows the server\'s IP address and country. The country is looked up from the server\'s IP, so it tells you where your traffic exits.</string>
+    <string name="tutorial_home_mode_title">VPN mode / Proxy mode</string>
+    <string name="tutorial_home_mode_body">VPN mode routes all of the phone\'s traffic through the tunnel; Proxy mode only serves apps that have the proxy configured. Switching modes while connected takes about 10 seconds: the tunnel disconnects, waits 6 seconds for the old service to stop fully, then reconnects in the new mode. While disconnected, switching only stores the mode for the next connect. For everyday use, choose VPN mode.</string>
+    <string name="tutorial_home_download_upload_title">Download and upload</string>
+    <string name="tutorial_home_download_upload_body">Live speeds on the wire, as actually sent through the tunnel.</string>
+    <string name="tutorial_home_latency_title">Latency</string>
+    <string name="tutorial_home_latency_body">Latency is the round-trip time to your server, measured through the tunnel. Lower is better; under 200 ms feels fast.</string>
+    <string name="tutorial_home_quality_title">Connection quality</string>
+    <string name="tutorial_home_quality_body">A score from 0 to 100 built from path health, latency and loss. The shield shows the same score in five bars: more lit bars, a better connection.</string>
+    <string name="tutorial_home_active_resolvers_title">Active resolvers</string>
+    <string name="tutorial_home_active_resolvers_body">How many resolvers are currently carrying traffic. Dead ones are replaced automatically, so there is no need to scan again.</string>
+    <string name="tutorial_home_scan_title">Scan resolvers</string>
+    <string name="tutorial_home_scan_body">Checks the resolvers in three stages: DNS and RTT screening, a Soar handshake on all responders, and saving every verified resolver into one pool.</string>
+    <string name="tutorial_home_today_title">Today</string>
+    <string name="tutorial_home_today_body">How much data the tunnel has carried today. The counter resets at midnight.</string>
+    <string name="tutorial_home_session_total_title">Session total</string>
+    <string name="tutorial_home_session_total_body">How much data this session has carried, up and down combined. It keeps counting across reconnects.</string>
+    <string name="tutorial_home_connection_time_title">Connection time</string>
+    <string name="tutorial_home_connection_time_body">How long the current session has been up. It restarts on every reconnect.</string>
+    <string name="tutorial_home_streams_title">Streams</string>
+    <string name="tutorial_home_streams_body">How many streams the tunnel is currently carrying. More streams usually means more apps or downloads active.</string>
+</resources>

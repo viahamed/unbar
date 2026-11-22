@@ -1,0 +1,56 @@
+# Android / Gradle
+*.iml
+.gradle/
+local.properties
+**/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/androidTest/**/build/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Android Studio
+.idea/
+*.jks
+*.keystore
+
+# Go
+*.a
+*.so
+/bin/
+core/unbar-core.aar
+ios/UnbarCore.xcframework
+
+# Go build cache (do not commit the local module cache)
+# (go.sum is committed; the module cache itself lives outside the repo)
+
+# Xcode / iOS
+ios/**/*.xcuserstate
+ios/**/xcuserdata/
+ios/**/DerivedData/
+*.xcworkspace/xcuserdata/
+*.ipa
+*.dSYM.zip
+*.dSYM
+ios/Pods/
+ios/*.xcworkspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Local SDK / toolchain caches (these live outside the repo)
+.cache/
+android/app/libs/unbar-core.aar

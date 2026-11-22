@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths shared with the package installer for downloaded updates:
+     only the Download folder inside the app's own external files dir. -->
+<paths>
+    <external-files-path name="update_downloads" path="Download/" />
+</paths>

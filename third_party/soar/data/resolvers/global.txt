@@ -1,0 +1,2 @@
+# Intentionally empty: this app uses Iranian resolvers only, so no
+# global public resolvers are vetted as tunnel paths.

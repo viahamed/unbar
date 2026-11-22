@@ -1,0 +1,60 @@
+# Baseline Profile (1.0.21, lag fix).
+# Hand-written, class-level rules for the app's own classes on the
+# cold-start + navigation path (MainActivity, ViewModel, screens,
+# tunnel, datastore). AGP packages this into the APK and the system
+# AOT-compiles the listed classes at install time, so cold start and
+# screen switching run compiled code instead of JIT warm-up. Every
+# rule names a real top-level class from the source tree.
+Lcom/breakthebarriers/unbar/AppContainer;
+Lcom/breakthebarriers/unbar/MainActivity;
+Lcom/breakthebarriers/unbar/UnbarApplication;
+Lcom/breakthebarriers/unbar/data/config/ConfigShareCodec;
+Lcom/breakthebarriers/unbar/data/config/ExportedUnbarConfig;
+Lcom/breakthebarriers/unbar/data/config/ServerValidation;
+Lcom/breakthebarriers/unbar/data/datastore/RememberedResolver;
+Lcom/breakthebarriers/unbar/data/datastore/ResolverHealthStore;
+Lcom/breakthebarriers/unbar/data/datastore/SettingsRepository;
+Lcom/breakthebarriers/unbar/data/db/ServerEntity;
+Lcom/breakthebarriers/unbar/data/db/SessionEntity;
+Lcom/breakthebarriers/unbar/data/db/SubscriptionEntity;
+Lcom/breakthebarriers/unbar/data/db/UnbarDao;
+Lcom/breakthebarriers/unbar/data/db/UnbarDatabase;
+Lcom/breakthebarriers/unbar/data/db/UsageEntity;
+Lcom/breakthebarriers/unbar/data/db/UsageTotals;
+Lcom/breakthebarriers/unbar/data/logs/LogStore;
+Lcom/breakthebarriers/unbar/data/security/SocksPasswordStore;
+Lcom/breakthebarriers/unbar/data/subscription/FetchedServerCandidate;
+Lcom/breakthebarriers/unbar/data/subscription/SubscriptionErrorKind;
+Lcom/breakthebarriers/unbar/data/subscription/SubscriptionFetchOutput;
+Lcom/breakthebarriers/unbar/data/subscription/SubscriptionFetchResult;
+Lcom/breakthebarriers/unbar/data/subscription/SubscriptionFetcher;
+Lcom/breakthebarriers/unbar/data/subscription/SubscriptionStatus;
+Lcom/breakthebarriers/unbar/data/tunnel/CoreTunnelBridge;
+Lcom/breakthebarriers/unbar/data/tunnel/ResolverScanStatus;
+Lcom/breakthebarriers/unbar/data/tunnel/TunnelManager;
+Lcom/breakthebarriers/unbar/model/AppLanguage;
+Lcom/breakthebarriers/unbar/model/AppSettings;
+Lcom/breakthebarriers/unbar/model/AppThemeMode;
+Lcom/breakthebarriers/unbar/model/ConnectionMode;
+Lcom/breakthebarriers/unbar/model/DialErrorEntry;
+Lcom/breakthebarriers/unbar/model/DiscoveryMode;
+Lcom/breakthebarriers/unbar/model/InstalledAppInfo;
+Lcom/breakthebarriers/unbar/model/LogEntry;
+Lcom/breakthebarriers/unbar/model/LogLevel;
+Lcom/breakthebarriers/unbar/model/PerAppRoutingMode;
+Lcom/breakthebarriers/unbar/model/ResolverMode;
+Lcom/breakthebarriers/unbar/model/TunnelStats;
+Lcom/breakthebarriers/unbar/model/TunnelStatus;
+Lcom/breakthebarriers/unbar/model/TunnelUiSnapshot;
+Lcom/breakthebarriers/unbar/model/VerifiedResolver;
+Lcom/breakthebarriers/unbar/service/UnbarTileService;
+Lcom/breakthebarriers/unbar/service/UnbarVpnService;
+Lcom/breakthebarriers/unbar/tunnel/HevSocks5Tunnel;
+Lcom/breakthebarriers/unbar/ui/MainViewModel;
+Lcom/breakthebarriers/unbar/ui/Routes;
+Lcom/breakthebarriers/unbar/ui/screens/AddSheetPage;
+Lcom/breakthebarriers/unbar/ui/screens/QrCodeAnalyzer;
+Lcom/breakthebarriers/unbar/widget/ToggleWidgetAction;
+Lcom/breakthebarriers/unbar/widget/UnbarWidget;
+Lcom/breakthebarriers/unbar/widget/UnbarWidgetReceiver;
+Lcom/breakthebarriers/unbar/widget/UnbarWidgetUpdater;

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- Two-tone Home stat icon (magnifier-check): blue #0B4F9E magnifier + orange #FF7A1A check. Design 4, chosen 2026-11-21. Matches Android ic_stat_magnifier_check.xml. -->
+  <circle cx="11" cy="11" r="6" fill="none" stroke="#0B4F9E" stroke-width="1.8"/>
+  <path fill="none" stroke="#0B4F9E" stroke-width="1.8" stroke-linecap="round" d="M15.5 15.5 L20 20"/>
+  <path fill="none" stroke="#FF7A1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M8 11 L10.5 13.5 L14 9.5"/>
+</svg>

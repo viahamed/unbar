@@ -1,0 +1,196 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  android:
+    name: Android (debug APK)
+    # Tag pushes run only the release job below.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+          cache-dependency-path: core/go.sum
+
+      # NOTE: no setup-android step — ubuntu-latest already ships a full
+      # Android SDK (ANDROID_HOME is pre-set). The android-actions/setup-android
+      # action fails because it tries to install the obsolete `tools` package,
+      # which no longer exists in the SDK repository.
+
+      - name: Install gomobile
+        run: go install golang.org/x/mobile/cmd/gomobile@latest
+
+      - name: Build the shared core (.aar)
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          gomobile init
+          # NOTE: bind must run from inside core/ — gomobile checks that
+          # golang.org/x/mobile is in the *current* module, and the repo
+          # root has no go.mod (Go 1.27 reports GOMOD=/dev/null there,
+          # so the check runs and fails instead of being skipped).
+          cd core
+          gomobile bind -androidapi 21 -target android/arm64,android/arm,android/amd64 \
+            -o ../android/app/libs/unbar-core.aar .
+
+      # The fixed debug keystore lives in secrets, never in the repo —
+      # restoring it keeps every CI debug APK on the same debug cert,
+      # so it installs over the previous one (see build.gradle.kts).
+      - name: Restore debug keystore
+        run: |
+          echo "$UNBAR_DEBUG_KEYSTORE_BASE64" | base64 -d > debug.keystore
+          test -s debug.keystore
+        env:
+          UNBAR_DEBUG_KEYSTORE_BASE64: ${{ secrets.UNBAR_DEBUG_KEYSTORE_BASE64 }}
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+        env:
+          UNBAR_DEBUG_KEYSTORE: ${{ github.workspace }}/debug.keystore
+          UNBAR_DEBUG_KEYSTORE_PASSWORD: ${{ secrets.UNBAR_DEBUG_KEYSTORE_PASSWORD }}
+          UNBAR_DEBUG_KEY_ALIAS: ${{ secrets.UNBAR_DEBUG_KEY_ALIAS }}
+          UNBAR_DEBUG_KEY_PASSWORD: ${{ secrets.UNBAR_DEBUG_KEY_PASSWORD }}
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: unbar-debug-apk
+          path: android/app/build/outputs/apk/debug/app-universal-debug.apk
+          if-no-files-found: error
+
+  ios:
+    name: iOS (simulator build)
+    # Re-enabled 2026-11-22 for the 1.0.0 clean-slate release: one macOS
+    # run per push to main. macOS runners cost 10x Linux, so this job runs
+    # on main pushes only — never on tag pushes (the release job handles
+    # those) and never on pull requests.
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+          cache-dependency-path: core/go.sum
+
+      - name: Install gomobile
+        run: go install golang.org/x/mobile/cmd/gomobile@latest
+
+      - name: Build the shared core (.xcframework)
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          gomobile init
+          # NOTE: bind must run from inside core/ — like the Android job.
+          # The current gomobile checks that golang.org/x/mobile is in the
+          # *current* module, and the repo root has no go.mod (Go 1.27
+          # reports GOMOD=/dev/null there), so binding from the root fails
+          # with "missing golang.org/x/mobile dependency".
+          cd core
+          gomobile bind -target ios -o ../ios/UnbarCore.xcframework .
+
+      # Unsigned simulator build only — verifies the core + Swift compile.
+      # It produces no installable IPA: a signed build / TestFlight upload
+      # needs the App Store Connect API key, a distribution certificate
+      # (.p12) and a provisioning profile. Note: App Store publication is
+      # BLOCKED by Guideline 5.4 (Individual account; Organization
+      # enrolment required) — internal TestFlight only, if it works at all.
+      # Unbar.xcodeproj is committed in the repo (no generation step needed).
+      - name: Build iOS app (simulator, unsigned)
+        run: |
+          cd ios
+          xcodebuild -project Unbar.xcodeproj -scheme Unbar \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
+
+  release:
+    name: Release (signed APK)
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+          cache-dependency-path: core/go.sum
+
+      - name: Install gomobile
+        run: go install golang.org/x/mobile/cmd/gomobile@latest
+
+      - name: Build the shared core (.aar)
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          gomobile init
+          cd core
+          gomobile bind -androidapi 21 -target android/arm64,android/arm,android/amd64 \
+            -o ../android/app/libs/unbar-core.aar .
+
+      - name: Restore release keystore
+        run: |
+          echo "$UNBAR_RELEASE_KEYSTORE_BASE64" | base64 -d > release.keystore
+          test -s release.keystore
+        env:
+          UNBAR_RELEASE_KEYSTORE_BASE64: ${{ secrets.UNBAR_RELEASE_KEYSTORE_BASE64 }}
+
+      - name: Build signed release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+        env:
+          UNBAR_RELEASE_KEYSTORE: ${{ github.workspace }}/release.keystore
+          UNBAR_KEYSTORE_PASSWORD: ${{ secrets.UNBAR_KEYSTORE_PASSWORD }}
+          UNBAR_KEY_ALIAS: ${{ secrets.UNBAR_KEY_ALIAS }}
+          UNBAR_KEY_PASSWORD: ${{ secrets.UNBAR_KEY_PASSWORD }}
+
+      - name: Create GitHub Release
+        run: |
+          VERSION="${{ github.ref_name }}"   # v1.0.0
+          VERSION="${VERSION#v}"             # 1.0.0
+          cd android/app/build/outputs/apk/release
+          cp app-universal-release.apk "Unbar-${VERSION}-universal.apk"
+          cp app-arm64-v8a-release.apk "Unbar-${VERSION}-arm64-v8a.apk"
+          cp app-armeabi-v7a-release.apk "Unbar-${VERSION}-armeabi-v7a.apk"
+          cp app-x86_64-release.apk "Unbar-${VERSION}-x86_64.apk"
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes "Unbar ${{ github.ref_name }}." \
+            "Unbar-${VERSION}-universal.apk" \
+            "Unbar-${VERSION}-arm64-v8a.apk" \
+            "Unbar-${VERSION}-armeabi-v7a.apk" \
+            "Unbar-${VERSION}-x86_64.apk"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
