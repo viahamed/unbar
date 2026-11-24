@@ -1306,10 +1306,12 @@ SettingsCard(title = stringResource(R.string.section_diagnostics)) {
         label = stringResource(R.string.history_title),
         onClick = onOpenHistory
     )
-    HorizontalDivider()
     // Check for update: one tap checks GitHub Releases for a newer
     // build. While a check runs the row is disabled and shows a
-    // spinner instead of the chevron.
+    // spinner instead of the chevron. Hidden in F-Droid builds
+    // (-Pfdroid), where F-Droid itself delivers updates.
+    if (BuildConfig.UPDATE_CHECK) {
+    HorizontalDivider()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1330,6 +1332,7 @@ SettingsCard(title = stringResource(R.string.section_diagnostics)) {
         } else {
             Icon(Icons.Rounded.ChevronRight, contentDescription = null)
         }
+    }
     }
 }
 

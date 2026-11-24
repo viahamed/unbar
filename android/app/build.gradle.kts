@@ -19,10 +19,18 @@ android {
         applicationId = "com.breakthebarriers.unbar"
         minSdk = 21
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         multiDexEnabled = true
+
+        // F-Droid builds pass -Pfdroid: the in-app GitHub update check
+        // is hidden there, since F-Droid delivers updates itself.
+        buildConfigField(
+            "boolean",
+            "UPDATE_CHECK",
+            (!project.hasProperty("fdroid")).toString()
+        )
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         vectorDrawables {
@@ -169,11 +177,11 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.zxing.core)
 
-    // QR code scanning for config import (CameraX + ML Kit).
+    // QR code scanning for config import (CameraX + ZXing; no
+    // proprietary ML Kit, so the app builds fully from source).
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.mlkit.barcode.scanning)
 
     // Home-screen widget (1.0.15, C7): Glance app widget.
     implementation(libs.androidx.glance.appwidget)
