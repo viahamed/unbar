@@ -1,7 +1,7 @@
 # Third-party components
 
-Unbar's own code is under the Unbar Source-Available License 1.0
-(see `LICENSE`). The components below are vendored into this repository
+Unbar's own code is licensed under the GNU General Public License v3.0
+(GPL-3.0, see `LICENSE`). The components below are vendored into this repository
 under their own licenses. The full license text for each one is kept
 alongside its source — see the paths listed below.
 
