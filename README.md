@@ -204,9 +204,9 @@ xcodebuild -project Unbar.xcodeproj -scheme Unbar \
 
 ## لایسنس
 
-کد آنبار برای مشاهده عمومی است، ولی استفاده، کپی، تغییر و انتشار آن ممنوع است؛
-فقط می‌توانید برای همین پروژه مشارکت بفرستید. نام‌ها و لوگوی «آنبار» و
-«Break The Barriers» علامت تجاری‌اند و این لایسنس حقی برای استفاده از آن‌ها نمی‌دهد.
+آنبار نرم‌افزار آزاد است و تحت لایسنس GNU General Public License نسخه ۳
+(GPL-3.0) منتشر می‌شود؛ می‌توانید طبق شرایط این لایسنس از آن استفاده کنید، آن را
+تغییر دهید و منتشر کنید. نام‌ها و لوگوی «آنبار» و «Break The Barriers» علامت تجاری‌اند.
 متن کامل در LICENSE. اجزای وندور شده (Soar و hev-socks5-tunnel) لایسنس خودشان
 را دارند — THIRD_PARTY.md.
 
@@ -422,10 +422,10 @@ Bug reports and pull requests are welcome. For larger changes, please open an is
 
 ## License
 
-Unbar's source code is public for review, but you may not use, copy, modify,
-or distribute it, except to contribute back to this project. "Unbar" and
-"Break The Barriers" names and logos are trademarks; this license grants no
-right to use them. Full text in LICENSE. Vendored components (Soar and
+Unbar is free software, licensed under the GNU General Public License v3.0
+(GPL-3.0). You may use, study, share, and modify it under the terms of that
+license. "Unbar" and "Break The Barriers" names and logos are trademarks of
+Break The Barriers. Full text in LICENSE. Vendored components (Soar and
 hev-socks5-tunnel) keep their own licenses — see THIRD_PARTY.md.
 
 ## Third-party notices
