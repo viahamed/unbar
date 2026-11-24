@@ -1,0 +1,1 @@
+Relicensed under GPL-3.0. QR scanning now uses ZXing instead of Google ML Kit.

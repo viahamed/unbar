@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
@@ -53,15 +52,19 @@ import androidx.core.content.ContextCompat
 import com.breakthebarriers.unbar.R
 import com.breakthebarriers.unbar.ui.theme.UnbarBlue
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.BinaryBitmap
+import com.google.zxing.DecodeHintType
+import com.google.zxing.MultiFormatReader
+import com.google.zxing.NotFoundException
+import com.google.zxing.PlanarYUVLuminanceSource
+import com.google.zxing.ReaderException
+import com.google.zxing.common.HybridBinarizer
 import java.util.concurrent.Executors
 
 // Full-screen QR code scanner for importing a server config.
-// Uses CameraX for the preview and ML Kit for barcode detection
-// (QR codes only). On a successful scan it calls onScanned exactly
+// Uses CameraX for the preview and ZXing (fully open source) for
+// barcode detection (QR codes only). On a successful scan it calls onScanned exactly
 // once with the raw text (an unbar:// link or exported JSON) and the
 // caller pops back to the Servers screen, where the text is fed into
 // the Import dialog.
@@ -94,18 +97,6 @@ fun QrScannerScreen(
         if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
-    // ML Kit scanner, QR codes only. Closed when the screen leaves.
-    val barcodeScanner = remember {
-        BarcodeScanning.getClient(
-            BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build()
-        )
-    }
-    DisposableEffect(Unit) {
-        onDispose { barcodeScanner.close() }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -131,7 +122,6 @@ fun QrScannerScreen(
         ) {
             if (hasPermission) {
                 CameraPreview(
-                    barcodeScanner = barcodeScanner,
                     onQrFound = { text ->
                         if (!scanned) {
                             scanned = true
@@ -192,7 +182,6 @@ fun QrScannerScreen(
 
 @Composable
 private fun CameraPreview(
-    barcodeScanner: com.google.mlkit.vision.barcode.BarcodeScanner,
     onQrFound: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -220,7 +209,7 @@ private fun CameraPreview(
                         .also { analysis ->
                             analysis.setAnalyzer(
                                 cameraExecutor,
-                                QrCodeAnalyzer(barcodeScanner, onQrFound)
+                                QrCodeAnalyzer(onQrFound)
                             )
                         }
                     try {
@@ -243,33 +232,50 @@ private fun CameraPreview(
     )
 }
 
+// Decodes QR codes from the camera's luminance (Y) plane with ZXing.
+// QR finder patterns work at any rotation, so the frame is decoded as
+// delivered; inverted (light-on-dark) codes are tried too.
 private class QrCodeAnalyzer(
-    private val scanner: com.google.mlkit.vision.barcode.BarcodeScanner,
     private val onQrFound: (String) -> Unit
 ) : ImageAnalysis.Analyzer {
 
-    @OptIn(ExperimentalGetImage::class)
-    override fun analyze(imageProxy: ImageProxy) {
-        val mediaImage = imageProxy.image
-        if (mediaImage == null) {
-            imageProxy.close()
-            return
-        }
-        val image = InputImage.fromMediaImage(
-            mediaImage,
-            imageProxy.imageInfo.rotationDegrees
+    private val reader = MultiFormatReader().apply {
+        setHints(
+            mapOf(
+                DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE),
+                DecodeHintType.TRY_HARDER to true,
+                DecodeHintType.ALSO_INVERTED to true
+            )
         )
-        scanner.process(image)
-            .addOnSuccessListener { barcodes ->
-                val value = barcodes.firstOrNull()?.rawValue
-                if (value != null) onQrFound(value)
+    }
+
+    override fun analyze(imageProxy: ImageProxy) {
+        try {
+            val plane = imageProxy.planes[0]
+            val buffer = plane.buffer
+            val rowStride = plane.rowStride
+            val width = imageProxy.width
+            val height = imageProxy.height
+            val data = ByteArray(buffer.remaining())
+            buffer.get(data)
+            val source = PlanarYUVLuminanceSource(
+                data, rowStride, height, 0, 0, width, height, false
+            )
+            val result = try {
+                reader.decodeWithState(BinaryBitmap(HybridBinarizer(source)))
+            } finally {
+                reader.reset()
             }
-            .addOnFailureListener { e ->
-                Log.w("QrScanner", "Barcode scan failed", e)
-            }
-            .addOnCompleteListener {
-                // Always close the frame, or the pipeline stalls.
-                imageProxy.close()
-            }
+            result.text?.let(onQrFound)
+        } catch (e: NotFoundException) {
+            // No QR code in this frame: the normal case, keep scanning.
+        } catch (e: ReaderException) {
+            Log.w("QrScanner", "QR decode failed", e)
+        } catch (e: Exception) {
+            Log.w("QrScanner", "Frame analysis failed", e)
+        } finally {
+            // Always close the frame, or the pipeline stalls.
+            imageProxy.close()
+        }
     }
 }
