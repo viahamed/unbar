@@ -1,0 +1,20 @@
+# Unbar 1.0.2 — update list (local, not published)
+
+Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
+
+## Done locally
+- [x] New app icon, option B: blue "U" + orange striped "b" on white.
+  - Adaptive icon: new foreground (inside the safe zone) and white background, day and night.
+  - Legacy and round launcher icons, all densities.
+  - F-Droid store icon `fastlane/.../images/icon.png` (en-US, fa), round, no tagline.
+  - Reason: F-Droid reviewer feedback on MR !58963 (icon looked rough as a square inside a circle).
+
+## To do before release
+- [ ] Bump version: versionName 1.0.2, versionCode 3 (F-Droid builds 31/32/33 per ABI).
+- [ ] Changelog `fastlane/metadata/android/{en-US,fa}/changelogs/3.txt`.
+- [ ] Telegram handle: pick one spelling (`Break_The_Barriers` vs `break_the_barriers` in full_description.txt).
+- [ ] Check icon on a real device (light, dark, themed icons).
+- [ ] Other changes for this version: (add here)
+- [ ] Build, sign, GitHub release v1.0.2 with APKs.
+- [ ] Update F-Droid recipe (new Builds entries), or let auto-update pick it up.
+- [ ] Update site (unbar.cc) icon and version.
