@@ -18,3 +18,4 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [ ] Build, sign, GitHub release v1.0.2 with APKs.
 - [ ] Update F-Droid recipe (new Builds entries), or let auto-update pick it up.
 - [ ] Update site (unbar.cc) icon and version.
+- [x] en-US phoneScreenshots replaced with 8 new English screenshots from the web demo (user approved 2026-11-26). F-Droid shows them after the 1.0.2 tag is built. fa screenshots unchanged.
