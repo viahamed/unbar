@@ -6,14 +6,14 @@ Features:
 
 * VPN mode for all traffic, or SOCKS proxy mode for selected apps
 * Resolver scan: DNS and RTT screening, a Soar handshake, then ranking into one pool; dead resolvers are replaced automatically
-* Built-in Iranian resolver list, or your own resolvers (CIDR ranges supported)
+* Built-in Iranian resolver list, your own resolvers (CIDR ranges supported), or import a .txt list: it is cleaned, scanned and only verified resolvers are kept
 * Import and share configs with unbar:// links, JSON or QR codes
 * HTTPS subscriptions that keep your server list up to date
 * Latency test and auto-select of the fastest server
 * Iran geo bypass (.ir and Iranian IPs go direct), custom bypass list and per-app routing
 * TCP mode, bandwidth limits, auto MTU and DNS answer size
 * Live stats, connection history, Quick Settings tile and home-screen widget
-* English and Persian, light and dark themes
+* English and Persian, soft "Cloud" light and dark themes
 
 Privacy: no account, no analytics, no ads, no crash reporting. Diagnostic logs are off by default and stay on your phone.
 
