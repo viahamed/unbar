@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/unbar-logo-light.png" alt="Unbar" width="320">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/unbar-logo-dark.png">
+    <img src="assets/unbar-logo-light.png" alt="Unbar" width="320">
+  </picture>
   <img src="assets/break-the-barriers-logo.png" alt="Break The Barriers" width="110">
 </p>
 
