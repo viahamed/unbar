@@ -19,3 +19,6 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [ ] Update F-Droid recipe (new Builds entries), or let auto-update pick it up.
 - [ ] Update site (unbar.cc) icon and version.
 - [x] en-US phoneScreenshots replaced with 8 new English screenshots from the web demo (user approved 2026-11-26). F-Droid shows them after the 1.0.2 tag is built. fa screenshots unchanged.
+
+- [x] Icon changed to simple option 6 (2026-11-26): white rounded square, solid blue U + solid orange b (Poppins Black), no stripes. Replaces striped option B. Adaptive fg/bg, legacy + round mipmaps, fastlane icon.png (en-US, fa).
+- [ ] Wordmark: simple two-tone 'Unbar' (Un blue, bar orange, Poppins Black) chosen direction — update site assets when releasing.
