@@ -35,3 +35,4 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
   - en-US screenshots re-rendered from the recoloured web demo. Changelogs 31-33 updated.
   - Site (local, not deployed): style.css variables, demo.html, assets/ logos, img/logo.png, img/btb.png, img/favicon.png recoloured.
   - Not compiled locally (no Android SDK in the sandbox): let CI build the pushed branch before tagging.
+- [x] In-app logos switched to the brand kit wordmark S1 (2026-11-26, user confirmed the kit is the new logo/icon set): unbar_wordmark_{light,dark}.xml and unbar_logo_{light,dark}.xml (wordmark + "by Break The Barriers" tagline) regenerated from Poppins Black outlines in Cloud colours; same canvas sizes, so UnbarLogo.kt and the launch window are unchanged. Site demo assets, site header logo and screenshots re-rendered to match.
