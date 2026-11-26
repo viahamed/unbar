@@ -10,6 +10,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import com.breakthebarriers.unbar.model.AppThemeMode
 
 // 1.0.2 "Cloud" palette: softer, cleaner light and dark themes.
@@ -119,8 +121,38 @@ fun UnbarTheme(
     CompositionLocalProvider(LocalUnbarDark provides darkTheme) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
-            typography = Typography(),
+            typography = UnbarTypography,
             content = content
         )
     }
+}
+
+// (1.0.2) UX rule, app-wide: text is centred in its line box, so an
+// icon beside a label, or a label inside a chip, button or pill, has
+// equal space above and below. Same sizes as Material 3's defaults.
+private val CenteredLine = LineHeightStyle(
+    alignment = LineHeightStyle.Alignment.Center,
+    trim = LineHeightStyle.Trim.None
+)
+
+private fun TextStyle.centred(): TextStyle = copy(lineHeightStyle = CenteredLine)
+
+private val UnbarTypography: Typography = Typography().let { t ->
+    Typography(
+        displayLarge = t.displayLarge.centred(),
+        displayMedium = t.displayMedium.centred(),
+        displaySmall = t.displaySmall.centred(),
+        headlineLarge = t.headlineLarge.centred(),
+        headlineMedium = t.headlineMedium.centred(),
+        headlineSmall = t.headlineSmall.centred(),
+        titleLarge = t.titleLarge.centred(),
+        titleMedium = t.titleMedium.centred(),
+        titleSmall = t.titleSmall.centred(),
+        bodyLarge = t.bodyLarge.centred(),
+        bodyMedium = t.bodyMedium.centred(),
+        bodySmall = t.bodySmall.centred(),
+        labelLarge = t.labelLarge.centred(),
+        labelMedium = t.labelMedium.centred(),
+        labelSmall = t.labelSmall.centred()
+    )
 }

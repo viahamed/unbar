@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -64,6 +65,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -557,9 +559,19 @@ private fun CapsuleMenuIcon(expanded: Boolean) {
     }
 }
 
+// (1.0.2): every item, selected or not, has the same box (icon,
+// 2dp gap, one trimmed label line, the pill's insets), so the icons
+// sit on one line, the block is centred in the capsule with equal
+// space above and below, and nothing moves when the selection moves.
 @Composable
 private fun CapsuleMenuItem(icon: ImageVector, labelRes: Int, selected: Boolean) {
     Column(
+        modifier = Modifier
+            .background(
+                if (selected) UnbarOrange else Color.Transparent,
+                RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 5.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -567,12 +579,21 @@ private fun CapsuleMenuItem(icon: ImageVector, labelRes: Int, selected: Boolean)
             imageVector = icon,
             contentDescription = null,
             tint = Color.White,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(22.dp)
         )
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = stringResource(labelRes),
-            fontSize = 13.sp,
-            lineHeight = 15.sp,
+            fontSize = 12.sp,
+            lineHeight = 14.sp,
+            // Glyphs centred in the line box and the extra leading
+            // trimmed, so the label adds no uneven space below.
+            style = LocalTextStyle.current.copy(
+                lineHeightStyle = LineHeightStyle(
+                    alignment = LineHeightStyle.Alignment.Center,
+                    trim = LineHeightStyle.Trim.Both
+                )
+            ),
             fontWeight = FontWeight.Normal,
             maxLines = 1,
             softWrap = false,
@@ -589,12 +610,12 @@ private fun FloatingCapsuleMenu(
     onNavigate: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // (1.0.33): 340dp, not 304dp — the 4 items need 71dp each
-    // (284dp of items) so the longest label ("Settings" /
-    // "تنظیمات") fits inside its orange pill without ellipsis.
-    // The 56dp close button is unchanged, so items = 340-56.
+    // (1.0.2): 316dp (was 340dp) — 12sp labels and 5dp pill insets
+    // let 4 items of 63dp (+8dp start inset = 260dp) hold the longest
+    // label ("Settings" / "تنظیمات") without ellipsis. The 56dp close
+    // button is unchanged, so items = 316-56.
     val capsuleWidth by animateDpAsState(
-        targetValue = if (expanded) 340.dp else 56.dp,
+        targetValue = if (expanded) 316.dp else 56.dp,
         animationSpec = tween(220),
         label = "capsuleMenuWidth"
     )
@@ -630,9 +651,9 @@ private fun FloatingCapsuleMenu(
             ) {
                 Row(
                     modifier = Modifier
-                        .requiredWidth(284.dp)
+                        .requiredWidth(260.dp)
                         .fillMaxHeight()
-                        .padding(start = 10.dp),
+                        .padding(start = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     items.forEach { (route, labelRes, icon) ->
@@ -647,26 +668,7 @@ private fun FloatingCapsuleMenu(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            if (selected) {
-                                // Orange rounded-rect pill behind icon+label.
-                                // Sized to the item's content with insets, so it
-                                // never extends outside the blue capsule — not
-                                // even on Home, the leftmost item.
-                                // (1.0.33): the insets are 6dp, not 8dp — with
-                                // the wider capsule the longest label
-                                // ("Settings" / "تنظیمات") now fits without
-                                // ellipsis.
-                                Box(
-                                    modifier = Modifier
-                                        .background(UnbarOrange, RoundedCornerShape(12.dp))
-                                        .padding(horizontal = 6.dp, vertical = 3.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CapsuleMenuItem(icon, labelRes, selected = true)
-                                }
-                            } else {
-                                CapsuleMenuItem(icon, labelRes, selected = false)
-                            }
+                            CapsuleMenuItem(icon, labelRes, selected)
                         }
                     }
                 }

@@ -45,3 +45,9 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [x] Limits unchanged from the core: ranges up to /20; scan cap 5000 addresses (warning shown).
 - [x] Changelogs 31-33 (en-US, fa) updated.
 - [ ] Not compiled here (no Android SDK). Cleaner logic was compiled and tested with kotlinc 2.0.21 on JVM. Needs CI build + device test (pick file, replace, clear, scan, connect, switch Custom<->Import keeps both lists).
+
+## Capsule menu + text centring (2026-11-26)
+- [x] Capsule 316dp wide when open (was 340dp); items 63dp, labels 12sp, icons 22dp.
+- [x] Every item has the same box (pill insets on selected and unselected), so icons sit on one line, nothing shifts when the selection moves, and the block has equal space above and below (5dp/5dp in the 56dp capsule; menu button 14dp/14dp).
+- [x] App-wide: typography with text centred in its line box (LineHeightStyle Center) so icon+label rows, chips and pills stay vertically centred.
+- [x] Web demo capsule updated to match; en-US F-Droid screenshots re-rendered.
