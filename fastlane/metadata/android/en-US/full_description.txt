@@ -18,4 +18,4 @@ Features:
 Privacy: no account, no analytics, no ads, no crash reporting. Diagnostic logs are off by default and stay on your phone.
 
 Website: https://unbar.cc
-Telegram: https://t.me/break_the_barriers
+Telegram: https://t.me/Unbarapp

@@ -49,10 +49,10 @@ public struct AboutView: View {
                                  title: "Break The Barriers",
                                  detail: "btb.onl")
                     }
-                    Button(action: { openURL("https://t.me/Break_The_Barriers") }) {
+                    Button(action: { openURL("https://t.me/Unbarapp") }) {
                         AboutRow(icon: "paperplane",
                                  title: loc.tr("about.telegram"),
-                                 detail: "t.me/Break_The_Barriers")
+                                 detail: "t.me/Unbarapp")
                     }
                     Button(action: { openURL("https://github.com/viahamed/unbar") }) {
                         AboutRow(icon: "chevron.left.slash.chevron.right",

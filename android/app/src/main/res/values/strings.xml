@@ -191,7 +191,7 @@
     <string name="about_line_2">Built for total blackouts,\nwhen DNS is the only way out.</string>
     <string name="about_soar_version">Soar tunnel protocol version: v0.2.5</string>
     <string name="about_license">Licensed under Apache License 2.0</string>
-    <string name="about_telegram_channel">Telegram channel @Break_The_Barriers</string>
+    <string name="about_telegram_channel">Telegram channel @Unbarapp</string>
     <string name="donate_title">Donation</string>
     <string name="donate_text">If Unbar helped you, a small donation keeps it going.</string>
     <string name="donate_usdt_bep20">USDT (BEP20)</string>

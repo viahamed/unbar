@@ -53,7 +53,7 @@ import com.breakthebarriers.unbar.model.AppThemeMode
 import com.breakthebarriers.unbar.ui.components.UnbarLogo
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 
-private const val TELEGRAM_CHANNEL_URL = "https://t.me/Break_The_Barriers"
+private const val TELEGRAM_CHANNEL_URL = "https://t.me/Unbarapp"
 private const val USDT_BEP20_ADDRESS = "0x46f872b46BFa471607ad0F0042bdFFCB2B9c702b"
 private const val TON_ADDRESS = "UQBdKaKX61k56IaJMbjTTMvXd7fskpbJnzGUPlQAyZT6RJn5"
 
@@ -133,7 +133,7 @@ fun AboutScreen(themeMode: AppThemeMode) {
                 modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Telegram channel link (opens t.me/Break_The_Barriers).
+                // Telegram channel link (opens t.me/Unbarapp).
                 // The website line was removed from About on purpose.
                 Row(
                     modifier = Modifier
