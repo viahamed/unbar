@@ -10,13 +10,14 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
   - Reason: F-Droid reviewer feedback on MR !58963 (icon looked rough as a square inside a circle).
 
 ## To do before release
-- [ ] Bump version: versionName 1.0.2, versionCode 3 (F-Droid builds 31/32/33 per ABI).
-- [ ] Changelog `fastlane/metadata/android/{en-US,fa}/changelogs/3.txt`.
+- [x] Bump version: versionName 1.0.2, versionCode 3 (F-Droid builds 31/32/33 per ABI, VercodeOperation 10*%c+1..3).
+- [x] Changelog `fastlane/metadata/android/{en-US,fa}/changelogs/31.txt, 32.txt, 33.txt` (F-Droid versionCodes).
+- [x] Verified: no code or build-script changes since v1.0.1, so the F-Droid recipe's prebuild seds still match; signing unchanged (same release keystore from GitHub secrets, so the APK signing certificate SHA-256 stays the same).
 - [ ] Telegram handle: pick one spelling (`Break_The_Barriers` vs `break_the_barriers` in full_description.txt).
 - [ ] Check icon on a real device (light, dark, themed icons).
 - [ ] Other changes for this version: (add here)
 - [ ] Build, sign, GitHub release v1.0.2 with APKs.
-- [ ] Update F-Droid recipe (new Builds entries), or let auto-update pick it up.
+- [x] F-Droid: no recipe MR needed. AutoUpdateMode: Version + UpdateCheckMode: Tags picks up tag v1.0.2.
 - [ ] Update site (unbar.cc) icon and version.
 - [x] en-US phoneScreenshots replaced with 8 new English screenshots from the web demo (user approved 2026-11-26). F-Droid shows them after the 1.0.2 tag is built. fa screenshots unchanged.
 
