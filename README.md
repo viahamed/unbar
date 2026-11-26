@@ -20,7 +20,7 @@
 
 آنبار ترافیک اینترنت شما را داخل کوئری‌های DNS جاسازی می‌کند و از طریق سرور خودتان عبور می‌دهد؛ بنابراین وقتی دسترسی مستقیم به اینترنت قطع شده اما DNS هنوز جواب می‌دهد، اتصال برقرار می‌ماند. آنبار هیچ سرور پیش‌فرضی ندارد و بدون سرور شما کار نمی‌کند — سرور را خودتان اضافه می‌کنید.
 
-- وب‌سایت: [btb.onl](https://btb.onl)
+- وب‌سایت: [unbar.cc](https://unbar.cc)
 - کانال تلگرام: [@Break_The_Barriers](https://t.me/Break_The_Barriers)
 - نسخهٔ فعلی: **1.0.2** (بیلد 3) — اندروید و iOS
 
@@ -239,7 +239,7 @@ xcodebuild -project Unbar.xcodeproj -scheme Unbar \
 
 Unbar carries your internet traffic inside DNS queries, through a server of your own — so the connection stays up when direct internet access is cut but DNS still answers. Unbar ships with no built-in server and does nothing without one; you add your own server.
 
-- Website: [btb.onl](https://btb.onl)
+- Website: [unbar.cc](https://unbar.cc)
 - Telegram channel: [@Break_The_Barriers](https://t.me/Break_The_Barriers)
 - Current version: **1.0.2** (build 3) — Android and iOS
 

@@ -84,8 +84,8 @@ struct ResolverImportView: View {
                       allowedContentTypes: [.plainText],
                       allowsMultipleSelection: false) { result in
             switch result {
-            case .success(let url):
-                readFile(url)
+            case .success(let urls):
+                if let url = urls.first { readFile(url) }
             case .failure:
                 importError = .unreadable
             }
