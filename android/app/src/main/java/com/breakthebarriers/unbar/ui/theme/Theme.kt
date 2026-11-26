@@ -1,7 +1,9 @@
 package com.breakthebarriers.unbar.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -10,6 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
 import com.breakthebarriers.unbar.model.AppThemeMode
@@ -122,6 +125,7 @@ fun UnbarTheme(
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
             typography = UnbarTypography,
+            shapes = UnbarShapes,
             content = content
         )
     }
@@ -156,3 +160,16 @@ private val UnbarTypography: Typography = Typography().let { t ->
         labelSmall = t.labelSmall.centred()
     )
 }
+
+// (1.0.2) UX rule, app-wide: nested corner radius = outer radius -
+// padding. Top-level cards are 24dp with 16dp padding, so panels,
+// list boxes, text fields and menus inside them are 8dp. (Capsule
+// menu: 16dp capsule, 5dp inset -> 11dp pill; mode switch: 10dp
+// track, 2dp inset -> 8dp segment.)
+val OuterCardRadius = 24.dp
+val InnerPanelRadius = 8.dp
+
+private val UnbarShapes = Shapes(
+    extraSmall = RoundedCornerShape(InnerPanelRadius), // text fields, menus
+    small = RoundedCornerShape(InnerPanelRadius)
+)

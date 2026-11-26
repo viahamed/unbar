@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.breakthebarriers.unbar.R
+import com.breakthebarriers.unbar.ui.theme.InnerPanelRadius
 import com.breakthebarriers.unbar.data.datastore.RESOLVER_IMPORT_MAX_BYTES
 import com.breakthebarriers.unbar.data.datastore.RESOLVER_SCAN_CAP
 import com.breakthebarriers.unbar.data.datastore.ResolverImportResult
@@ -149,7 +150,7 @@ internal fun ResolverImportBlock(
     } else {
         val addresses = resolverAddressCount(importedResolvers)
         Card(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(InnerPanelRadius),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Row(
@@ -198,7 +199,7 @@ internal fun ResolverImportBlock(
         }
         if (showList) {
             Card(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(InnerPanelRadius),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 )

@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.breakthebarriers.unbar.BuildConfig
 import com.breakthebarriers.unbar.R
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 import com.breakthebarriers.unbar.model.AppThemeMode
 import com.breakthebarriers.unbar.ui.components.UnbarLogo
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
@@ -98,7 +99,7 @@ fun AboutScreen(themeMode: AppThemeMode) {
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(OuterCardRadius),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
@@ -125,7 +126,7 @@ fun AboutScreen(themeMode: AppThemeMode) {
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(OuterCardRadius),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
@@ -179,7 +180,7 @@ fun AboutScreen(themeMode: AppThemeMode) {
         // blue-and-orange-only palette has no exception here.
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(OuterCardRadius),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(

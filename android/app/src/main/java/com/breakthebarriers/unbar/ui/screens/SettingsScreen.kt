@@ -46,6 +46,8 @@ import com.breakthebarriers.unbar.ui.components.UnbarFilterChip
 import com.breakthebarriers.unbar.ui.components.TutorialAccordion
 import com.breakthebarriers.unbar.ui.components.TutorialGroup
 import com.breakthebarriers.unbar.ui.components.TutorialTopic
+import com.breakthebarriers.unbar.ui.theme.InnerPanelRadius
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 import com.breakthebarriers.unbar.ui.theme.UnbarBlue
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 import androidx.compose.material3.HorizontalDivider
@@ -974,7 +976,7 @@ if (discoveryMode == DiscoveryMode.BUILTIN && sortedRemembered.isNotEmpty()) {
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(InnerPanelRadius),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
@@ -1421,9 +1423,11 @@ private fun SettingsCard(
     title: String,
     content: @Composable () -> Unit
 ) {
+    // (1.0.2) nested-radius rule: outer = inner + padding.
+    // 24dp card, 16dp padding -> 8dp panels and fields inside.
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(OuterCardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(

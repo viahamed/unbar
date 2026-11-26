@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.breakthebarriers.unbar.R
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 
 // One tutorial topic: a title row that expands to show one short paragraph.
@@ -59,7 +60,7 @@ fun TutorialAccordion(
     var expanded by remember { mutableStateOf(false) }
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(OuterCardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

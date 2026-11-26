@@ -90,6 +90,8 @@ import com.breakthebarriers.unbar.ui.components.TutorialTopic
 import com.breakthebarriers.unbar.ui.components.AnimatedDialog
 import com.breakthebarriers.unbar.ui.components.ExportConfigDialog
 import com.breakthebarriers.unbar.ui.components.ImportConfigForm
+import com.breakthebarriers.unbar.ui.theme.InnerPanelRadius
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 import com.breakthebarriers.unbar.ui.theme.UnbarBlue
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 import java.text.DateFormat
@@ -280,7 +282,7 @@ fun ServersScreen(
                 item(key = "servers_empty") {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
+                        shape = RoundedCornerShape(OuterCardRadius),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
@@ -541,7 +543,7 @@ private fun AddSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(OuterCardRadius),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
@@ -639,7 +641,7 @@ private fun AddSheetCard(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(InnerPanelRadius),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {

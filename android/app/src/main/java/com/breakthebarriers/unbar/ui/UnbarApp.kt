@@ -569,7 +569,8 @@ private fun CapsuleMenuItem(icon: ImageVector, labelRes: Int, selected: Boolean)
         modifier = Modifier
             .background(
                 if (selected) UnbarOrange else Color.Transparent,
-                RoundedCornerShape(12.dp)
+                // Nested radius: capsule 16dp - 5dp inset = 11dp.
+                RoundedCornerShape(11.dp)
             )
             .padding(horizontal = 5.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
