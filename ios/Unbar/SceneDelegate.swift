@@ -22,17 +22,15 @@ public class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = UIHostingController(rootView: contentView)
         self.window = window
         window.makeKeyAndVisible()
-        // Page background for List/Form screens (before-release: light
-        // #EAF0F8, dark unchanged). iOS 14 has no per-list SwiftUI
-        // background API, so the table background is set once here.
-        // Dark keeps systemGroupedBackground (#1C1C1E) exactly as now;
-        // light uses AppBackground (#EAF0F8). ScrollView screens set
-        // it directly instead.
-        UITableView.appearance().backgroundColor = UIColor { traitCollection in
-            traitCollection.userInterfaceStyle == .dark
-                ? UIColor.systemGroupedBackground
-                : UIColor(named: "AppBackground") ?? UIColor.systemBackground
-        }
+        // Page background for List/Form screens (1.0.2 Cloud theme:
+        // light #F2F6FB, dark #101722; rows on Surface, light #FFFFFF,
+        // dark #18212E — Android's background/surface). iOS 14 has no
+        // per-list SwiftUI background API, so the table colours are
+        // set once here. ScrollView screens set it directly instead.
+        // (iOS 16+ draws Form/List with a collection view, which keeps
+        // the system grouped colours.)
+        UITableView.appearance().backgroundColor = UIColor(named: "AppBackground") ?? UIColor.systemGroupedBackground
+        UITableViewCell.appearance().backgroundColor = UIColor(named: "Surface") ?? UIColor.secondarySystemGroupedBackground
         ThemeManager.shared.apply()
         for context in connectionOptions.urlContexts {
             openURL(context.url)

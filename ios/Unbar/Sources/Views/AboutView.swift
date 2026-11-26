@@ -19,15 +19,17 @@ public struct AboutView: View {
                 // Unbar logo and the Break The Barriers channel logo side
                 // by side, the channel logo to the right of the Unbar logo.
                 HStack(alignment: .center, spacing: 16) {
+                    // (1.0.2): brand kit wordmark S1 + tagline
+                    // (light/dark variants), transparent and wide
+                    // (1730x673), so it is sized by width.
                     Image("Logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 220, height: 220)
-                        .cornerRadius(16)
+                        .frame(width: 200)
                     Image("ChannelLogo")
                         .resizable()
                         .scaledToFit()
-                        .frame(height: 100)
+                        .frame(height: 80)
                 }
                 VStack(spacing: 8) {
                     Text(loc.tr("about.line1"))
@@ -78,7 +80,7 @@ public struct AboutView: View {
             }
             .padding()
         }
-        // Page background (before-release: light #EAF0F8, dark unchanged).
+        // Page background (1.0.2 Cloud: light #F2F6FB, dark #101722).
         .background(Color("AppBackground"))
         .navigationBarTitle(loc.tr("about.title"), displayMode: .inline)
     }
@@ -86,7 +88,7 @@ public struct AboutView: View {
     /// Donation: the heart is orange (the brand orange), never red.
     private var donationCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 Image(systemName: "heart.fill")
                     .foregroundColor(Color("BrandOrange"))
                 Text(loc.tr("about.donate_title"))
@@ -102,9 +104,9 @@ public struct AboutView: View {
             DonationAddressRow(label: loc.tr("about.donate_ton"),
                                address: "UQBdKaKX61k56IaJMbjTTMvXd7fskpbJnzGUPlQAyZT6RJn5")
         }
-        .padding(12)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(UnbarRadius.cardPadding)
+        .background(Color("Surface"))
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
     }
 
     private func openURL(_ string: String) {
@@ -126,7 +128,7 @@ private struct AboutRow: View {
     var detail: String
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             Image(systemName: icon)
                 .foregroundColor(Color("BrandBlue"))
                 .frame(width: 24)
@@ -139,9 +141,9 @@ private struct AboutRow: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding(12)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(UnbarRadius.cardPadding)
+        .background(Color("Surface"))
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
     }
 }
 
@@ -153,7 +155,7 @@ private struct DonationAddressRow: View {
     @State private var copied = false
 
     var body: some View {
-        HStack {
+        HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(.system(size: 12, weight: .semibold))

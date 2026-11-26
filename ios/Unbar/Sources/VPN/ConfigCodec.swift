@@ -40,7 +40,11 @@ public enum ConfigCodec {
             name: server.name,
             zone: server.zone,
             key: server.serverKeyB64,
-            resolverMode: settings.resolverMode.rawValue,
+            // (1.0.2): an imported list is shared as a plain Custom
+            // list (the receiver has no file), like Android's
+            // export of userResolvers().
+            resolverMode: settings.resolverMode == .builtIn
+                ? ResolverMode.builtIn.rawValue : ResolverMode.custom.rawValue,
             resolvers: settings.effectiveResolvers
         )
         guard let data = try? JSONEncoder().encode(exported) else { return nil }

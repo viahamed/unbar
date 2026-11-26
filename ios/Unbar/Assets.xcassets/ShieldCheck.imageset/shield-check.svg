@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-  <!-- Shield B (1.0.53, item 42): rounded shield outline, thick blue #0B4F9E stroke + big orange #FF7A1A check. Replaces the filled shield on the Connection Quality card. Matches Android ic_stat_shield_outline.xml. -->
-  <path fill="none" stroke="#0B4F9E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2.2 C13.8 3.4 16.6 4.4 19.6 5.4 C20.4 5.7 20.8 6.4 20.8 7.3 V11.8 C20.8 16.8 17.2 20.6 12 22 C6.8 20.6 3.2 16.8 3.2 11.8 V7.3 C3.2 6.4 3.6 5.7 4.4 5.4 C7.4 4.4 10.2 3.4 12 2.2 Z"/>
-  <path fill="none" stroke="#FF7A1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M8.3 11.8 L11 14.5 L15.8 9.3"/>
+  <!-- Shield B (1.0.53, item 42): rounded shield outline, thick blue #1A5BAA stroke + big orange #F7853A check. Replaces the filled shield on the Connection Quality card. Matches Android ic_stat_shield_outline.xml. -->
+  <path fill="none" stroke="#1A5BAA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2.2 C13.8 3.4 16.6 4.4 19.6 5.4 C20.4 5.7 20.8 6.4 20.8 7.3 V11.8 C20.8 16.8 17.2 20.6 12 22 C6.8 20.6 3.2 16.8 3.2 11.8 V7.3 C3.2 6.4 3.6 5.7 4.4 5.4 C7.4 4.4 10.2 3.4 12 2.2 Z"/>
+  <path fill="none" stroke="#F7853A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M8.3 11.8 L11 14.5 L15.8 9.3"/>
 </svg>

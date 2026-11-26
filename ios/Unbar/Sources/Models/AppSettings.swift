@@ -34,8 +34,14 @@ public enum LanguageChoice: String, Codable, CaseIterable {
 /// carries over as Custom, anything else becomes Built-in.
 public struct AppSettingsSnapshot: Codable {
     public var connectionMode: String
-    public var resolverMode: String      // "builtIn" | "custom"
+    public var resolverMode: String      // "builtIn" | "custom" | "import"
     public var customResolvers: String   // comma-separated, normalized
+    // (1.0.2): the cleaned list from the last imported .txt file,
+    // its file name and when it was imported (epoch ms, 0 = never).
+    // Separate from customResolvers: Custom's list is never touched.
+    public var importedResolvers: [String]
+    public var importFileName: String
+    public var importedAtMs: Int64
     public var mtu: Int                  // 0 = Auto (measure interface MTU at connect), else 1280/1400/1500
     public var maxAnswer: Int            // DNS answer-size cap: 0 = Auto (probe up to 1232), else 512/768/1024/1232
     public var tcpModeEnabled: Bool      // false = "auto", true = "on"
@@ -59,6 +65,9 @@ public struct AppSettingsSnapshot: Codable {
         connectionMode: "vpn",
         resolverMode: "builtIn",
         customResolvers: "",
+        importedResolvers: [],
+        importFileName: "",
+        importedAtMs: 0,
         mtu: 0,
         maxAnswer: 0,
         tcpModeEnabled: false,
@@ -78,6 +87,7 @@ public struct AppSettingsSnapshot: Codable {
     )
 
     public init(connectionMode: String, resolverMode: String, customResolvers: String,
+                importedResolvers: [String] = [], importFileName: String = "", importedAtMs: Int64 = 0,
                 mtu: Int, maxAnswer: Int, tcpModeEnabled: Bool, autoUpdateSubscriptions: Bool,
                 socksPort: Int, socksUsername: String, bandwidthUpKBps: Int,
                 bandwidthDownKBps: Int, geoBypass: Bool, bypassDomains: String,
@@ -86,6 +96,9 @@ public struct AppSettingsSnapshot: Codable {
         self.connectionMode = connectionMode
         self.resolverMode = resolverMode
         self.customResolvers = customResolvers
+        self.importedResolvers = importedResolvers
+        self.importFileName = importFileName
+        self.importedAtMs = importedAtMs
         self.mtu = mtu
         self.maxAnswer = maxAnswer
         self.tcpModeEnabled = tcpModeEnabled
@@ -109,6 +122,9 @@ public struct AppSettingsSnapshot: Codable {
         connectionMode = try c.decodeIfPresent(String.self, forKey: .connectionMode) ?? "vpn"
         resolverMode = try c.decodeIfPresent(String.self, forKey: .resolverMode) ?? "builtIn"
         customResolvers = try c.decodeIfPresent(String.self, forKey: .customResolvers) ?? ""
+        importedResolvers = try c.decodeIfPresent([String].self, forKey: .importedResolvers) ?? []
+        importFileName = try c.decodeIfPresent(String.self, forKey: .importFileName) ?? ""
+        importedAtMs = try c.decodeIfPresent(Int64.self, forKey: .importedAtMs) ?? 0
         mtu = try c.decodeIfPresent(Int.self, forKey: .mtu) ?? 0
         maxAnswer = try c.decodeIfPresent(Int.self, forKey: .maxAnswer) ?? 0
         tcpModeEnabled = try c.decodeIfPresent(Bool.self, forKey: .tcpModeEnabled) ?? false
@@ -138,6 +154,11 @@ public final class AppSettings: ObservableObject {
     @Published public var connectionMode: ConnectionMode = .vpn { didSet { save() } }
     @Published public var resolverMode: ResolverMode = .builtIn { didSet { save() } }
     @Published public var customResolvers: String = "" { didSet { save() } }
+    // (1.0.2) Import mode's own list; set through setImportedResolvers
+    // / clearImportedResolvers so the three values change together.
+    @Published public private(set) var importedResolvers: [String] = []
+    @Published public private(set) var importFileName: String = ""
+    @Published public private(set) var importedAtMs: Int64 = 0
     @Published public var mtu: Int = 0 { didSet { save() } }
     @Published public var maxAnswer: Int = 0 { didSet { save() } }
     @Published public var tcpModeEnabled: Bool = false { didSet { save() } }
@@ -160,21 +181,34 @@ public final class AppSettings: ObservableObject {
         return servers.first(where: { $0.id == id }) ?? servers.first
     }
 
-    /// Resolvers string for the current mode, for config export.
-    /// Built-in -> "" (the core substitutes the bundled list when
-    /// resolvers="" and discovery is on); Custom -> the normalized
-    /// user list.
+    /// (1.0.2): the user's own resolver list for the selected mode —
+    /// Custom's field or the imported file; empty in Built-in mode.
+    public var userResolvers: [String] {
+        switch resolverMode {
+        case .builtIn:
+            return []
+        case .custom:
+            return ResolverNormalization.normalizeResolvers(customResolvers)
+        case .imported:
+            return importedResolvers
+        }
+    }
+
+    /// Resolvers string for the current mode, for config export and
+    /// the scan. Built-in -> "" (the core substitutes the bundled
+    /// list when resolvers="" and discovery is on); Custom / Import
+    /// -> the normalized user list of that mode only.
     public var effectiveResolvers: String {
         switch resolverMode {
         case .builtIn:
             return ""
-        case .custom:
-            return ResolverNormalization.normalizeResolvers(customResolvers).joined(separator: ", ")
+        case .custom, .imported:
+            return ResolverNormalization.normalizeResolvers(userResolvers.joined(separator: ",")).joined(separator: ", ")
         }
     }
 
     /// Discovery is on for Built-in (bundled list) and off for
-    /// Custom (only the field's resolvers).
+    /// Custom and Import (only that mode's own resolvers).
     public var discoveryEnabled: Bool {
         return resolverMode == .builtIn
     }
@@ -191,7 +225,7 @@ public final class AppSettings: ObservableObject {
         case .builtIn:
             let remembered = ResolverHealthStore.shared.freshAddrs()
             return remembered.isEmpty ? "" : Array(remembered.prefix(ResolverHealthStore.seedCount)).joined(separator: ", ")
-        case .custom:
+        case .custom, .imported:
             return effectiveResolvers
         }
     }
@@ -206,7 +240,7 @@ public final class AppSettings: ObservableObject {
         case .builtIn:
             let remembered = ResolverHealthStore.shared.freshAddrs()
             return Array(remembered.dropFirst(ResolverHealthStore.seedCount)).joined(separator: ", ")
-        case .custom:
+        case .custom, .imported:
             return ""
         }
     }
@@ -219,13 +253,13 @@ public final class AppSettings: ObservableObject {
         switch resolverMode {
         case .builtIn:
             return ResolverHealthStore.shared.freshAddrs().joined(separator: ", ")
-        case .custom:
+        case .custom, .imported:
             return effectiveResolvers
         }
     }
 
     /// Discovery flag handed to the core when a tunnel starts:
-    /// Built-in always on, Custom always off.
+    /// Built-in always on, Custom and Import always off.
     public var connectDiscoveryEnabled: Bool {
         return resolverMode == .builtIn
     }
@@ -291,6 +325,9 @@ public final class AppSettings: ObservableObject {
             connectionMode: connectionMode.rawValue,
             resolverMode: resolverMode.rawValue,
             customResolvers: ResolverNormalization.normalizeResolvers(customResolvers).joined(separator: ", "),
+            importedResolvers: importedResolvers,
+            importFileName: importFileName,
+            importedAtMs: importedAtMs,
             mtu: Self.validatedMTU(mtu),
             maxAnswer: Self.validatedMaxAnswer(maxAnswer),
             tcpModeEnabled: tcpModeEnabled,
@@ -317,6 +354,8 @@ public final class AppSettings: ObservableObject {
         switch snap.resolverMode {
         case "custom", "manual":
             resolverMode = .custom
+        case "import":
+            resolverMode = .imported
         default:
             resolverMode = .builtIn
         }
@@ -332,6 +371,9 @@ public final class AppSettings: ObservableObject {
             customRaw = snap.poolResolvers ?? ""
         }
         customResolvers = ResolverNormalization.normalizeResolvers(customRaw).joined(separator: ", ")
+        importedResolvers = snap.importedResolvers
+        importFileName = snap.importFileName
+        importedAtMs = snap.importedAtMs
         mtu = Self.validatedMTU(snap.mtu)
         maxAnswer = Self.validatedMaxAnswer(snap.maxAnswer)
         tcpModeEnabled = snap.tcpModeEnabled
@@ -346,6 +388,31 @@ public final class AppSettings: ObservableObject {
         autoSelectFastest = snap.autoSelectFastest
         appearance = AppearanceChoice(rawValue: snap.appearance) ?? .system
         language = LanguageChoice(rawValue: snap.language) ?? .system
+    }
+
+    // MARK: - Imported resolvers (1.0.2)
+
+    /// Stores an imported (already cleaned) resolver list and switches
+    /// to Import mode in one save. The Custom list is untouched.
+    public func setImportedResolvers(_ entries: [String], fileName: String, at date: Date = Date()) {
+        loading = true
+        importedResolvers = entries
+        importFileName = fileName
+        importedAtMs = Int64(date.timeIntervalSince1970 * 1000)
+        resolverMode = .imported
+        loading = false
+        save()
+    }
+
+    /// Forgets the imported list (Clear). Stays in Import mode with an
+    /// empty list, like an empty Custom field.
+    public func clearImportedResolvers() {
+        loading = true
+        importedResolvers = []
+        importFileName = ""
+        importedAtMs = 0
+        loading = false
+        save()
     }
 
     // MARK: - Servers

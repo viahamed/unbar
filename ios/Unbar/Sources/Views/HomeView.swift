@@ -36,7 +36,7 @@ public var body: some View {
             }
             .padding()
         }
-        // Page background (before-release: light #EAF0F8, dark unchanged).
+        // Page background (1.0.2 Cloud: light #F2F6FB, dark #101722).
         .background(Color("AppBackground"))
         // (1.0.31): the Home content keeps the locale direction
         // (RTL in Persian); the nav bar itself is forced LTR by the
@@ -104,7 +104,7 @@ private var topBarButtons: some View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(Color("BrandBlue"))
         }
-        .accessibilityLabel(Text(loc.tr("settings.logs")))
+        .accessibility(label: Text(loc.tr("settings.logs")))
         themeToggleButton
     }
 }
@@ -157,7 +157,7 @@ private var brandHeader: some View {
 // tutorial. Text via loc.tr — keys tutorial.home.<topic>.title/body.
 
 private var tutorialSection: some View {
-    TutorialAccordion(titleKey: "guide.title", sections: [TutorialSection(topics: homeTutorialTopics)])
+    TutorialAccordion(titleKey: "guide.title", sections: [TutorialSection(topics: homeTutorialTopics)], asCard: true)
 }
 
 private var homeTutorialTopics: [TutorialTopic] {
@@ -193,7 +193,7 @@ private var statusCard: some View {
     let connected = vpn.isConnected
     let connecting = vpn.state == .connecting || vpn.state == .reasserting
     return VStack(alignment: .leading, spacing: 8) {
-        HStack(spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             Image(systemName: connected ? "shield.fill" : "shield.slash.fill")
                 .font(.system(size: 28))
                 .foregroundColor(.white)
@@ -213,7 +213,7 @@ private var statusCard: some View {
                     // Country flag (bundled asset, all ISO codes)
                     // right after the code, e.g. "Server: 1.1.1.1
                     // (DE)" + German flag; no asset -> text only.
-                    HStack(spacing: 6) {
+                    HStack(alignment: .center, spacing: 6) {
                         Text(String(format: loc.tr("home.server_ip_country"),
                                     locale: Locale(identifier: loc.effectiveCode),
                                     stats.serverIP, stats.serverCountry))
@@ -258,7 +258,7 @@ private var statusCard: some View {
             .frame(height: 1)
             .padding(.top, 10)
         Button(action: toggleConnection) {
-            HStack(spacing: 10) {
+            HStack(alignment: .center, spacing: 10) {
                 if vpn.isTransitioning {
                     ProgressViewPlaceholder()
                     Text(connecting ? loc.tr("home.connecting") : loc.tr("home.working"))
@@ -278,8 +278,12 @@ private var statusCard: some View {
     }
     .padding(20)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(connected ? Color("BrandBlue") : Color("AccentColor"))
-    .cornerRadius(16)
+    // (1.0.2) Cloud theme: connected = HeroBlue (follows light/dark,
+    // like Android's UnbarHeroBlue); disconnected stays orange.
+    .background(connected ? Color("HeroBlue") : Color("AccentColor"))
+    // Nested-radius rule: no inner element hugs the corner (iOS has
+    // no mode switch on the card), so it is a plain 24pt card.
+    .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.hero, style: .continuous))
 }
 
 /// "Streams: 12/256" while connected (max 0 = just the live count).
@@ -363,7 +367,7 @@ private func flagImage(for countryCode: String) -> Image? {
 /// yet): "—".
 private var qualityStatView: some View {
     VStack(alignment: .leading, spacing: 10) {
-        HStack(spacing: 6) {
+        HStack(alignment: .center, spacing: 6) {
             Image("ShieldCheck")
                 .resizable()
                 .scaledToFit()
@@ -380,7 +384,7 @@ private var qualityStatView: some View {
                 let lit = qualityBars(for: score)
                 ForEach(0..<5) { i in
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(i < lit ? Color("BrandOrange") : Color(UIColor.systemGray4))
+                        .fill(i < lit ? Color("BrandOrange") : Color("Outline"))
                         .frame(maxWidth: .infinity)
                         .frame(height: 16)
                 }
@@ -394,8 +398,8 @@ private var qualityStatView: some View {
     .padding(.vertical, 10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(height: statCardHeight)
-    .background(Color(UIColor.secondarySystemBackground))
-    .cornerRadius(12)
+    .background(Color("Surface"))
+    .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
 }
 
 private func qualityBars(for score: Int) -> Int {
@@ -430,7 +434,7 @@ private enum ScanStepState {
 private var scanResolversCard: some View {
     let running = vpn.testScanRunning
     return VStack(alignment: .leading, spacing: 8) {
-        HStack(spacing: 6) {
+        HStack(alignment: .center, spacing: 6) {
             Image("MagnifierCheck")
                 .resizable()
                 .scaledToFit()
@@ -445,13 +449,13 @@ private var scanResolversCard: some View {
                     .foregroundColor(running ? .secondary : .white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 3)
-                    .background(running ? Color(UIColor.systemGray5) : Color("BrandOrange"))
+                    .background(running ? Color("SurfaceVariant") : Color("BrandOrange"))
                     .cornerRadius(11)
             }
             .disabled(running)
             .buttonStyle(PlainButtonStyle())
         }
-        HStack(spacing: 0) {
+        HStack(alignment: .center, spacing: 0) {
             scanStepNode(scanStage1State)
             scanStepConnector
             scanStepNode(scanStage2State)
@@ -463,8 +467,8 @@ private var scanResolversCard: some View {
     .padding(.vertical, 10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(height: statCardHeight)
-    .background(Color(UIColor.secondarySystemBackground))
-    .cornerRadius(12)
+    .background(Color("Surface"))
+    .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
 }
 
 /// True once a scan has completed (or the tunnel already has
@@ -498,7 +502,7 @@ private var scanStage3State: ScanStepState {
 
 private var scanStepConnector: some View {
     Rectangle()
-        .fill(Color(UIColor.systemGray5))
+        .fill(Color("Outline"))
         .frame(maxWidth: .infinity)
         .frame(height: 2)
 }
@@ -548,7 +552,7 @@ private func formatElapsed(_ seconds: TimeInterval) -> String {
 // MARK: - Server row
 
 private var serverRow: some View {
-    HStack {
+    HStack(alignment: .center) {
         Image(systemName: "server.rack")
             .foregroundColor(Color("BrandBlue"))
         if let server = settings.activeServer {
@@ -566,9 +570,9 @@ private var serverRow: some View {
                 .foregroundColor(Color("BrandBlue"))
         }
     }
-    .padding(12)
-    .background(Color(UIColor.secondarySystemBackground))
-    .cornerRadius(12)
+    .padding(UnbarRadius.cardPadding)
+    .background(Color("Surface"))
+    .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
 }
 
 private func toggleConnection() {

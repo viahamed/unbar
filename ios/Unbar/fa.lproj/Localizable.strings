@@ -286,3 +286,27 @@
 "tutorial.home.time.body" = "نشست فعلی چقدر وصل بوده است. با هر بار وصل شدن دوباره از اول شروع می‌شود.";
 "tutorial.home.streams.title" = "استریم‌ها";
 "tutorial.home.streams.body" = "تونل در حال حاضر چند استریم را حمل می‌کند. استریم بیشتر معمولاً یعنی برنامه یا دانلود فعال بیشتر.";
+
+/* (1.0.2) Resolver list import */
+"settings.resolver_import" = "وارد کردن";
+"import.note" = "یک فایل ‎.txt‎ با آی‌پی ریزالورها انتخاب کنید. آی‌پی تکی و رنج (مثل 2.188.21.0/24)، هر کدام در یک خط یا جدا با کاما یا فاصله.";
+"import.note_custom_kept" = "برنامه لیست را خودکار تمیز و مرتب می‌کند. لیست Custom شما دست نمی‌خورد.";
+"import.choose_file" = "انتخاب فایل ‎.txt‎";
+"import.replace_file" = "جایگزینی فایل";
+"import.view_list" = "نمایش لیست";
+"import.hide_list" = "بستن لیست";
+"import.clear" = "پاک کردن";
+"import.file_meta" = "%1$d مورد · %2$d آدرس";
+"import.list_more" = "… و %1$d مورد دیگر";
+"import.reading" = "در حال خواندن فایل…";
+"import.over_cap" = "این لیست %1$d آدرس دارد؛ اسکن %2$d آدرس اول را بررسی می‌کند.";
+"import.error_too_large" = "فایل خیلی بزرگ است (حداکثر ۱ مگابایت).";
+"import.error_unreadable" = "این فایل خوانده نشد.";
+"import.error_empty" = "در این فایل ریزالور IPv4 معتبری نبود. لیست قبلی حفظ شد.";
+"import.fixed_title" = "%1$d مورد خودکار اصلاح شد";
+"import.fix_cleaned" = "%1$d مورد تمیز شد (فاصله، نماد، عدد فارسی، متن اضافه)";
+"import.fix_duplicates" = "%1$d تکراری حذف شد";
+"import.fix_inside_range" = "%1$d مورد که داخل یک رنج بود حذف شد";
+"import.fix_ranges" = "%1$d رنج به آدرس شبکهٔ درست اصلاح شد";
+"import.fix_dash" = "%1$d رنج خط‌تیره‌دار به CIDR تبدیل شد";
+"import.ignored" = "%1$d خط نادیده گرفته شد (فقط ریزالور IPv4): %2$@";

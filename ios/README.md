@@ -42,7 +42,10 @@ Unbar/                        app target (bundle org.breakthebarriers.unbar)
   SceneDelegate.swift         hosts the SwiftUI root, handles unbar:// links
   Info.plist                  scene manifest, unbar URL scheme, localizations
   Unbar.entitlements          App Group only
-  Assets.xcassets/            AppIcon (light + dark), Logo, AccentColor, BrandBlue
+  Assets.xcassets/            AppIcon (light + dark), Logo (wordmark S1, light + dark),
+                              Cloud palette colorsets (AppBackground, Surface,
+                              SurfaceVariant, BrandBlue, BrandOrange, HeroBlue,
+                              CapsuleBlue, ...), each with a dark appearance
   LaunchScreen.storyboard
   en.lproj/ fa.lproj/         Localizable.strings (every string, both languages)
   Sources/
@@ -138,7 +141,11 @@ default route `0.0.0.0/0`, DNS `10.8.0.1` (all domains), MTU 1500.
   with no included routes and runs the SOCKS5 listener on
   `127.0.0.1:port`. iOS backgrounding limits what other apps can do
   with a loopback proxy, so VPN is the primary mode and the UI says so.
-* Everything else is the same: Discovery/Pool/Manual resolvers, proxy
+* Resolvers: Built-in, Custom (typed list) and Import (a .txt file
+  picked with `.fileImporter`, cleaned and sorted by
+  `ResolverFileImport.swift`, stored separately from Custom). Custom
+  and Import both send only their own list, with no discovery.
+* Everything else is the same: proxy
   settings, bandwidth limits, Iran geo bypass, auto-select fastest,
   auto-reconnect + health checks, live stats, config import/export,
   capped logs, Persian RTL + dark mode, Model B dashboard with the
@@ -161,7 +168,11 @@ default route `0.0.0.0/0`, DNS `10.8.0.1` (all domains), MTU 1500.
   Combine, completion handlers, `NavigationView`,
   `UIActivityIndicatorView`, and window `overrideUserInterfaceStyle`
   (via `connectedScenes`) for the manual light/dark setting. `.task`
-  (iOS 15) and `NavigationStack` (iOS 16) are still avoided.
+  (iOS 15) and `NavigationStack` (iOS 16) are still avoided. Resolver
+  import uses `.fileImporter` (iOS 14) with security-scoped access.
+* Version: `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` are build
+  settings set in `tools/generate_project.py` for both targets (1.0.2,
+  build 3); the Info.plists read them.
 * The app lifecycle is `UIApplicationDelegate` + `UISceneDelegate`
   with a `UIHostingController` (the delegate pattern, kept for the
   shared scene handling).

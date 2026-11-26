@@ -141,8 +141,16 @@
 				fileRef = C7446F41D0BCC332329A5778;
 				isa = PBXBuildFile;
 			};
+		9D52CBA80AF2ACB398F0D6D1 /* ResolverFileImport.swift */ = {
+				fileRef = 202D6FD3697B92516824EF2F;
+				isa = PBXBuildFile;
+			};
 		A912B5B8E8D1DD7520FF6F1C /* ThemeManager.swift */ = {
 				fileRef = 7A76754C4540F4CA5E2CD2A4;
+				isa = PBXBuildFile;
+			};
+		B442EBE73E9E7FA2BB5A640C /* ResolverImportView.swift */ = {
+				fileRef = 5E1199CD92E2C18BA92BEC55;
 				isa = PBXBuildFile;
 			};
 		BA151510B0DA9E311492D73C /* ServerValidation.swift */ = {
@@ -244,6 +252,12 @@
 				lastKnownFileType = text.plist.strings;
 				name = en;
 				path = en.lproj/Localizable.strings;
+				sourceTree = "<group>";
+			};
+		202D6FD3697B92516824EF2F /* ResolverFileImport.swift */ = {
+				isa = PBXFileReference;
+				lastKnownFileType = sourcecode.swift;
+				path = ResolverFileImport.swift;
 				sourceTree = "<group>";
 			};
 		20AA79D3D2AC43DAA95B5830 /* NetworkExtension.framework */ = {
@@ -356,6 +370,12 @@
 				isa = PBXFileReference;
 				lastKnownFileType = sourcecode.swift;
 				path = ContentView.swift;
+				sourceTree = "<group>";
+			};
+		5E1199CD92E2C18BA92BEC55 /* ResolverImportView.swift */ = {
+				isa = PBXFileReference;
+				lastKnownFileType = sourcecode.swift;
+				path = ResolverImportView.swift;
 				sourceTree = "<group>";
 			};
 		5E727231349D42D818B2B567 /* VPNManager.swift */ = {
@@ -563,6 +583,7 @@
 					BB79BF5914E2F551E1507089,
 					30D8A6047EDE643386AFBB3D,
 					CBE8F8E64303BD6496408282,
+					5E1199CD92E2C18BA92BEC55,
 					716CB4606951F058439C05A9,
 					20DB6E9FF5A9CB85799F201C,
 					2FD340ED9BEC82C889B6F473,
@@ -620,6 +641,7 @@
 					EB6325D12C2EC57E1369BB9D,
 					6FF7AC9EEED06CB908FCC5A2,
 					72D6617EE9BC1A5A0D90BEF3,
+					202D6FD3697B92516824EF2F,
 					226B5D6318CC030AEB8CC7F8,
 					B7CADE10A9BFB3CAE241565B,
 					2F3299B024679AEEE9E8BA90,
@@ -766,6 +788,7 @@
 					225623E5C3E268C8D2CF8774,
 					1CC17D05EC8571A331FBF730,
 					548E4A3CAD74D4CBD2D79BBD,
+					9D52CBA80AF2ACB398F0D6D1,
 					4BE57C25CB2CC22A8A782D03,
 					BA151510B0DA9E311492D73C,
 					D057D3EA148C57096F077483,
@@ -780,6 +803,7 @@
 					7899A462C0734D4059B72141,
 					5674D9A98F0D71E2A55C539F,
 					D1CB52FA2004BD599A594C65,
+					B442EBE73E9E7FA2BB5A640C,
 					371D0BBE6590F29AD738E7DA,
 					5D19DEDD8EF285DCE5D1CC9D,
 					E42660E63022F0BA4BAC38E9,
@@ -820,6 +844,7 @@
 					ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 					CODE_SIGN_ENTITLEMENTS = Unbar/Unbar.entitlements;
 					CODE_SIGN_STYLE = Automatic;
+					CURRENT_PROJECT_VERSION = 3;
 					FRAMEWORK_SEARCH_PATHS = (
 						"$(inherited)",
 						"$(PROJECT_DIR)",
@@ -830,6 +855,7 @@
 						"$(inherited)",
 						"@executable_path/Frameworks",
 					);
+					MARKETING_VERSION = 1.0.2;
 					PRODUCT_BUNDLE_IDENTIFIER = org.breakthebarriers.unbar;
 					PRODUCT_NAME = "$(TARGET_NAME)";
 					SWIFT_VERSION = 5.0;
@@ -843,6 +869,7 @@
 					APPLICATION_EXTENSION_API_ONLY = YES;
 					CODE_SIGN_ENTITLEMENTS = UnbarTunnel/UnbarTunnel.entitlements;
 					CODE_SIGN_STYLE = Automatic;
+					CURRENT_PROJECT_VERSION = 3;
 					FRAMEWORK_SEARCH_PATHS = (
 						"$(inherited)",
 						"$(PROJECT_DIR)",
@@ -854,6 +881,7 @@
 						"@executable_path/Frameworks",
 						"@executable_path/../../Frameworks",
 					);
+					MARKETING_VERSION = 1.0.2;
 					PRODUCT_BUNDLE_IDENTIFIER = org.breakthebarriers.unbar.UnbarTunnel;
 					PRODUCT_NAME = "$(TARGET_NAME)";
 					SKIP_INSTALL = YES;
@@ -869,6 +897,7 @@
 					ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 					CODE_SIGN_ENTITLEMENTS = Unbar/Unbar.entitlements;
 					CODE_SIGN_STYLE = Automatic;
+					CURRENT_PROJECT_VERSION = 3;
 					FRAMEWORK_SEARCH_PATHS = (
 						"$(inherited)",
 						"$(PROJECT_DIR)",
@@ -879,6 +908,7 @@
 						"$(inherited)",
 						"@executable_path/Frameworks",
 					);
+					MARKETING_VERSION = 1.0.2;
 					PRODUCT_BUNDLE_IDENTIFIER = org.breakthebarriers.unbar;
 					PRODUCT_NAME = "$(TARGET_NAME)";
 					SWIFT_VERSION = 5.0;
@@ -914,6 +944,7 @@
 					APPLICATION_EXTENSION_API_ONLY = YES;
 					CODE_SIGN_ENTITLEMENTS = UnbarTunnel/UnbarTunnel.entitlements;
 					CODE_SIGN_STYLE = Automatic;
+					CURRENT_PROJECT_VERSION = 3;
 					FRAMEWORK_SEARCH_PATHS = (
 						"$(inherited)",
 						"$(PROJECT_DIR)",
@@ -925,6 +956,7 @@
 						"@executable_path/Frameworks",
 						"@executable_path/../../Frameworks",
 					);
+					MARKETING_VERSION = 1.0.2;
 					PRODUCT_BUNDLE_IDENTIFIER = org.breakthebarriers.unbar.UnbarTunnel;
 					PRODUCT_NAME = "$(TARGET_NAME)";
 					SKIP_INSTALL = YES;

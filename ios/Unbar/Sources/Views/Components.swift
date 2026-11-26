@@ -2,6 +2,31 @@
 
 import SwiftUI
 
+/// (1.0.2) Nested corner radius rule, app-wide (mirrors Android
+/// ui/theme/Theme.kt): inner radius = outer radius - padding.
+/// Top-level cards are 24pt with 16pt padding, so panels, list boxes,
+/// text fields and inner cards inside them are 8pt. The capsule menu
+/// is 16pt with a 5pt inset, so its selected pill is 11pt. Fully
+/// round pills and badges that do not hug a container corner keep
+/// their own shape.
+public enum UnbarRadius {
+    /// Top-level cards (Home stat cards, server / subscription cards,
+    /// About rows, the Add button).
+    public static let outer: CGFloat = 24
+    /// Panels, list boxes, text fields and inner cards inside a
+    /// top-level card (24 - 16 padding).
+    public static let inner: CGFloat = 8
+    /// The Home status (hero) card. Android's is 30 because its
+    /// VPN/Proxy switch (radius 10) sits 20 from the corner; iOS has
+    /// no switch on the card, so it is a plain top-level card.
+    public static let hero: CGFloat = 24
+    /// Floating capsule menu and its selected pill (16 - 5 inset).
+    public static let capsule: CGFloat = 16
+    public static let capsulePill: CGFloat = 11
+    /// Standard padding inside a top-level card.
+    public static let cardPadding: CGFloat = 16
+}
+
 /// Shared fixed height for every Home stat card — the simple
 /// cards' natural height — so all rows stay even. The richer
 /// Quality and Test cards tighten their inner spacing to fit it.
@@ -32,7 +57,7 @@ public struct StatCard: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
+            HStack(alignment: .center, spacing: 6) {
                 if let customIcon = customIcon {
                     StatIconView(kind: customIcon, size: 14)
                 } else {
@@ -52,8 +77,8 @@ public struct StatCard: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: statCardHeight)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
+        .background(Color("Surface"))
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
     }
 }
 
@@ -121,7 +146,7 @@ public struct TCPModeSwitchRow: View {
     }
 
     public var body: some View {
-        HStack {
+        HStack(alignment: .center) {
             Text(label)
             Spacer()
             TCPModeSwitch(isOn: $isOn)
