@@ -6,24 +6,42 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.breakthebarriers.unbar.model.AppThemeMode
 
-val UnbarBlue = Color(0xFF0B4F9E)
-val UnbarBlueLight = Color(0xFF3E7FD1)
-val UnbarOrange = Color(0xFFFF7A1A)
-val UnbarDarkBg = Color(0xFF0B1320)
-val UnbarDarkSurface = Color(0xFF131E32)
-val UnbarDarkSurfaceVariant = Color(0xFF1B2942)
-// Light background (before-release #3, option A):
-// darker so white cards and borders read as clearly as in dark.
-val UnbarLightBg = Color(0xFFEAF0F8)
-// Splash background: the pre-1.0.29 light background. The splash
-// keeps the old lighter shade; only the main screens (Home and the
-// other pages) use the darker UnbarLightBg.
-val UnbarLightSplashBg = Color(0xFFF6F8FC)
+// 1.0.2 "Cloud" palette: softer, cleaner light and dark themes.
+// Logo, icon and website use the same blue and orange.
+val UnbarBlue = Color(0xFF1A5BAA)
+val UnbarBlueLight = Color(0xFF6E9FDB)
+val UnbarOrange = Color(0xFFF7853A)
+val UnbarOrangeDark = Color(0xFFF7954A)
+val UnbarDarkBg = Color(0xFF101722)
+val UnbarDarkSurface = Color(0xFF18212E)
+val UnbarDarkSurfaceVariant = Color(0xFF202B3A)
+val UnbarLightBg = Color(0xFFF2F6FB)
+// Splash background: a slightly lighter shade of the light background.
+val UnbarLightSplashBg = Color(0xFFF6F9FD)
 val UnbarLightSurface = Color(0xFFFFFFFF)
-val UnbarLightSurfaceVariant = Color(0xFFEAF0F8)
+val UnbarLightSurfaceVariant = Color(0xFFE9F0F8)
+// Connected status card and floating menu capsule, per theme.
+val UnbarHeroBlueDark = Color(0xFF26548F)
+val UnbarCapsuleLight = Color(0xFF173A6B)
+val UnbarCapsuleDark = Color(0xFF212C3C)
+
+private val LocalUnbarDark = staticCompositionLocalOf { false }
+
+val UnbarHeroBlue: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (LocalUnbarDark.current) UnbarHeroBlueDark else UnbarBlue
+
+val UnbarCapsuleBlue: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (LocalUnbarDark.current) UnbarCapsuleDark else UnbarCapsuleLight
 
 // Brand palette is ONLY blue (logo blue and its shades) and orange
 // (logo orange and its shades), in light and dark forms. No other
@@ -36,26 +54,26 @@ val UnbarLightSurfaceVariant = Color(0xFFEAF0F8)
 private val LightColors = lightColorScheme(
     primary = UnbarBlue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD9E6F8),
-    onPrimaryContainer = Color(0xFF062954),
+    primaryContainer = Color(0xFFE2ECF9),
+    onPrimaryContainer = Color(0xFF0B2E5A),
     secondary = UnbarOrange,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFFE4D1),
-    onSecondaryContainer = Color(0xFF5A2500),
+    secondaryContainer = Color(0xFFFFEEDF),
+    onSecondaryContainer = Color(0xFF6E330A),
     background = UnbarLightBg,
-    onBackground = Color(0xFF0F172A),
+    onBackground = Color(0xFF172338),
     surface = UnbarLightSurface,
-    onSurface = Color(0xFF0F172A),
+    onSurface = Color(0xFF172338),
     surfaceVariant = UnbarLightSurfaceVariant,
-    onSurfaceVariant = Color(0xFF475569),
+    onSurfaceVariant = Color(0xFF5B6B82),
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFEFF4FB),
-    surfaceContainer = Color(0xFFE6EDF7),
-    surfaceContainerHigh = Color(0xFFDCE6F3),
-    surfaceContainerHighest = Color(0xFFD2DFF0),
-    surfaceDim = Color(0xFFD9E2EE),
+    surfaceContainerLow = Color(0xFFF6F9FD),
+    surfaceContainer = Color(0xFFEEF3F9),
+    surfaceContainerHigh = Color(0xFFE9F0F8),
+    surfaceContainerHighest = Color(0xFFE2EAF4),
+    surfaceDim = Color(0xFFDCE5F0),
     surfaceBright = Color(0xFFFFFFFF),
-    outline = Color(0xFFCBD5E1),
+    outline = Color(0xFFDCE5F0),
     error = UnbarOrange,
     onError = Color.White
 )
@@ -63,27 +81,27 @@ private val LightColors = lightColorScheme(
 private val DarkColors = darkColorScheme(
     primary = UnbarBlueLight,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFF0B4F9E),
+    primaryContainer = Color(0xFF1E3352),
     onPrimaryContainer = Color.White,
-    secondary = UnbarOrange,
+    secondary = UnbarOrangeDark,
     onSecondary = Color(0xFF1F0C00),
-    secondaryContainer = Color(0xFF4D2200),
-    onSecondaryContainer = Color(0xFFFFD6BA),
+    secondaryContainer = Color(0xFF3B2716),
+    onSecondaryContainer = Color(0xFFFFD3B2),
     background = UnbarDarkBg,
-    onBackground = Color(0xFFF1F5F9),
+    onBackground = Color(0xFFE3EAF3),
     surface = UnbarDarkSurface,
-    onSurface = Color(0xFFF1F5F9),
+    onSurface = Color(0xFFE3EAF3),
     surfaceVariant = UnbarDarkSurfaceVariant,
-    onSurfaceVariant = Color(0xFF94A3B8),
-    surfaceContainerLowest = Color(0xFF070D18),
-    surfaceContainerLow = Color(0xFF0E1728),
-    surfaceContainer = Color(0xFF131E32),
-    surfaceContainerHigh = Color(0xFF1B2942),
-    surfaceContainerHighest = Color(0xFF243449),
-    surfaceDim = Color(0xFF070D18),
-    surfaceBright = Color(0xFF1E2C47),
-    outline = Color(0xFF2B3B59),
-    error = UnbarOrange,
+    onSurfaceVariant = Color(0xFF8FA0B6),
+    surfaceContainerLowest = Color(0xFF0C121B),
+    surfaceContainerLow = Color(0xFF141C28),
+    surfaceContainer = Color(0xFF18212E),
+    surfaceContainerHigh = Color(0xFF202B3A),
+    surfaceContainerHighest = Color(0xFF283445),
+    surfaceDim = Color(0xFF0C121B),
+    surfaceBright = Color(0xFF263142),
+    outline = Color(0xFF273345),
+    error = UnbarOrangeDark,
     onError = Color(0xFF1F0C00)
 )
 
@@ -98,9 +116,11 @@ fun UnbarTheme(
         AppThemeMode.DARK -> true
     }
 
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = Typography(),
-        content = content
-    )
+    CompositionLocalProvider(LocalUnbarDark provides darkTheme) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) DarkColors else LightColors,
+            typography = Typography(),
+            content = content
+        )
+    }
 }

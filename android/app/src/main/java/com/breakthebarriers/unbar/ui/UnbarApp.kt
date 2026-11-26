@@ -87,6 +87,7 @@ import com.breakthebarriers.unbar.ui.screens.QrScannerScreen
 import com.breakthebarriers.unbar.ui.screens.ServersScreen
 import com.breakthebarriers.unbar.ui.screens.SettingsScreen
 import com.breakthebarriers.unbar.ui.screens.SplashScreen
+import com.breakthebarriers.unbar.ui.theme.UnbarCapsuleBlue
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 import com.breakthebarriers.unbar.ui.theme.UnbarTheme
 
@@ -531,8 +532,7 @@ UnbarTheme(themeMode = themeMode) {
 
 }
 
-// Capsule dark blue (#10367C) — the approved Model C color.
-private val CapsuleBlue = Color(0xFF10367C)
+// Capsule colour: UnbarCapsuleBlue (ui/theme/Theme.kt), per theme.
 
 @Composable
 private fun CapsuleMenuIcon(expanded: Boolean) {
@@ -610,7 +610,7 @@ private fun FloatingCapsuleMenu(
             .width(capsuleWidth)
             .height(56.dp),
         shape = RoundedCornerShape(16.dp),
-        color = CapsuleBlue,
+        color = UnbarCapsuleBlue,
         shadowElevation = 6.dp
     ) {
         Row(

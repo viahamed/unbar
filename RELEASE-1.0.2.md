@@ -12,7 +12,7 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 ## To do before release
 - [x] Bump version: versionName 1.0.2, versionCode 3 (F-Droid builds 31/32/33 per ABI, VercodeOperation 10*%c+1..3).
 - [x] Changelog `fastlane/metadata/android/{en-US,fa}/changelogs/31.txt, 32.txt, 33.txt` (F-Droid versionCodes).
-- [x] Verified: no code or build-script changes since v1.0.1, so the F-Droid recipe's prebuild seds still match; signing unchanged (same release keystore from GitHub secrets, so the APK signing certificate SHA-256 stays the same).
+- [x] No build-script changes since v1.0.1 (build.gradle.kts only versionCode/versionName), so the F-Droid recipe's prebuild seds still match. Signing config untouched: same release keystore from GitHub secrets, so the signing certificate SHA-256 should stay the same. To confirm after the build: compare the 1.0.2 APK certificate fingerprint with 1.0.1 (apksigner verify --print-certs).
 - [ ] Telegram handle: pick one spelling (`Break_The_Barriers` vs `break_the_barriers` in full_description.txt).
 - [ ] Check icon on a real device (light, dark, themed icons).
 - [ ] Other changes for this version: (add here)
@@ -25,3 +25,13 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [x] Brand kit in branding/ (2026-11-26): SVG masters (text as outlines) + PNG exports — wordmark light/dark/white/black, lockup light/dark (512/1024/2048 px), icon square/round/dark/full-bleed/mono (16–1024 px), favicon.ico, adaptive foreground. Colours: blue #0D52A0, dark-bg blue #4F95EC, orange #FF7A13, ink #0A162C. App mipmaps and fastlane icon.png re-exported from the SVG masters.
 - [ ] Site: replace assets/wordmark-*.png, assets/lockup-*.png, favicon, apple-touch-icon with the new kit (ready files in /workspace/work/unbar-brand/site/). Needs approval before deploy.
 - [ ] README / GitHub social preview: use branding/png/lockup-light-1024.png (optional).
+
+- [x] Cloud theme (2026-11-26, user chose B "ابری"): softer, cleaner light and dark themes.
+  - Theme.kt: light bg #F2F6FB, surface #FFFFFF, primary #1A5BAA, orange #F7853A; dark bg #101722, surface #18212E, primary #6E9FDB, orange #F7954A. All surface containers set explicitly (blue-tinted neutrals).
+  - Connected status card and floating menu capsule now follow the theme (UnbarHeroBlue, UnbarCapsuleBlue). Small UI code change only (Theme.kt, HomeScreen.kt, HistoryScreen.kt, UnbarApp.kt); no logic or build-script changes.
+  - colors.xml / themes.xml (launch window, splash, widget, status/nav bar) mirror the new palette.
+  - Logos recoloured to the same blue/orange: in-app Unbar logo + wordmark (light/dark), Break The Barriers logo, stat icons.
+  - Brand kit colours: blue #1A5BAA, dark-bg blue #6E9FDB, orange #F7853A, ink #101722. Icons and mipmaps re-exported; fastlane icon.png updated.
+  - en-US screenshots re-rendered from the recoloured web demo. Changelogs 31-33 updated.
+  - Site (local, not deployed): style.css variables, demo.html, assets/ logos, img/logo.png, img/btb.png, img/favicon.png recoloured.
+  - Not compiled locally (no Android SDK in the sandbox): let CI build the pushed branch before tagging.

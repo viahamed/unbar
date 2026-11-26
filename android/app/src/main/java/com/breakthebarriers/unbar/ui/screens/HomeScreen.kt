@@ -78,7 +78,7 @@ import com.breakthebarriers.unbar.ui.components.TutorialTopic
 import com.breakthebarriers.unbar.ui.components.formatBytes
 import com.breakthebarriers.unbar.ui.components.formatElapsed
 import com.breakthebarriers.unbar.ui.components.formatSpeedBps
-import com.breakthebarriers.unbar.ui.theme.UnbarBlue
+import com.breakthebarriers.unbar.ui.theme.UnbarHeroBlue
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -155,7 +155,7 @@ Column(
     // fade (surface -> blue) still animates.
     val statusColor by animateColorAsState(
         targetValue = when (snapshot.status) {
-            TunnelStatus.CONNECTED -> UnbarBlue
+            TunnelStatus.CONNECTED -> UnbarHeroBlue
             TunnelStatus.ERROR -> UnbarOrange.copy(alpha = 0.14f)
             else -> MaterialTheme.colorScheme.surface
         },
@@ -280,7 +280,7 @@ Column(
                         ModeSegment(
                             label = stringResource(R.string.mode_short_vpn),
                             active = settings.connectionMode == ConnectionMode.VPN,
-                            activeColor = UnbarBlue,
+                            activeColor = MaterialTheme.colorScheme.primary,
                             isConnected = isConnected,
                             onClick = { onSwitchMode(ConnectionMode.VPN) }
                         )
@@ -484,7 +484,7 @@ Column(
         StatCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Rounded.ArrowDownward,
-            iconTint = UnbarBlue,
+            iconTint = MaterialTheme.colorScheme.primary,
             label = stringResource(R.string.speed_download),
             value = formatSpeedBps(snapshot.stats.speedDownBps)
         )
@@ -929,7 +929,7 @@ private fun ScanStepNode(state: ScanStepState) {
             ScanStepState.PENDING -> Box(
                 modifier = Modifier
                     .size(18.dp)
-                    .border(2.dp, UnbarBlue, CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
             )
         }
     }

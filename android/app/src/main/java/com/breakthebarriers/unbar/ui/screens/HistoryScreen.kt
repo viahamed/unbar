@@ -38,7 +38,6 @@ import com.breakthebarriers.unbar.R
 import com.breakthebarriers.unbar.data.db.SessionEntity
 import com.breakthebarriers.unbar.ui.components.formatBytes
 import com.breakthebarriers.unbar.ui.components.formatElapsed
-import com.breakthebarriers.unbar.ui.theme.UnbarBlue
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -97,7 +96,7 @@ fun HistoryScreen(
                         Icon(
                             imageVector = Icons.Rounded.DataUsage,
                             contentDescription = null,
-                            tint = UnbarBlue
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = stringResource(R.string.usage_monthly),

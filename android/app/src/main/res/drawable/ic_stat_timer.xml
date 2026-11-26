@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Two-tone Home stat icon (timer, outline): blue #0B4F9E outline + orange #FF7A1A crown.
+<!-- Two-tone Home stat icon (timer, outline): blue #1A5BAA outline + orange #F7853A crown.
      Same language as ic_stat_magnifier_check: 1.8 blue strokes, 2.2 orange accent, round caps. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

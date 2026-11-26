@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Shield B (1.0.53, item 42): rounded shield outline, thick blue #0B4F9E stroke + big orange #FF7A1A check. Replaces the filled shield on the Connection Quality card. -->
+<!-- Shield B (1.0.53, item 42): rounded shield outline, thick blue #1A5BAA stroke + big orange #F7853A check. Replaces the filled shield on the Connection Quality card. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
