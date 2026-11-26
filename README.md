@@ -30,10 +30,10 @@
 ## اسکرین‌شات‌ها
 
 <p align="center">
-  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/1.png" width="180">
-  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/2.png" width="180">
-  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/4.png" width="180">
-  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/8.png" width="180">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="180">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="180">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="180">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/8.png" width="180">
 </p>
 
 ## آنبار چیست
