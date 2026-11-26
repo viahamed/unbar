@@ -30,10 +30,10 @@
 ## اسکرین‌شات‌ها
 
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="180">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="180">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="180">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/8.png" width="180">
+  <img src="assets/screenshots/fa/1.png" width="180">
+  <img src="assets/screenshots/fa/2.png" width="180">
+  <img src="assets/screenshots/fa/4.png" width="180">
+  <img src="assets/screenshots/fa/8.png" width="180">
 </p>
 
 ## آنبار چیست
@@ -233,8 +233,6 @@ xcodebuild -project Unbar.xcodeproj -scheme Unbar \
 
 - **USDT (BEP20):** `0x46f872b46BFa471607ad0F0042bdFFCB2B9c702b`
 - **TON:** `UQBdKaKX61k56IaJMbjTTMvXd7fskpbJnzGUPlQAyZT6RJn5`
-
-صفحهٔ دونیت: [btb.onl/posts/post-2160.html](https://btb.onl/posts/post-2160.html)
 
 </div>
 
@@ -461,5 +459,3 @@ Unbar is free. If it helped you, a small donation keeps it going:
 
 - **USDT (BEP20):** `0x46f872b46BFa471607ad0F0042bdFFCB2B9c702b`
 - **TON:** `UQBdKaKX61k56IaJMbjTTMvXd7fskpbJnzGUPlQAyZT6RJn5`
-
-Donate page: [btb.onl/posts/post-2160.html](https://btb.onl/posts/post-2160.html)
