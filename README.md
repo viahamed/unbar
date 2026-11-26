@@ -27,6 +27,15 @@
 - کانال تلگرام: [@Unbarapp](https://t.me/Unbarapp)
 - نسخهٔ فعلی: **1.0.2** (بیلد 3) — اندروید و iOS
 
+## اسکرین‌شات‌ها
+
+<p align="center">
+  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/1.png" width="180">
+  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/2.png" width="180">
+  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/4.png" width="180">
+  <img src="fastlane/metadata/android/fa/images/phoneScreenshots/8.png" width="180">
+</p>
+
 ## آنبار چیست
 
 آنبار یک VPN معمولی نیست. به‌جای اتصال مستقیم به یک سرور VPN، تونل Soar ترافیک را به‌صورت کوئری‌های DNS به یک zone (دامنهٔ) اختصاصی روی سرور شما می‌فرستد و داده‌ها در پاسخ‌های DNS برمی‌گردند. در گوشی، ترافیک از طریق پل hev-socks5-tunnel وارد تونل می‌شود. به همین دلیل آنبار در شرایطی کار می‌کند که VPNهای معمولی کاملاً از کار می‌افتند: قطعی کامل اینترنت، وقتی فقط DNS باز است.
@@ -245,6 +254,15 @@ Unbar carries your internet traffic inside DNS queries, through a server of your
 - Website: [unbar.cc](https://unbar.cc)
 - Telegram channel: [@Unbarapp](https://t.me/Unbarapp)
 - Current version: **1.0.2** (build 3) — Android and iOS
+
+## Screenshots
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="180">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="180">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="180">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/8.png" width="180">
+</p>
 
 ## What Unbar is
 
