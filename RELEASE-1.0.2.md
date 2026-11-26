@@ -37,6 +37,9 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
   - Not compiled locally (no Android SDK in the sandbox): let CI build the pushed branch before tagging.
 - [x] In-app logos switched to the brand kit wordmark S1 (2026-11-26, user confirmed the kit is the new logo/icon set): unbar_wordmark_{light,dark}.xml and unbar_logo_{light,dark}.xml (wordmark + "by Break The Barriers" tagline) regenerated from Poppins Black outlines in Cloud colours; same canvas sizes, so UnbarLogo.kt and the launch window are unchanged. Site demo assets, site header logo and screenshots re-rendered to match.
 
+- [x] Nested-radius rule extended to every remaining screen (2026-11-26, user asked for the whole app, site, demo and screenshots): Home stat cards, no-server card, History, Logs (padding 10 -> 14), server cards, subscription card and rows now 24dp; connected status card 30dp (10dp mode switch sits 20dp from its corner); dialogs 32dp (24dp inset + 8dp inner); QR box 8dp. Icon/text rows on server cards and the subscription paste row explicitly centred.
+- [x] Site (local): style.css radius system (cards 24px, small boxes 16px, controls inside 8px; code copy button and wallet-address copy button inset to match). Demo: status card 30px, stats/servers/notice/about/scan cards 24px, dialog 32px with 24px padding, QR 8px. en-US screenshots re-rendered.
+
 ## Resolver import (2026-11-26)
 - [x] New "Import" chip right of Custom (Settings > Resolvers). Picks a .txt via the system file picker (ACTION_OPEN_DOCUMENT, no storage permission), max 1 MB, UTF-8/UTF-16.
 - [x] Cleaning (data/datastore/ResolverFileImport.kt): comments (# and //), surrounding text, Persian/Arabic digits and separators, missing :53, leading zeros, CIDR host bits -> network address, dash ranges -> exact CIDR blocks, duplicates, singles :53 inside a range, ranges inside a larger range, sorted by address. IPv6/hostnames/invalid reported as ignored. Report shown after import.
@@ -47,7 +50,7 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [ ] Not compiled here (no Android SDK). Cleaner logic was compiled and tested with kotlinc 2.0.21 on JVM. Needs CI build + device test (pick file, replace, clear, scan, connect, switch Custom<->Import keeps both lists).
 
 ## Capsule menu + text centring (2026-11-26)
-- [x] Capsule 316dp wide when open (was 340dp); items 63dp, labels 12sp, icons 22dp.
+- [x] Capsule 316dp wide when open (was 340dp); items row 260dp, labels 12sp, icons 22dp.
 - [x] Every item has the same box (pill insets on selected and unselected), so icons sit on one line, nothing shifts when the selection moves, and the block has equal space above and below (5dp/5dp in the 56dp capsule; menu button 14dp/14dp).
 - [x] App-wide: typography with text centred in its line box (LineHeightStyle Center) so icon+label rows, chips and pills stay vertically centred.
 - [x] Web demo capsule updated to match; en-US F-Droid screenshots re-rendered.

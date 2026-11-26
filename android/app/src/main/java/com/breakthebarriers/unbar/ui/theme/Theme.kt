@@ -168,8 +168,13 @@ private val UnbarTypography: Typography = Typography().let { t ->
 // track, 2dp inset -> 8dp segment.)
 val OuterCardRadius = 24.dp
 val InnerPanelRadius = 8.dp
+// Connected status card: the VPN/Proxy switch (10dp track) sits 20dp from
+// its corner, so the card is 10 + 20 = 30dp (nested-radius rule).
+val HeroCardRadius = 30.dp
 
 private val UnbarShapes = Shapes(
     extraSmall = RoundedCornerShape(InnerPanelRadius), // text fields, menus
-    small = RoundedCornerShape(InnerPanelRadius)
+    small = RoundedCornerShape(InnerPanelRadius),
+    // Dialogs: 24dp content inset + 8dp inner fields/boxes = 32dp.
+    extraLarge = RoundedCornerShape(32.dp)
 )

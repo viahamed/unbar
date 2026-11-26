@@ -46,6 +46,7 @@ import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -154,10 +155,10 @@ fun LogsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItemPlacement(tween(250)),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(OuterCardRadius),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
                                     text = timeFmt.format(Date(entry.timestampMs)),

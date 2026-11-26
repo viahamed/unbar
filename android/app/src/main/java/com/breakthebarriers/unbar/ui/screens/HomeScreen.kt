@@ -82,6 +82,8 @@ import com.breakthebarriers.unbar.ui.theme.UnbarHeroBlue
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import com.breakthebarriers.unbar.ui.theme.HeroCardRadius
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 
 @Composable
 fun HomeScreen(
@@ -190,7 +192,7 @@ Column(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(HeroCardRadius),
         colors = CardDefaults.cardColors(containerColor = cardColor, contentColor = cardContentColor),
         elevation = CardDefaults.cardElevation(defaultElevation = cardElevation)
     ) {
@@ -450,7 +452,7 @@ Column(
     if (servers.isEmpty()) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(OuterCardRadius),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
         ) {
             Row(
@@ -673,7 +675,7 @@ private fun StatCard(
 ) {
     Card(
         modifier = modifier.height(StatCardHeight),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(OuterCardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
@@ -720,7 +722,7 @@ private fun QualityStatCard(
 ) {
     Card(
         modifier = modifier.height(StatCardHeight),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(OuterCardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
@@ -828,7 +830,7 @@ private fun ScanResolversCard(
     val stage3State = if (scanCompleted) ScanStepState.DONE else ScanStepState.PENDING
     Card(
         modifier = modifier.height(StatCardHeight),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(OuterCardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
