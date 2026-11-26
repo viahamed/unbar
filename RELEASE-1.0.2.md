@@ -36,3 +36,12 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
   - Site (local, not deployed): style.css variables, demo.html, assets/ logos, img/logo.png, img/btb.png, img/favicon.png recoloured.
   - Not compiled locally (no Android SDK in the sandbox): let CI build the pushed branch before tagging.
 - [x] In-app logos switched to the brand kit wordmark S1 (2026-11-26, user confirmed the kit is the new logo/icon set): unbar_wordmark_{light,dark}.xml and unbar_logo_{light,dark}.xml (wordmark + "by Break The Barriers" tagline) regenerated from Poppins Black outlines in Cloud colours; same canvas sizes, so UnbarLogo.kt and the launch window are unchanged. Site demo assets, site header logo and screenshots re-rendered to match.
+
+## Resolver import (2026-11-26)
+- [x] New "Import" chip right of Custom (Settings > Resolvers). Picks a .txt via the system file picker (ACTION_OPEN_DOCUMENT, no storage permission), max 1 MB, UTF-8/UTF-16.
+- [x] Cleaning (data/datastore/ResolverFileImport.kt): comments (# and //), surrounding text, Persian/Arabic digits and separators, missing :53, leading zeros, CIDR host bits -> network address, dash ranges -> exact CIDR blocks, duplicates, singles :53 inside a range, ranges inside a larger range, sorted by address. IPv6/hostnames/invalid reported as ignored. Report shown after import.
+- [x] Shared normalizer upgraded (Custom gets the same per-entry fixes: Persian digits, leading zeros, host bits, dash ranges). Custom keeps its own order (no sorting).
+- [x] Separate stored list (imported_resolvers, import_file_name, imported_at_ms); DiscoveryMode.IMPORT behaves like CUSTOM in TunnelManager (no discovery; scan/connect use only this list). Scan UI unchanged (same 3-stage stepper).
+- [x] Limits unchanged from the core: ranges up to /20; scan cap 5000 addresses (warning shown).
+- [x] Changelogs 31-33 (en-US, fa) updated.
+- [ ] Not compiled here (no Android SDK). Cleaner logic was compiled and tested with kotlinc 2.0.21 on JVM. Needs CI build + device test (pick file, replace, clear, scan, connect, switch Custom<->Import keeps both lists).

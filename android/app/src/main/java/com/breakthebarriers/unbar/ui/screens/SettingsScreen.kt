@@ -123,6 +123,8 @@ fun SettingsScreen(
     onRefreshSystemStatuses: () -> Unit,
     onSetConnectionMode: (ConnectionMode) -> Unit,
     onSetResolverConfig: (Boolean, DiscoveryMode, List<String>, String) -> Unit,
+    onImportResolverList: (List<String>, String) -> Unit,
+    onClearImportedResolvers: () -> Unit,
     onSetTcpMode: (Boolean) -> Unit,
     onSetMtu: (Int) -> Unit,
     onSetMaxAnswer: (Int) -> Unit,
@@ -217,8 +219,13 @@ fun SettingsScreen(
             ResolversSection(
                 discoveryMode = settings.discoveryMode,
                 customResolversJoined = settings.customResolvers.joinToString(","),
+                importedResolvers = settings.importedResolvers,
+                importFileName = settings.importFileName,
+                importedAtMs = settings.importedAtMs,
                 resolverScanStatusFlow = resolverScanStatusFlow,
                 onSetResolverConfig = onSetResolverConfig,
+                onImportResolverList = onImportResolverList,
+                onClearImportedResolvers = onClearImportedResolvers,
                 onTestResolvers = onTestResolvers,
                 onStopScan = onStopScan,
                 onPauseScan = onPauseScan,
@@ -418,8 +425,13 @@ private fun ConnectionSection(
 private fun ResolversSection(
     discoveryMode: DiscoveryMode,
     customResolversJoined: String,
+    importedResolvers: List<String>,
+    importFileName: String,
+    importedAtMs: Long,
     resolverScanStatusFlow: StateFlow<ResolverScanStatus>,
     onSetResolverConfig: (Boolean, DiscoveryMode, List<String>, String) -> Unit,
+    onImportResolverList: (List<String>, String) -> Unit,
+    onClearImportedResolvers: () -> Unit,
     onTestResolvers: () -> Unit,
     onStopScan: () -> Unit,
     onPauseScan: () -> Unit,
@@ -503,6 +515,20 @@ private fun ResolversSection(
                 },
                 label = { Text(stringResource(R.string.discovery_custom)) }
             )
+            // (1.0.2): Import — a resolver list loaded from a .txt
+            // file, kept separately from the Custom field.
+            UnbarFilterChip(
+                selected = discoveryMode == DiscoveryMode.IMPORT,
+                onClick = {
+                    onSetResolverConfig(
+                        true,
+                        DiscoveryMode.IMPORT,
+                        normalizeResolvers(customText),
+                        "IR"
+                    )
+                },
+                label = { Text(stringResource(R.string.discovery_import)) }
+            )
         }
 
         if (discoveryMode == DiscoveryMode.CUSTOM) {
@@ -563,6 +589,14 @@ private fun ResolversSection(
                 text = stringResource(R.string.custom_resolvers_cidr_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else if (discoveryMode == DiscoveryMode.IMPORT) {
+            ResolverImportBlock(
+                importedResolvers = importedResolvers,
+                importFileName = importFileName,
+                importedAtMs = importedAtMs,
+                onImport = onImportResolverList,
+                onClear = onClearImportedResolvers
             )
         } else {
             Text(

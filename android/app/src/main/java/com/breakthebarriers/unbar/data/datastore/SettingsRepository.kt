@@ -107,6 +107,9 @@ class SettingsRepository(
         val LANGUAGE = stringPreferencesKey("language")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val AUTO_UPDATE_SUBSCRIPTIONS = booleanPreferencesKey("auto_update_subscriptions")
+        val IMPORTED_RESOLVERS = stringPreferencesKey("imported_resolvers")
+        val IMPORT_FILE_NAME = stringPreferencesKey("import_file_name")
+        val IMPORTED_AT_MS = longPreferencesKey("imported_at_ms")
     }
 
     val settingsFlow: Flow<AppSettings> = context.unbarDataStore.data.map { prefs ->
@@ -135,6 +138,9 @@ class SettingsRepository(
             discoveryEnabled = prefs[Keys.DISCOVERY_ENABLED] ?: true,
             discoveryMode = migratedMode,
             customResolvers = migratedCustom,
+            importedResolvers = parseLineList(prefs[Keys.IMPORTED_RESOLVERS]),
+            importFileName = prefs[Keys.IMPORT_FILE_NAME].orEmpty(),
+            importedAtMs = prefs[Keys.IMPORTED_AT_MS] ?: 0L,
             discoveryCountry = prefs[Keys.DISCOVERY_COUNTRY]?.ifBlank { "IR" } ?: "IR",
             tcpMode = prefs[Keys.TCP_MODE] ?: false,
             // MTU (1.0.34): 0 = Auto (measure the interface MTU at
@@ -189,6 +195,28 @@ class SettingsRepository(
             it[Keys.DISCOVERY_MODE] = mode.name
             it[Keys.CUSTOM_RESOLVERS] = normalized.joinToString(",")
             it[Keys.DISCOVERY_COUNTRY] = country.trim().uppercase().ifBlank { "IR" }
+        }
+    }
+
+    // (1.0.2): store an imported (already cleaned) resolver list and
+    // switch to Import mode in one edit. The Custom list is untouched.
+    suspend fun setImportedResolvers(entries: List<String>, fileName: String, atMs: Long) {
+        context.unbarDataStore.edit {
+            it[Keys.IMPORTED_RESOLVERS] = entries.joinToString(",")
+            it[Keys.IMPORT_FILE_NAME] = fileName
+            it[Keys.IMPORTED_AT_MS] = atMs
+            it[Keys.DISCOVERY_ENABLED] = true
+            it[Keys.DISCOVERY_MODE] = DiscoveryMode.IMPORT.name
+        }
+    }
+
+    // (1.0.2): forget the imported list (Clear). Stays in Import
+    // mode with an empty list, like an empty Custom field.
+    suspend fun clearImportedResolvers() {
+        context.unbarDataStore.edit {
+            it.remove(Keys.IMPORTED_RESOLVERS)
+            it.remove(Keys.IMPORT_FILE_NAME)
+            it.remove(Keys.IMPORTED_AT_MS)
         }
     }
 
@@ -369,9 +397,87 @@ private fun splitDotSeparatedIps(raw: String): String {
 }
 
 private fun splitResolverTokens(raw: String): List<String> {
-    return splitDotSeparatedIps(raw).split(',', ';', '\n', '\r', '\t', ' ')
+    // (1.0.2): Persian/Arabic digits and separators become their
+    // ASCII forms first, and dash ranges ("a.b.c.d-a.b.c.e") turn
+    // into the exact CIDR blocks that cover them, so typed text and
+    // imported files read the same way.
+    val prepared = expandDashRanges(asciiResolverText(raw))
+    return splitDotSeparatedIps(prepared).split(',', ';', '\n', '\r', '\t', ' ')
         .map { it.trim() }
         .filter { it.isNotEmpty() }
+}
+
+// (1.0.2): Persian (U+06F0..06F9) and Arabic-Indic (U+0660..0669)
+// digits -> ASCII; Persian comma / semicolon / full stop and the
+// zero-width joiners Persian keyboards insert -> ASCII or removed.
+internal fun asciiResolverText(raw: String): String {
+    val sb = StringBuilder(raw.length)
+    for (ch in raw) {
+        when (ch) {
+            in '\u06F0'..'\u06F9' -> sb.append('0' + (ch - '\u06F0'))
+            in '\u0660'..'\u0669' -> sb.append('0' + (ch - '\u0660'))
+            '\u060C' -> sb.append(',')
+            '\u061B' -> sb.append(';')
+            '\u06D4' -> sb.append('.')
+            '\u066B' -> sb.append('.')
+            '\u200C', '\u200D', '\u200E', '\u200F', '\uFEFF' -> Unit
+            else -> sb.append(ch)
+        }
+    }
+    return sb.toString()
+}
+
+private val DASH_RANGE = Regex("""(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})\s*[-\u2013\u2014]\s*(\d{1,3}(?:\.\d{1,3}){3})(?![\d.])""")
+
+// (1.0.2): "2.188.21.1-2.188.21.254" -> the minimal CIDR blocks
+// covering exactly that range ("2.188.21.1/32,2.188.21.2/31,...").
+// A reversed range is swapped; an invalid address leaves the text
+// as-is so it is reported as ignored.
+internal fun expandDashRanges(raw: String): String {
+    if (!raw.contains('-') && !raw.contains('\u2013') && !raw.contains('\u2014')) return raw
+    return DASH_RANGE.replace(raw) { m ->
+        val a = canonicalIpv4(m.groupValues[1])?.let { ipv4ToLong(it) }
+        val b = canonicalIpv4(m.groupValues[2])?.let { ipv4ToLong(it) }
+        if (a == null || b == null) m.value
+        else rangeToCidrs(minOf(a, b), maxOf(a, b)).joinToString(",")
+    }
+}
+
+// (1.0.2): an IPv4 address in canonical form, or null. Leading
+// zeros are dropped ("010.001.2.3" -> "10.1.2.3") instead of the
+// whole entry being rejected.
+internal fun canonicalIpv4(ip: String): String? {
+    val octets = ip.split('.')
+    if (octets.size != 4) return null
+    val out = ArrayList<Int>(4)
+    for (o in octets) {
+        if (o.isEmpty() || o.length > 3 || !o.all { it in '0'..'9' }) return null
+        val n = o.toInt()
+        if (n !in 0..255) return null
+        out.add(n)
+    }
+    return out.joinToString(".")
+}
+
+internal fun ipv4ToLong(ip: String): Long {
+    val p = ip.split('.')
+    return (p[0].toLong() shl 24) or (p[1].toLong() shl 16) or (p[2].toLong() shl 8) or p[3].toLong()
+}
+
+internal fun longToIpv4(v: Long): String =
+    "${(v shr 24) and 255}.${(v shr 16) and 255}.${(v shr 8) and 255}.${v and 255}"
+
+internal fun rangeToCidrs(start: Long, end: Long): List<String> {
+    val out = ArrayList<String>()
+    var cur = start
+    while (cur <= end) {
+        var size = if (cur == 0L) 32 else java.lang.Long.numberOfTrailingZeros(cur).coerceAtMost(32)
+        while (size > 0 && cur + (1L shl size) - 1 > end) size--
+        out.add("${longToIpv4(cur)}/${32 - size}")
+        cur += 1L shl size
+        if (out.size > 64) break // pathological input; never expected
+    }
+    return out
 }
 
 // One token -> "ip:port", or a CIDR range "ip/prefix" passed
@@ -388,36 +494,29 @@ private fun cleanResolverToken(token: String): String? {
     if (trimmed.contains('/')) {
         val cidrParts = trimmed.split('/')
         if (cidrParts.size != 2) return null
-        val ip = cidrParts[0].filter { it.isDigit() || it == '.' }.trim('.')
+        val ip = canonicalIpv4(cidrParts[0].filter { it in '0'..'9' || it == '.' }.trim('.')) ?: return null
         val prefix = cidrParts[1].trim()
-        if (!isValidIpv4(ip)) return null
-        // Prefix must be a plain 0-32 number: 1-2 digits, no
-        // leading zeros, no port.
-        if (prefix.isEmpty() || prefix.length > 2 || !prefix.all { it.isDigit() }) return null
-        if (prefix.length > 1 && prefix.startsWith('0')) return null
+        // Prefix must be a plain 0-32 number, no port.
+        if (prefix.isEmpty() || prefix.length > 2 || !prefix.all { it in '0'..'9' }) return null
         val prefixNum = prefix.toIntOrNull() ?: return null
         if (prefixNum !in 0..32) return null
-        return "$ip/$prefixNum"
+        // (1.0.2): host bits set ("5.200.14.7/24") -> the range's
+        // network address ("5.200.14.0/24"), the range the user meant.
+        return "${cidrNetwork(ip, prefixNum)}/$prefixNum"
     }
-    val cleaned = token.filter { it.isDigit() || it == '.' || it == ':' }.trim('.')
+    val cleaned = token.filter { it in '0'..'9' || it == '.' || it == ':' }.trim('.')
     if (cleaned.isBlank()) return null
     val parts = cleaned.split(':')
-    val ip = parts.getOrNull(0).orEmpty()
+    val ip = canonicalIpv4(parts.getOrNull(0).orEmpty()) ?: return null
     val port = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: "53"
-    if (!isValidIpv4(ip)) return null
     val portNum = port.toIntOrNull() ?: return null
     if (portNum !in 1..65535) return null
     return "$ip:$portNum"
 }
 
-private fun isValidIpv4(ip: String): Boolean {
-    val octets = ip.split('.')
-    if (octets.size != 4) return false
-    return octets.all { o ->
-        if (o.isEmpty() || o.length > 3) return@all false
-        val n = o.toIntOrNull() ?: return@all false
-        n in 0..255 && (o.length == 1 || !o.startsWith('0'))
-    }
+internal fun cidrNetwork(ip: String, prefix: Int): String {
+    val mask = if (prefix == 0) 0L else (0xFFFFFFFFL shl (32 - prefix)) and 0xFFFFFFFFL
+    return longToIpv4(ipv4ToLong(ip) and mask)
 }
 
 /**

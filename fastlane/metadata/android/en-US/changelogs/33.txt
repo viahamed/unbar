@@ -1,1 +1,2 @@
+New: import resolvers from a .txt file (single IPs and ranges) next to Custom. The list is cleaned, de-duplicated and sorted automatically and scanned exactly like Custom.
 New softer, cleaner light and dark theme ("Cloud"). New, simpler app icon (proper adaptive icon); Unbar and Break The Barriers logos in the refreshed blue and orange. New store screenshots.

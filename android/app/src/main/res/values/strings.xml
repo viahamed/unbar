@@ -273,4 +273,27 @@
     <string name="tutorial_home_connection_time_body">How long the current session has been up. It restarts on every reconnect.</string>
     <string name="tutorial_home_streams_title">Streams</string>
     <string name="tutorial_home_streams_body">How many streams the tunnel is currently carrying. More streams usually means more apps or downloads active.</string>
+    <!-- (1.0.2) Resolver list import -->
+    <string name="discovery_import">Import</string>
+    <string name="import_note">Load a .txt file of resolver IPs. Single IPs and ranges (e.g. 2.188.21.0/24), one per line or separated by commas or spaces.</string>
+    <string name="import_note_custom_kept">The app cleans and sorts the list automatically. Your Custom list stays as it is.</string>
+    <string name="import_choose_file">Choose .txt file</string>
+    <string name="import_replace_file">Replace file</string>
+    <string name="import_view_list">View list</string>
+    <string name="import_hide_list">Hide list</string>
+    <string name="import_clear">Clear</string>
+    <string name="import_file_meta">%1$d entries · %2$d addresses</string>
+    <string name="import_list_more">… %1$d more</string>
+    <string name="import_reading">Reading file…</string>
+    <string name="import_over_cap">The list expands to %1$d addresses; a scan covers the first %2$d.</string>
+    <string name="import_error_too_large">File is too large (max 1 MB).</string>
+    <string name="import_error_unreadable">Could not read this file.</string>
+    <string name="import_error_empty">No valid IPv4 resolvers in this file. The previous list was kept.</string>
+    <string name="import_fixed_title">Auto-fixed %1$d entries</string>
+    <string name="import_fix_cleaned">%1$d cleaned (spaces, symbols, Persian digits, extra text)</string>
+    <string name="import_fix_duplicates">%1$d duplicates removed</string>
+    <string name="import_fix_inside_range">%1$d entries already inside a range removed</string>
+    <string name="import_fix_ranges">%1$d ranges corrected to their network address</string>
+    <string name="import_fix_dash">%1$d dash ranges converted to CIDR</string>
+    <string name="import_ignored">Ignored %1$d lines (IPv4 resolvers only): %2$s</string>
 </resources>
