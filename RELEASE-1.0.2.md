@@ -21,4 +21,6 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [x] en-US phoneScreenshots replaced with 8 new English screenshots from the web demo (user approved 2026-11-26). F-Droid shows them after the 1.0.2 tag is built. fa screenshots unchanged.
 
 - [x] Icon changed to simple option 6 (2026-11-26): white rounded square, solid blue U + solid orange b (Poppins Black), no stripes. Replaces striped option B. Adaptive fg/bg, legacy + round mipmaps, fastlane icon.png (en-US, fa).
-- [ ] Wordmark: simple two-tone 'Unbar' (Un blue, bar orange, Poppins Black) chosen direction — update site assets when releasing.
+- [x] Brand kit in branding/ (2026-11-26): SVG masters (text as outlines) + PNG exports — wordmark light/dark/white/black, lockup light/dark (512/1024/2048 px), icon square/round/dark/full-bleed/mono (16–1024 px), favicon.ico, adaptive foreground. Colours: blue #0D52A0, dark-bg blue #4F95EC, orange #FF7A13, ink #0A162C. App mipmaps and fastlane icon.png re-exported from the SVG masters.
+- [ ] Site: replace assets/wordmark-*.png, assets/lockup-*.png, favicon, apple-touch-icon with the new kit (ready files in /workspace/work/unbar-brand/site/). Needs approval before deploy.
+- [ ] README / GitHub social preview: use branding/png/lockup-light-1024.png (optional).
