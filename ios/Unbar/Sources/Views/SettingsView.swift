@@ -3,7 +3,7 @@
 //
 // Connection settings apply when the tunnel is next started; the on-demand toggle is written to the saved VPN configuration right away. Per-app routing and a kill switch are Android-only and are deliberately NOT here: iOS per-app VPN is enterprise/MDM-only, and iOS has no true kill switch — on-demand VPN is the iOS equivalent.
 //
-// Resolvers (1.0.16 redesign): Built-in uses the bundled 2,307 Iranian resolvers; Custom uses only the resolvers typed in the field. Every setting auto-saves — there is no Save button on any settings section. The custom field saves on a 3s debounce (typing resets the clock) and is never rewritten while typing.
+// Resolvers (1.0.16 redesign): Built-in uses the bundled 2,307 Iranian resolvers; Custom uses only the resolvers typed in the field; (1.0.2) Import uses only the list imported from a .txt file (its own stored list; Custom's is never touched). Every setting auto-saves — there is no Save button on any settings section. The custom field saves on a 3s debounce (typing resets the clock) and is never rewritten while typing.
 
 import SwiftUI
 
@@ -190,13 +190,16 @@ private func mtuChip(_ value: Int) -> some View {
     return Button(action: { settings.mtu = value }) {
         Text(value == 0 ? loc.tr("settings.mtu_auto") : "\(value)")
             .font(.system(size: 15, weight: selected ? .semibold : .regular))
-            .padding(.vertical, 8)
+            .lineLimit(1)
             .padding(.horizontal, 16)
-            .background(selected ? Color("BrandBlue") : Color(UIColor.secondarySystemBackground))
+            // (1.0.2): fixed 34pt box, text centred vertically.
+            .frame(height: 34, alignment: .center)
+            .background(selected ? Color("BrandBlue") : Color("SurfaceVariant"))
             .foregroundColor(selected ? .white : Color("BrandBlue"))
-            .cornerRadius(16)
+            // Free-standing chip: fully round, keeps its shape.
+            .clipShape(Capsule())
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                Capsule()
                     .stroke(Color("BrandBlue"), lineWidth: selected ? 0 : 1)
             )
     }
@@ -213,13 +216,16 @@ private func answerSizeChip(_ value: Int) -> some View {
     return Button(action: { settings.maxAnswer = value }) {
         Text(label)
             .font(.system(size: 15, weight: selected ? .semibold : .regular))
-            .padding(.vertical, 8)
+            .lineLimit(1)
             .padding(.horizontal, 12)
-            .background(selected ? Color("BrandBlue") : Color(UIColor.secondarySystemBackground))
+            // (1.0.2): fixed 34pt box, text centred vertically.
+            .frame(height: 34, alignment: .center)
+            .background(selected ? Color("BrandBlue") : Color("SurfaceVariant"))
             .foregroundColor(selected ? .white : Color("BrandBlue"))
-            .cornerRadius(16)
+            // Free-standing chip: fully round, keeps its shape.
+            .clipShape(Capsule())
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                Capsule()
                     .stroke(Color("BrandBlue"), lineWidth: selected ? 0 : 1)
             )
     }
@@ -232,6 +238,8 @@ private var resolverSection: some View {
         Picker(loc.tr("settings.resolver_mode"), selection: $settings.resolverMode) {
             Text(loc.tr("settings.resolver_builtin")).tag(ResolverMode.builtIn)
             Text(loc.tr("settings.resolver_custom")).tag(ResolverMode.custom)
+            // (1.0.2): Import, right after Custom.
+            Text(loc.tr("settings.resolver_import")).tag(ResolverMode.imported)
         }
         .pickerStyle(SegmentedPickerStyle())
         // (1.0.33, fix 3): a mode switch clears the displayed
@@ -241,6 +249,11 @@ private var resolverSection: some View {
         }
         if settings.resolverMode == .builtIn {
             NoteText(loc.tr("settings.resolver_builtin_note"))
+        } else if settings.resolverMode == .imported {
+            // (1.0.2): file card / Replace / View list / Clear and
+            // the fix report. The scan row below is shared and
+            // unchanged (same 3-stage stepper as Custom).
+            ResolverImportView()
         } else {
             TextField(loc.tr("settings.custom_resolvers_label"),
                       text: customBinding)

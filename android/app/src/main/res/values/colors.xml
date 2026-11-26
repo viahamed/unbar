@@ -4,17 +4,17 @@
          the Compose theme colors (ui/theme/Theme.kt) so the launching
          window and the Android 12 splash screen use the same colors
          as the app itself. -->
-    <color name="unbar_light_bg">#F6F8FC</color>
-    <color name="unbar_dark_bg">#0B1320</color>
-    <color name="unbar_blue">#0B4F9E</color>
-    <color name="unbar_orange">#FF7A1A</color>
+    <color name="unbar_light_bg">#F6F9FD</color>
+    <color name="unbar_dark_bg">#101722</color>
+    <color name="unbar_blue">#1A5BAA</color>
+    <color name="unbar_orange">#F7853A</color>
 
     <!-- Home-screen widget colors (day). The night values live in
          res/values-night/colors.xml; the widget reads them by
          resource id (ColorProvider(R.color.*)), so the OS picks the
          right variant for the current theme. -->
     <color name="widget_bg">#FFFFFFFF</color>
-    <color name="widget_title">#0B4F9E</color>
-    <color name="widget_body">#0F172A</color>
-    <color name="widget_muted">#475569</color>
+    <color name="widget_title">#1A5BAA</color>
+    <color name="widget_body">#172338</color>
+    <color name="widget_muted">#5B6B82</color>
 </resources>

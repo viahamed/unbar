@@ -90,6 +90,8 @@ import com.breakthebarriers.unbar.ui.components.TutorialTopic
 import com.breakthebarriers.unbar.ui.components.AnimatedDialog
 import com.breakthebarriers.unbar.ui.components.ExportConfigDialog
 import com.breakthebarriers.unbar.ui.components.ImportConfigForm
+import com.breakthebarriers.unbar.ui.theme.InnerPanelRadius
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 import com.breakthebarriers.unbar.ui.theme.UnbarBlue
 import com.breakthebarriers.unbar.ui.theme.UnbarOrange
 import java.text.DateFormat
@@ -280,7 +282,7 @@ fun ServersScreen(
                 item(key = "servers_empty") {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
+                        shape = RoundedCornerShape(OuterCardRadius),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
@@ -310,7 +312,7 @@ fun ServersScreen(
                             .fillMaxWidth()
                             .animateItemPlacement(tween(250))
                             .clickable { onSelectServer(server.id) },
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(OuterCardRadius),
                         border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
@@ -425,7 +427,8 @@ fun ServersScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 IconButton(onClick = { onTestServer(server) }, enabled = !isTesting) {
                                     Icon(Icons.Rounded.Speed, contentDescription = stringResource(R.string.test))
@@ -541,7 +544,7 @@ private fun AddSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(OuterCardRadius),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
@@ -639,7 +642,7 @@ private fun AddSheetCard(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(InnerPanelRadius),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -717,7 +720,8 @@ private fun SubscriptionAddForm(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedButton(
                 onClick = {
@@ -820,7 +824,7 @@ private fun SubscriptionCard(
     val status = effectiveSubscriptionStatus(subscriptionStatus, subscriptions)
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(OuterCardRadius),
         border = BorderStroke(1.5.dp, UnbarOrange),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -1054,7 +1058,7 @@ private fun SubscriptionRowCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(OuterCardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(

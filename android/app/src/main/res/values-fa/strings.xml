@@ -273,4 +273,27 @@
     <string name="tutorial_home_connection_time_body">نشست فعلی چقدر وصل بوده است. با هر بار وصل شدن دوباره از اول شروع می‌شود.</string>
     <string name="tutorial_home_streams_title">استریم‌ها</string>
     <string name="tutorial_home_streams_body">تونل در حال حاضر چند استریم را حمل می‌کند. استریم بیشتر معمولاً یعنی برنامه یا دانلود فعال بیشتر.</string>
+    <!-- (1.0.2) وارد کردن لیست ریزالور -->
+    <string name="discovery_import">وارد کردن</string>
+    <string name="import_note">یک فایل ‎.txt‎ با آی‌پی ریزالورها انتخاب کنید. آی‌پی تکی و رنج (مثل 2.188.21.0/24)، هر کدام در یک خط یا جدا با کاما یا فاصله.</string>
+    <string name="import_note_custom_kept">برنامه لیست را خودکار تمیز و مرتب می‌کند. لیست Custom شما دست نمی‌خورد.</string>
+    <string name="import_choose_file">انتخاب فایل ‎.txt‎</string>
+    <string name="import_replace_file">جایگزینی فایل</string>
+    <string name="import_view_list">نمایش لیست</string>
+    <string name="import_hide_list">بستن لیست</string>
+    <string name="import_clear">پاک کردن</string>
+    <string name="import_file_meta">%1$d مورد · %2$d آدرس</string>
+    <string name="import_list_more">… و %1$d مورد دیگر</string>
+    <string name="import_reading">در حال خواندن فایل…</string>
+    <string name="import_over_cap">این لیست %1$d آدرس دارد؛ اسکن %2$d آدرس اول را بررسی می‌کند.</string>
+    <string name="import_error_too_large">فایل خیلی بزرگ است (حداکثر ۱ مگابایت).</string>
+    <string name="import_error_unreadable">این فایل خوانده نشد.</string>
+    <string name="import_error_empty">در این فایل ریزالور IPv4 معتبری نبود. لیست قبلی حفظ شد.</string>
+    <string name="import_fixed_title">%1$d مورد خودکار اصلاح شد</string>
+    <string name="import_fix_cleaned">%1$d مورد تمیز شد (فاصله، نماد، عدد فارسی، متن اضافه)</string>
+    <string name="import_fix_duplicates">%1$d تکراری حذف شد</string>
+    <string name="import_fix_inside_range">%1$d مورد که داخل یک رنج بود حذف شد</string>
+    <string name="import_fix_ranges">%1$d رنج به آدرس شبکهٔ درست اصلاح شد</string>
+    <string name="import_fix_dash">%1$d رنج خط‌تیره‌دار به CIDR تبدیل شد</string>
+    <string name="import_ignored">%1$d خط نادیده گرفته شد (فقط ریزالور IPv4): %2$s</string>
 </resources>

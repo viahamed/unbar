@@ -1,7 +1,8 @@
 // StatIcons.swift — two-tone Home stat icons (blue + orange).
 // The same artwork as the Android vectors (res/drawable/ic_stat_*.xml),
 // drawn from the same 24x24 path data so both platforms match exactly.
-// Palette is only BrandBlue (#0B4F9E) and BrandOrange (#FF7A1A).
+// Palette is only BrandBlue and BrandOrange (1.0.2 Cloud: #1A5BAA /
+// dark #6E9FDB and #F7853A / dark #F7954A, from the asset catalog).
 // The timer, dns and storage icons are OUTLINE style, matching the new
 // Android outline vectors: 1.8pt blue strokes, 2.2pt orange accent,
 // round caps (same language as the magnifier-check icon). The other

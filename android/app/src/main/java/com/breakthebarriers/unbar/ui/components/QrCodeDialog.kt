@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material3.AlertDialog
+import com.breakthebarriers.unbar.ui.theme.InnerPanelRadius
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,7 +71,7 @@ fun ExportConfigDialog(
                         Box(
                             modifier = Modifier
                                 .size(210.dp)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(InnerPanelRadius))
                                 .background(Color.White)
                                 .padding(10.dp),
                             contentAlignment = Alignment.Center

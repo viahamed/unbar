@@ -38,10 +38,10 @@ import com.breakthebarriers.unbar.R
 import com.breakthebarriers.unbar.data.db.SessionEntity
 import com.breakthebarriers.unbar.ui.components.formatBytes
 import com.breakthebarriers.unbar.ui.components.formatElapsed
-import com.breakthebarriers.unbar.ui.theme.UnbarBlue
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.breakthebarriers.unbar.ui.theme.OuterCardRadius
 
 // (1.0.15, C8): connection history — the last ~30 sessions, kept
 // locally. Each row shows when it ran, which server it used, how
@@ -80,7 +80,7 @@ fun HistoryScreen(
             // usage_daily, summed for this month.
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(OuterCardRadius),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
@@ -97,7 +97,7 @@ fun HistoryScreen(
                         Icon(
                             imageVector = Icons.Rounded.DataUsage,
                             contentDescription = null,
-                            tint = UnbarBlue
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = stringResource(R.string.usage_monthly),
@@ -142,7 +142,7 @@ fun HistoryScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItemPlacement(tween(250)),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(OuterCardRadius),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(

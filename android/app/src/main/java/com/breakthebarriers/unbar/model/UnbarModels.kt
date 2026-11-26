@@ -11,11 +11,15 @@ enum class ResolverMode {
     MANUAL
 }
 
-// Discovery mode inside Resolver Discovery: the bundled Iran list, or
-// the user's own Custom resolvers.
+// Discovery mode inside Resolver Discovery: the bundled Iran list,
+// the user's own Custom resolvers, or (1.0.2) a list imported from a
+// .txt file. Import behaves exactly like Custom (no discovery, only
+// its own list is scanned and used) but keeps its own stored list,
+// so switching between Custom and Import never loses either one.
 enum class DiscoveryMode {
     BUILTIN,
-    CUSTOM
+    CUSTOM,
+    IMPORT
 }
 
 enum class AppThemeMode {
@@ -175,6 +179,11 @@ data class AppSettings(
     val discoveryEnabled: Boolean = true,
     val discoveryMode: DiscoveryMode = DiscoveryMode.BUILTIN,
     val customResolvers: List<String> = emptyList(),
+    // (1.0.2): the cleaned list from the last imported .txt file,
+    // its file name and when it was imported (epoch ms, 0 = never).
+    val importedResolvers: List<String> = emptyList(),
+    val importFileName: String = "",
+    val importedAtMs: Long = 0L,
     val discoveryCountry: String = "IR",
     val tcpMode: Boolean = false,
     // MTU for the VPN tunnel (VPN mode only; SOCKS mode has no TUN).
@@ -225,3 +234,11 @@ data class InstalledAppInfo(
     val label: String,
     val isSystemApp: Boolean
 )
+
+// (1.0.2): the user's own resolver list for the selected mode —
+// Custom's field or the imported file; empty in Built-in mode.
+fun AppSettings.userResolvers(): List<String> = when (discoveryMode) {
+    DiscoveryMode.BUILTIN -> emptyList()
+    DiscoveryMode.CUSTOM -> customResolvers
+    DiscoveryMode.IMPORT -> importedResolvers
+}

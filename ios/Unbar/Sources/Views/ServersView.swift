@@ -48,7 +48,7 @@ public struct ServersView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 14) {
-                    TutorialAccordion(sections: serversTutorialSections)
+                    TutorialAccordion(sections: serversTutorialSections, asCard: true)
                     if settings.servers.isEmpty {
                         Text(loc.tr("servers.empty"))
                             .foregroundColor(.secondary)
@@ -60,14 +60,14 @@ public struct ServersView: View {
                     }
                     subscriptionSection
                     Button(action: openAddSheet) {
-                        HStack {
+                        HStack(alignment: .center) {
                             Image(systemName: "plus")
                             Text(loc.tr("servers.add"))
                             Spacer()
                         }
-                        .padding(14)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(14)
+                        .padding(UnbarRadius.cardPadding)
+                        .background(Color("Surface"))
+                        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
                         .foregroundColor(Color("BrandBlue"))
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -76,7 +76,7 @@ public struct ServersView: View {
                     // state and spinner state as before — the spinner
                     // is white here, or it would vanish on the blue.
                     Button(action: autoSelect) {
-                        HStack(spacing: 8) {
+                        HStack(alignment: .center, spacing: 8) {
                             if autoSelecting {
                                 ActivityIndicator(color: .white)
                             } else {
@@ -89,7 +89,8 @@ public struct ServersView: View {
                         .padding(.vertical, 12)
                         .foregroundColor(.white)
                         .background(Color("BrandBlue"))
-                        .cornerRadius(28)
+                        // Fully round pill (free-standing, keeps its shape).
+                        .clipShape(Capsule())
                     }
                     .buttonStyle(PlainButtonStyle())
                     .disabled(settings.servers.isEmpty || autoSelecting)
@@ -103,6 +104,8 @@ public struct ServersView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
+            // (1.0.2) Cloud theme: page background behind the cards.
+            .background(Color("AppBackground").edgesIgnoringSafeArea(.all))
             .navigationBarTitle(loc.tr("servers.title"), displayMode: .large)
             .sheet(isPresented: $showingAdd) {
                 addSheet
@@ -160,10 +163,10 @@ public struct ServersView: View {
         return VStack(alignment: .leading, spacing: 0) {
             Button(action: { settings.selectServer(server) }) {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 6) {
+                    HStack(alignment: .center, spacing: 6) {
                         Image(systemName: active ? "circle.fill" : "circle")
                             .font(.system(size: 10))
-                            .foregroundColor(active ? Color("BrandBlue") : Color(.systemGray3))
+                            .foregroundColor(active ? Color("BrandBlue") : Color("Muted"))
                         Text(server.name)
                             .font(.system(size: 16, weight: .bold))
                             .lineLimit(1)
@@ -174,7 +177,7 @@ public struct ServersView: View {
                                 .padding(.vertical, 2)
                                 .foregroundColor(Color("BrandOrange"))
                                 .background(Color("BrandOrange").opacity(0.14))
-                                .cornerRadius(6)
+                                .clipShape(Capsule())
                         }
                         Spacer()
                         latencyPill(server)
@@ -195,7 +198,7 @@ public struct ServersView: View {
             .buttonStyle(PlainButtonStyle())
             Divider()
                 .padding(.top, 10)
-            HStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 0) {
                 Button(action: { test(server) }) {
                     if testingId == server.id {
                         ActivityIndicator()
@@ -223,12 +226,12 @@ public struct ServersView: View {
             .buttonStyle(PlainButtonStyle())
             .padding(.top, 6)
         }
-        .padding(14)
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
+        .padding(UnbarRadius.cardPadding)
+        .background(Color("Surface"))
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(active ? Color("BrandBlue") : Color(.systemGray4), lineWidth: active ? 2 : 1)
+            RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous)
+                .stroke(active ? Color("BrandBlue") : Color("Outline"), lineWidth: active ? 2 : 1)
         )
     }
 
@@ -246,7 +249,7 @@ public struct ServersView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(Color("BrandBlue").opacity(0.12))
-                .cornerRadius(12)
+                .clipShape(Capsule())
         }
     }
 
@@ -266,9 +269,9 @@ public struct ServersView: View {
                 subscriptionCard
                 ForEach(subscriptions.subscriptions) { sub in
                     subscriptionRow(sub)
-                        .padding(14)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(14)
+                        .padding(UnbarRadius.cardPadding)
+                        .background(Color("Surface"))
+                        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
                 }
             }
         }
@@ -279,7 +282,7 @@ public struct ServersView: View {
     /// auto-update toggle row, and the HTTPS note.
     private var subscriptionCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 Image(systemName: "book")
                     .foregroundColor(Color("BrandOrange"))
                 Text(loc.tr("subscription.title"))
@@ -296,11 +299,11 @@ public struct ServersView: View {
                              isOn: $settings.autoUpdateSubscriptions)
             NoteText(loc.tr("subscription.https_note"))
         }
-        .padding(14)
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
+        .padding(UnbarRadius.cardPadding)
+        .background(Color("Surface"))
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous)
                 .stroke(Color("BrandOrange"), lineWidth: 1.5)
         )
     }
@@ -341,9 +344,9 @@ public struct ServersView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Color("BrandOrange"))
-                .cornerRadius(16)
+                .clipShape(Capsule())
         case .updating:
-            HStack(spacing: 6) {
+            HStack(alignment: .center, spacing: 6) {
                 ActivityIndicator(color: UIColor(named: "BrandOrange"))
                 Text(loc.tr("subscription.updating"))
                     .font(.footnote)
@@ -498,7 +501,7 @@ public struct ServersView: View {
     private func addCard(icon: String, title: String, subtitle: String,
                          action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 24))
                     .foregroundColor(Color("BrandOrange"))
@@ -840,17 +843,36 @@ public struct TutorialAccordion: View {
     @State private var expanded = false
     @State private var openTopics: Set<String> = []
 
+    /// (1.0.2): on Home and Servers the accordion stands on the page
+    /// background, so it is drawn as a top-level card (24pt radius,
+    /// 16pt padding, like Android's tutorial card). In Settings it
+    /// sits inside a Form row and stays bare.
+    public let asCard: Bool
+
     // The header title is a parameter: Home passes "guide.title";
     // Servers/Settings use the default "tutorial.title".
-    public init(titleKey: String = "tutorial.title", sections: [TutorialSection]) {
+    public init(titleKey: String = "tutorial.title", sections: [TutorialSection], asCard: Bool = false) {
         self.titleKey = titleKey
         self.sections = sections
+        self.asCard = asCard
     }
 
     public var body: some View {
+        if asCard {
+            content
+                .padding(.horizontal, UnbarRadius.cardPadding)
+                .padding(.vertical, 10)
+                .background(Color("Surface"))
+                .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: { expanded.toggle() }) {
-                HStack {
+                HStack(alignment: .center) {
                     Image(systemName: "book")
                         .foregroundColor(Color("BrandOrange"))
                     Text(loc.tr(titleKey))
@@ -891,7 +913,7 @@ public struct TutorialAccordion: View {
                     openTopics.insert(topic.titleKey)
                 }
             }) {
-                HStack {
+                HStack(alignment: .center) {
                     Text(loc.tr(topic.titleKey))
                         .font(.subheadline)
                         .foregroundColor(.primary)

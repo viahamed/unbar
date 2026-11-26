@@ -42,10 +42,21 @@ public enum SharedKey {
 
 /// Resolver selection: the bundled list, or the user's own resolvers.
 /// Built-in uses the bundled Iranian resolvers through discovery; Custom
-/// uses only the resolvers typed in the settings field.
+/// uses only the resolvers typed in the settings field. (1.0.2) Import
+/// uses only the list imported from a .txt file: it behaves exactly
+/// like Custom (no discovery, only its own list is scanned and used)
+/// but keeps its own stored list, so switching between Custom and
+/// Import never loses either one. The extension treats every mode
+/// other than "builtIn" the same way, so it needs no change for it.
 public enum ResolverMode: String, Codable, CaseIterable {
     case builtIn
     case custom
+    case imported = "import"
+
+    /// Custom and Import: the user's own list, no discovery.
+    public var usesOwnList: Bool {
+        return self != .builtIn
+    }
 }
 
 /// VPN or SOCKS. VPN (Network Extension) is primary on iOS; SOCKS is
@@ -63,7 +74,7 @@ public enum ConnectionMode: String, Codable, CaseIterable {
 public struct TunnelConfig: Codable {
     public var zone: String
     public var serverKeyB64: String
-    public var resolverMode: String          // "builtIn" | "custom"
+    public var resolverMode: String          // "builtIn" | "custom" | "import"
     public var resolvers: String             // comma-separated "host:port", "" = bundled list via discovery
     public var discoveryEnabled: Bool
     /// (1.0.53, item 40): the rest of the remembered pool (pool

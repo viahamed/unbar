@@ -25,6 +25,7 @@ import com.breakthebarriers.unbar.model.AppSettings
 import com.breakthebarriers.unbar.model.AppThemeMode
 import com.breakthebarriers.unbar.model.ConnectionMode
 import com.breakthebarriers.unbar.model.DiscoveryMode
+import com.breakthebarriers.unbar.model.userResolvers
 import com.breakthebarriers.unbar.model.InstalledAppInfo
 import com.breakthebarriers.unbar.model.LogEntry
 import com.breakthebarriers.unbar.model.PerAppRoutingMode
@@ -399,8 +400,8 @@ fun autoSelectFastestServer() {
 
 fun exportServerUri(server: ServerEntity): String {
     val current = settings.value
-    val resolvers = if (current.discoveryEnabled && current.discoveryMode == DiscoveryMode.CUSTOM) {
-        current.customResolvers
+    val resolvers = if (current.discoveryEnabled && current.discoveryMode != DiscoveryMode.BUILTIN) {
+        current.userResolvers()
     } else {
         emptyList()
     }
@@ -740,6 +741,22 @@ fun setResolverConfig(
             tunnelManager.clearScanResults()
         }
         settingsRepo.setResolverConfig(discoveryEnabled, mode, customResolvers, country)
+    }
+}
+
+// (1.0.2): store a cleaned resolver file and switch to Import.
+// Scan results belong to the previous list, so they are cleared.
+fun importResolverList(entries: List<String>, fileName: String) {
+    viewModelScope.launch {
+        tunnelManager.clearScanResults()
+        settingsRepo.setImportedResolvers(entries, fileName, System.currentTimeMillis())
+    }
+}
+
+fun clearImportedResolvers() {
+    viewModelScope.launch {
+        tunnelManager.clearScanResults()
+        settingsRepo.clearImportedResolvers()
     }
 }
 

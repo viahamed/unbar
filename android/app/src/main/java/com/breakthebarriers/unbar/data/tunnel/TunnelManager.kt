@@ -18,6 +18,7 @@ import com.breakthebarriers.unbar.data.logs.LogStore
 import com.breakthebarriers.unbar.model.AppSettings
 import com.breakthebarriers.unbar.model.ConnectionMode
 import com.breakthebarriers.unbar.model.DiscoveryMode
+import com.breakthebarriers.unbar.model.userResolvers
 import com.breakthebarriers.unbar.model.TunnelStats
 import com.breakthebarriers.unbar.model.TunnelStatus
 import com.breakthebarriers.unbar.model.TunnelUiSnapshot
@@ -432,7 +433,7 @@ suspend fun testServer(server: ServerEntity): Result<Pair<Long, String>> = withC
 fun resolveListForSettings(settings: AppSettings): List<String> {
     return when (settings.discoveryMode) {
         DiscoveryMode.BUILTIN -> rememberedAddrs.take(ResolverHealthStore.SEED_COUNT)
-        DiscoveryMode.CUSTOM -> normalizeResolvers(settings.customResolvers.joinToString(","))
+        DiscoveryMode.CUSTOM, DiscoveryMode.IMPORT -> normalizeResolvers(settings.userResolvers().joinToString(","))
     }
 }
 
@@ -443,7 +444,7 @@ fun resolveListForSettings(settings: AppSettings): List<String> {
 fun candidateListForSettings(settings: AppSettings): List<String> {
     return when (settings.discoveryMode) {
         DiscoveryMode.BUILTIN -> rememberedAddrs.drop(ResolverHealthStore.SEED_COUNT)
-        DiscoveryMode.CUSTOM -> emptyList()
+        DiscoveryMode.CUSTOM, DiscoveryMode.IMPORT -> emptyList()
     }
 }
 
@@ -453,7 +454,7 @@ fun candidateListForSettings(settings: AppSettings): List<String> {
 fun probeListForSettings(settings: AppSettings): List<String> {
     return when (settings.discoveryMode) {
         DiscoveryMode.BUILTIN -> rememberedAddrs
-        DiscoveryMode.CUSTOM -> normalizeResolvers(settings.customResolvers.joinToString(","))
+        DiscoveryMode.CUSTOM, DiscoveryMode.IMPORT -> normalizeResolvers(settings.userResolvers().joinToString(","))
     }
 }
 
@@ -522,7 +523,7 @@ private fun launchFullScan(manual: Boolean) {
                 val resolversCsv = if (discovery) {
                     ""
                 } else {
-                    normalizeResolvers(settings.customResolvers.joinToString(",")).joinToString(",")
+                    normalizeResolvers(settings.userResolvers().joinToString(",")).joinToString(",")
                 }
                 // (1.0.35): hand the selected server's credentials
                 // to the scan's stage-2 vetting, so it can Soar-vet

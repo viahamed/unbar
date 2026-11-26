@@ -286,3 +286,27 @@
 "tutorial.home.time.body" = "How long the current session has been up. It restarts on every reconnect.";
 "tutorial.home.streams.title" = "Streams";
 "tutorial.home.streams.body" = "How many streams the tunnel is currently carrying. More streams usually means more apps or downloads active.";
+
+/* (1.0.2) Resolver list import */
+"settings.resolver_import" = "Import";
+"import.note" = "Load a .txt file of resolver IPs. Single IPs and ranges (e.g. 2.188.21.0/24), one per line or separated by commas or spaces.";
+"import.note_custom_kept" = "The app cleans and sorts the list automatically. Your Custom list stays as it is.";
+"import.choose_file" = "Choose .txt file";
+"import.replace_file" = "Replace file";
+"import.view_list" = "View list";
+"import.hide_list" = "Hide list";
+"import.clear" = "Clear";
+"import.file_meta" = "%1$d entries · %2$d addresses";
+"import.list_more" = "… %1$d more";
+"import.reading" = "Reading file…";
+"import.over_cap" = "The list expands to %1$d addresses; a scan covers the first %2$d.";
+"import.error_too_large" = "File is too large (max 1 MB).";
+"import.error_unreadable" = "Could not read this file.";
+"import.error_empty" = "No valid IPv4 resolvers in this file. The previous list was kept.";
+"import.fixed_title" = "Auto-fixed %1$d entries";
+"import.fix_cleaned" = "%1$d cleaned (spaces, symbols, Persian digits, extra text)";
+"import.fix_duplicates" = "%1$d duplicates removed";
+"import.fix_inside_range" = "%1$d entries already inside a range removed";
+"import.fix_ranges" = "%1$d ranges corrected to their network address";
+"import.fix_dash" = "%1$d dash ranges converted to CIDR";
+"import.ignored" = "Ignored %1$d lines (IPv4 resolvers only): %2$@";

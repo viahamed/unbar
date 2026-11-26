@@ -22,7 +22,7 @@
 
 - وب‌سایت: [btb.onl](https://btb.onl)
 - کانال تلگرام: [@Break_The_Barriers](https://t.me/Break_The_Barriers)
-- اولین نسخهٔ عمومی: **1.0.0** (بیلد 1) — اندروید و iOS
+- نسخهٔ فعلی: **1.0.2** (بیلد 3) — اندروید و iOS
 
 ## آنبار چیست
 
@@ -38,6 +38,7 @@
 - **حالت SOCKS (پروکسی):** فقط برنامه‌هایی که پروکسی را تنظیم کرده‌اند از تونل استفاده می‌کنند. پروکسی SOCKS محلی روی `127.0.0.1:1080` (قابل تغییر) اجرا می‌شود و رمز اختیاری دارد.
 - **اسکن ریزالورها:** ریزالورهای DNS را در سه مرحله بررسی می‌کند — غربال DNS و RTT، هندشیک Soar روی جواب‌دهنده‌ها، و رتبه‌بندی و ذخیرهٔ موارد تأییدشده در یک استخر. فقط ریزالورهایی که هندشیک Soar را با موفقیت پشت سر بگذارند «سالم» محسوب می‌شوند؛ ریزالورهای ازکارافتاده به‌صورت خودکار جایگزین می‌شوند.
 - **لیست داخلی ریزالورهای ایرانی:** در حالت داخلی، از لیست داخلی ریزالورهای ایران استفاده می‌شود؛ در حالت سفارشی فقط ریزالورهایی که خودتان وارد کرده‌اید به کار می‌روند. بازه‌های CIDR هم پشتیبانی می‌شوند.
+- **وارد کردن لیست ریزالور (Import):** یک فایل ‎.txt‎ با آی‌پی تکی و رنج (CIDR یا خط‌تیره‌دار) انتخاب کنید. برنامه لیست را خودکار تمیز می‌کند (عدد فارسی، فاصله و متن اضافه، ‎:53‎، تکراری‌ها، رنج‌های تودرتو)، مرتب می‌کند و گزارش اصلاحات را نشان می‌دهد. این لیست جدا از لیست سفارشی ذخیره می‌شود و دقیقاً مثل آن اسکن می‌شود. حداکثر ۱ مگابایت.
 - **ایمپورت و اشتراک‌گذاری کانفیگ:** لینک `unbar://`، فایل JSON، یا اسکن کد QR. خروجی کانفیگ هم به‌صورت لینک یا QR صادر می‌شود؛ رمز پروکسی SOCKS محلی هرگز در خروجی قرار نمی‌گیرد.
 - **اشتراک (Subscription):** با وارد کردن یک لینک HTTPS، لیست سرورها به‌صورت خودکار از آن لینک به‌روز می‌شود. سرورهایی که دستی اضافه کرده‌اید دست نمی‌خورند. فقط لینک‌های HTTPS پذیرفته می‌شوند.
 - **تست تأخیر و انتخاب خودکار:** تأخیر هر سرور از داخل تونل اندازه‌گیری می‌شود و انتخاب خودکار سریع‌ترین سرور را برای اتصال برمی‌گزیند.
@@ -47,7 +48,7 @@
 - **MTU خودکار و اندازهٔ جواب DNS:** هر دو به‌صورت خودکار بهترین مقدار را انتخاب می‌کنند؛ در صورت مشکل، مقدار دستی هم قابل تنظیم است.
 - **آمار زنده:** سرعت واقعی روی سیم، تأخیر از داخل تونل، امتیاز کیفیت اتصال (۰ تا ۱۰۰)، تعداد ریزالورهای فعال، مصرف امروز و این ماه، زمان اتصال، مجموع نشست و تعداد استریم‌ها. کارت وضعیت IP و کشور سرور را هم نشان می‌دهد.
 - **سابقهٔ اتصال**؛ در اندروید: کاشی تنظیمات سریع و ویجت صفحهٔ اصلی.
-- **فارسی و انگلیسی، تم روشن و تیره.**
+- **فارسی و انگلیسی، تم روشن و تیرهٔ «ابری».**
 - **بررسی به‌روزرسانی:** از صفحهٔ تنظیمات می‌توانید بررسی کنید نسخهٔ جدیدی منتشر شده یا نه. در iOS صفحهٔ ریلیز در سافاری باز می‌شود؛ نصب از داخل برنامه ممکن نیست.
 - همهٔ تنظیمات به‌صورت خودکار ذخیره می‌شوند؛ دکمهٔ ذخیرهٔ جداگانه‌ای وجود ندارد.
 
@@ -126,7 +127,7 @@ curl -fsSL https://raw.githubusercontent.com/viahamed/unbar-server/main/install.
 ## تنظیمات
 
 - **اتصال:** حالت VPN یا SOCKS، حالت TCP، ‏MTU‏، اندازهٔ جواب DNS؛ در iOS حالت فقط از تنظیمات عوض می‌شود
-- **ریزالورها:** حالت داخلی یا سفارشی، لیست ریزالورهای سفارشی، اسکن ریزالورها، ریزالورهای سالم ذخیره‌شده
+- **ریزالورها:** حالت داخلی، سفارشی یا وارد کردن (فایل ‎.txt‎)، لیست ریزالورهای سفارشی، اسکن ریزالورها، ریزالورهای سالم ذخیره‌شده
 - **پروکسی SOCKS محلی:** پورت، نام کاربری و رمز (اختیاری)
 - **محدودیت پهنای باند:** سقف آپلود و دانلود
 - **مسیریابی:** عبور مستقیم ایران، لیست عبور سفارشی، مسیریابی به‌ازای هر برنامه
@@ -240,7 +241,7 @@ Unbar carries your internet traffic inside DNS queries, through a server of your
 
 - Website: [btb.onl](https://btb.onl)
 - Telegram channel: [@Break_The_Barriers](https://t.me/Break_The_Barriers)
-- First public release: **1.0.0** (build 1) — Android and iOS
+- Current version: **1.0.2** (build 3) — Android and iOS
 
 ## What Unbar is
 
@@ -256,6 +257,7 @@ As the About screen puts it: "A DNS-tunnel VPN client based on Soar, by Break Th
 - **SOCKS (proxy) mode:** only apps configured to use the proxy use the tunnel. A local SOCKS proxy runs on `127.0.0.1:1080` (changeable) with optional credentials.
 - **Resolver scan:** checks DNS resolvers in three stages — DNS and RTT screening, a Soar handshake with every responder, then ranking and saving the verified ones into one pool. Only resolvers that pass the Soar handshake count as healthy; dead ones are replaced automatically.
 - **Built-in Iranian resolver list:** in Built-in mode the built-in list of Iranian resolvers is used; in Custom mode only the resolvers you entered are used. CIDR ranges are supported.
+- **Resolver import:** pick a .txt file of single IPs and ranges (CIDR or dash ranges). The app cleans it automatically (Persian digits, stray spaces and text, `:53`, duplicates, nested ranges), sorts it and shows a report of what it fixed. The imported list is stored separately from your Custom list and scanned exactly like it. Max 1 MB.
 - **Config import and sharing:** `unbar://` links, pasted JSON, or QR code scanning. Configs can also be exported as a link or QR code; local SOCKS proxy credentials are never included in exports.
 - **Subscriptions:** enter an HTTPS subscription link and the server list updates from it automatically. Manually added servers are left untouched. Only HTTPS links are accepted.
 - **Latency test and auto-select:** each server's latency is measured through the tunnel, and auto-select picks the fastest server for the connection.
@@ -265,7 +267,7 @@ As the About screen puts it: "A DNS-tunnel VPN client based on Soar, by Break Th
 - **Auto MTU and DNS answer size:** both pick the best value automatically; manual values are available if you run into trouble.
 - **Live stats:** true wire speed, latency measured through the tunnel, a connection quality score (0–100), active resolver count, today and this-month usage, connection time, session total, and stream count. The status card also shows the server's IP and country.
 - **Connection history**; on Android: a Quick Settings tile and a home-screen widget.
-- **English and Persian, light and dark themes.**
+- **English and Persian, light and dark "Cloud" themes.**
 - **Check for update:** check for a newer release from the Settings page. On iOS the release page opens in Safari; installing from inside the app is not possible.
 - Every setting saves automatically; there is no separate Save button.
 
@@ -344,7 +346,7 @@ After install, `unbar` opens the menu and the Setup wizard walks you through it.
 ## Settings
 
 - **Connection:** VPN or SOCKS mode, TCP mode, MTU, DNS answer size; on iOS the mode is switched from Settings only
-- **Resolvers:** Built-in or Custom mode, custom resolver list, resolver scan, remembered healthy resolvers
+- **Resolvers:** Built-in, Custom or Import (.txt file) mode, custom resolver list, resolver scan, remembered healthy resolvers
 - **Local SOCKS proxy:** port, username and password (optional)
 - **Bandwidth limit:** upload and download caps
 - **Routing:** Iran geo bypass, custom bypass list, per-app routing

@@ -337,14 +337,21 @@ project_release = config("Release", "config:project:release",
                              "VALIDATE_PRODUCT": "YES",
                          }))
 
+# One version for both targets (an app extension must match its host
+# app): Info.plists read these build settings.
+MARKETING_VERSION = "1.0.2"
+CURRENT_PROJECT_VERSION = "3"
+
 APP_COMMON = {
     "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
     "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
     "CODE_SIGN_ENTITLEMENTS": "Unbar/Unbar.entitlements",
     "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": CURRENT_PROJECT_VERSION,
     "FRAMEWORK_SEARCH_PATHS": ["$(inherited)", "$(PROJECT_DIR)"],
     "INFOPLIST_FILE": "Unbar/Info.plist",
     "IPHONEOS_DEPLOYMENT_TARGET": "14.0",
+    "MARKETING_VERSION": MARKETING_VERSION,
     "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks"],
     "PRODUCT_BUNDLE_IDENTIFIER": "org.breakthebarriers.unbar",
     "PRODUCT_NAME": "$(TARGET_NAME)",
@@ -358,9 +365,11 @@ EXT_COMMON = {
     "APPLICATION_EXTENSION_API_ONLY": "YES",
     "CODE_SIGN_ENTITLEMENTS": "UnbarTunnel/UnbarTunnel.entitlements",
     "CODE_SIGN_STYLE": "Automatic",
+    "CURRENT_PROJECT_VERSION": CURRENT_PROJECT_VERSION,
     "FRAMEWORK_SEARCH_PATHS": ["$(inherited)", "$(PROJECT_DIR)"],
     "INFOPLIST_FILE": "UnbarTunnel/Info.plist",
     "IPHONEOS_DEPLOYMENT_TARGET": "14.0",
+    "MARKETING_VERSION": MARKETING_VERSION,
     "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks",
                                 "@executable_path/../../Frameworks"],
     "PRODUCT_BUNDLE_IDENTIFIER": "org.breakthebarriers.unbar.UnbarTunnel",

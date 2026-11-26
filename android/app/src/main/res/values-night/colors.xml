@@ -2,8 +2,8 @@
 <resources>
     <!-- Home-screen widget colors (night). Day values are in
          res/values/colors.xml. -->
-    <color name="widget_bg">#131E32</color>
+    <color name="widget_bg">#18212E</color>
     <color name="widget_title">#FFFFFF</color>
-    <color name="widget_body">#F1F5F9</color>
-    <color name="widget_muted">#94A3B8</color>
+    <color name="widget_body">#E3EAF3</color>
+    <color name="widget_muted">#8FA0B6</color>
 </resources>
