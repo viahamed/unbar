@@ -47,6 +47,7 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [x] Separate stored list (imported_resolvers, import_file_name, imported_at_ms); DiscoveryMode.IMPORT behaves like CUSTOM in TunnelManager (no discovery; scan/connect use only this list). Scan UI unchanged (same 3-stage stepper).
 - [x] Limits unchanged from the core: ranges up to /20; scan cap 5000 addresses (warning shown).
 - [x] Changelogs 31-33 (en-US, fa) updated.
+- [x] Web demo: Import chip + file card (sample resolvers-iran.txt), fix report, Replace/View list/Clear. en-US screenshot 4 now shows Import mode with the scan stepper.
 - [ ] Not compiled here (no Android SDK). Cleaner logic was compiled and tested with kotlinc 2.0.21 on JVM. Needs CI build + device test (pick file, replace, clear, scan, connect, switch Custom<->Import keeps both lists).
 
 ## Capsule menu + text centring (2026-11-26)
@@ -55,3 +56,7 @@ Branch: `release-1.0.2` (from `main` / v1.0.1, 93a6524). Not pushed.
 - [x] App-wide: typography with text centred in its line box (LineHeightStyle Center) so icon+label rows, chips and pills stay vertically centred.
 - [x] Web demo capsule updated to match; en-US F-Droid screenshots re-rendered.
 - [x] Nested-radius rule app-wide (outer = inner + padding): top-level cards (Settings, About, Tutorial, Servers empty state, Add dialog) 24dp with 16dp padding; panels, list boxes, text fields, menus and Add cards inside them 8dp (Theme shapes extraSmall/small = 8dp); capsule pill 11dp (16dp capsule, 5dp inset); mode switch 10dp track, 2dp inset, 8dp segment (already correct). Small floating pills/badges that do not hug a container edge keep their shape. Web demo matched; screenshots re-rendered.
+
+## On push/build (user rule, 2026-11-26 15:27)
+- [ ] When the user says push and build: also update the GitHub repo to match 1.0.2 — README (features, incl. resolver Import in the Resolvers section; version 1.0.2; Android + iOS notes), repo description/topics if needed.
+- [ ] GitHub release v1.0.2 body: full list of what changed in this version (Cloud theme, new logo/icon, resolver Import, capsule menu, nested-radius/centring UX pass, iOS parity). Show the exact text to the user before publishing.
