@@ -63,7 +63,10 @@ data class ResolverScanStatus(
     // is what the stepper's stage 2 shows.
     val scanVerifiedCount: Int = 0,
     val testedResolvers: Int = 0,
-    val totalResolvers: Int = 0
+    val totalResolvers: Int = 0,
+    // (1.0.3): addresses the core left out of the resolver list
+    // (ranges larger than /20 skipped, or the 5000 cap). 0 = none.
+    val resolverListDropped: Int = 0
 )
 
 class TunnelManager( private val context: Context, private val settingsRepo:
@@ -136,7 +139,8 @@ val resolverScanStatus: StateFlow<ResolverScanStatus> = combine(
                 verifiedCount = snap.stats.verifiedCount,
                 scanVerifiedCount = snap.stats.scanVerifiedCount,
                 testedResolvers = snap.stats.testedResolvers,
-                totalResolvers = snap.stats.totalResolvers
+                totalResolvers = snap.stats.totalResolvers,
+                resolverListDropped = snap.stats.resolverListDropped
             )
         }
         .distinctUntilChanged()
@@ -172,6 +176,26 @@ init {
         // (1.0.53): app start is a re-scan trigger (likely
         // disconnected): a thin/stale pool refreshes silently.
         maybeBackgroundRescan()
+    }
+}
+
+// (1.0.3): per-network resolver memory. Called by the VPN service
+// when the underlying (non-VPN) network changes and before every
+// connect: records the network key and reloads the in-memory pool
+// (this network's own pool, else the global pool), so the next
+// connect starts from resolvers known healthy on THIS network.
+suspend fun onUnderlyingNetworkChanged(networkKey: String?) {
+    val previous = ResolverHealthStore.currentNetworkKey.value
+    ResolverHealthStore.setCurrentNetworkKey(networkKey)
+    val pool = runCatching { healthStore.load() }.getOrDefault(emptyList())
+    rememberedAddrs = pool.map { it.addr }
+    // A different network: the probe list handed to the core and
+    // the last-synced verified set belong to the old network.
+    if (previous != networkKey) {
+        lastSyncedVerifiedAddrs = emptySet()
+        lastSeenProbeAddrs = emptySet()
+        val label = networkKey?.substringBefore(':') ?: "global"
+        logStore.info("TunnelManager", "Resolver memory: network=$label pool=${pool.size}")
     }
 }
 
@@ -336,9 +360,16 @@ fun applyLiveSettings(settings: AppSettings) {
         runCatching {
             bridge.setBandwidthLimit(settings.uploadLimitBps, settings.downloadLimitBps)
             bridge.setGeoBypass(settings.iranGeoBypass)
+            // (1.0.3): the answer size is stored on the Go tunnel here
+            // but only takes effect on the NEXT connect (Soar fixes
+            // each path's answer class at path creation) — the log
+            // says so instead of claiming it was applied live.
             bridge.setMaxAnswer(settings.maxAnswer)
+            // (1.0.3): scan transport — the next scan and the
+            // background pool probe pick it up at once.
+            bridge.setScanTransport(settings.scanUdpTcp)
             bridge.setBypassDomains(settings.customBypassList)
-            logStore.info("TunnelManager", "Applied live routing and bandwidth settings")
+            logStore.info("TunnelManager", "Applied live routing and bandwidth settings; DNS answer size applies on next connect")
         }.onFailure {
             logStore.warn("TunnelManager", "Failed to apply live settings: ${it.message}")
         }
@@ -545,6 +576,8 @@ private fun launchFullScan(manual: Boolean) {
                     }
                 }
                 bridge.setProbeResolvers(resolversCsv, discovery)
+                // (1.0.3): scan over UDP or UDP + TCP (Settings).
+                bridge.setScanTransport(settings.scanUdpTcp)
                 bridge.testResolvers()
             }.onFailure {
                 logStore.warn("TunnelManager", "Test resolvers failed: ${it.message}")
@@ -752,20 +785,16 @@ private fun syncVerifiedResolvers(stats: TunnelStats) {
             } else {
                 emptySet()
             }
-            val byAddr = healthStore.load().associateBy { it.addr }.toMutableMap()
-            evicted.forEach { byAddr.remove(it) }
-            stats.verifiedResolvers.forEach { v ->
-                byAddr[v.addr] = RememberedResolver(v.addr, v.rttMs, nowMs)
-            }
-            // Drop rows the pre-fix builds saved with a 0 ping: a
+            // (1.0.3): merged into the global pool AND the current
+            // network's own pool (carrier MCC-MNC / hashed Wi-Fi id).
+            // Rows with a 0 ping (saved by pre-fix builds: a
             // verified path that never produced a measurable answer
-            // time. They sort to the top of the remembered list and
-            // never get re-measured, because the live verified set
-            // (which overwrites rows here) already filters RTT 0 out.
-            val merged = byAddr.values
-                .filter { it.rttMs > 0 }
-                .sortedBy { it.rttMs }
-            healthStore.save(merged)
+            // time) are dropped by the store. The returned list is
+            // the effective pool: this network's, else the global.
+            val merged = healthStore.mergeVerified(
+                verified = stats.verifiedResolvers.map { v -> RememberedResolver(v.addr, v.rttMs, nowMs, v.transport) },
+                evicted = evicted
+            )
             rememberedAddrs = merged.map { it.addr }
             // Hand the pool to the Go core when it changed, so its
             // 30s loop rotates over the fresh pool. (The old code

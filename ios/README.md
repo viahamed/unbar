@@ -171,8 +171,8 @@ default route `0.0.0.0/0`, DNS `10.8.0.1` (all domains), MTU 1500.
   (iOS 15) and `NavigationStack` (iOS 16) are still avoided. Resolver
   import uses `.fileImporter` (iOS 14) with security-scoped access.
 * Version: `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` are build
-  settings set in `tools/generate_project.py` for both targets (1.0.2,
-  build 3); the Info.plists read them.
+  settings set in `tools/generate_project.py` for both targets (1.0.3,
+  build 4); the Info.plists read them.
 * The app lifecycle is `UIApplicationDelegate` + `UISceneDelegate`
   with a `UIHostingController` (the delegate pattern, kept for the
   shared scene handling).

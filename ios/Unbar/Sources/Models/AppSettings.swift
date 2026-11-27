@@ -43,8 +43,9 @@ public struct AppSettingsSnapshot: Codable {
     public var importFileName: String
     public var importedAtMs: Int64
     public var mtu: Int                  // 0 = Auto (measure interface MTU at connect), else 1280/1400/1500
-    public var maxAnswer: Int            // DNS answer-size cap: 0 = Auto (probe up to 1232), else 512/768/1024/1232
+    public var maxAnswer: Int            // DNS answer-size cap: 0 = Auto (probe up to 1232), else (1.0.3) 512/752/992
     public var tcpModeEnabled: Bool      // false = "auto", true = "on"
+    public var scanUdpTcp: Bool          // (1.0.3) resolver scan: false = UDP, true = UDP + TCP
     public var autoUpdateSubscriptions: Bool
     public var socksPort: Int
     public var socksUsername: String
@@ -71,6 +72,7 @@ public struct AppSettingsSnapshot: Codable {
         mtu: 0,
         maxAnswer: 0,
         tcpModeEnabled: false,
+        scanUdpTcp: false,
         autoUpdateSubscriptions: false,
         socksPort: 1080,
         socksUsername: "",
@@ -88,7 +90,7 @@ public struct AppSettingsSnapshot: Codable {
 
     public init(connectionMode: String, resolverMode: String, customResolvers: String,
                 importedResolvers: [String] = [], importFileName: String = "", importedAtMs: Int64 = 0,
-                mtu: Int, maxAnswer: Int, tcpModeEnabled: Bool, autoUpdateSubscriptions: Bool,
+                mtu: Int, maxAnswer: Int, tcpModeEnabled: Bool, scanUdpTcp: Bool = false, autoUpdateSubscriptions: Bool,
                 socksPort: Int, socksUsername: String, bandwidthUpKBps: Int,
                 bandwidthDownKBps: Int, geoBypass: Bool, bypassDomains: String,
                 onDemandEnabled: Bool, autoSelectFastest: Bool, appearance: String,
@@ -102,6 +104,7 @@ public struct AppSettingsSnapshot: Codable {
         self.mtu = mtu
         self.maxAnswer = maxAnswer
         self.tcpModeEnabled = tcpModeEnabled
+        self.scanUdpTcp = scanUdpTcp
         self.autoUpdateSubscriptions = autoUpdateSubscriptions
         self.socksPort = socksPort
         self.socksUsername = socksUsername
@@ -128,6 +131,7 @@ public struct AppSettingsSnapshot: Codable {
         mtu = try c.decodeIfPresent(Int.self, forKey: .mtu) ?? 0
         maxAnswer = try c.decodeIfPresent(Int.self, forKey: .maxAnswer) ?? 0
         tcpModeEnabled = try c.decodeIfPresent(Bool.self, forKey: .tcpModeEnabled) ?? false
+        scanUdpTcp = try c.decodeIfPresent(Bool.self, forKey: .scanUdpTcp) ?? false
         autoUpdateSubscriptions = try c.decodeIfPresent(Bool.self, forKey: .autoUpdateSubscriptions) ?? false
         socksPort = try c.decodeIfPresent(Int.self, forKey: .socksPort) ?? 1080
         socksUsername = try c.decodeIfPresent(String.self, forKey: .socksUsername) ?? ""
@@ -162,6 +166,8 @@ public final class AppSettings: ObservableObject {
     @Published public var mtu: Int = 0 { didSet { save() } }
     @Published public var maxAnswer: Int = 0 { didSet { save() } }
     @Published public var tcpModeEnabled: Bool = false { didSet { save() } }
+    // (1.0.3): resolver scan over UDP only (false) or UDP + TCP (true).
+    @Published public var scanUdpTcp: Bool = false { didSet { save() } }
     @Published public var autoUpdateSubscriptions: Bool = false { didSet { save() } }
     @Published public var socksPort: Int = 1080 { didSet { save() } }
     @Published public var socksUsername: String = "" { didSet { save() } }
@@ -269,6 +275,11 @@ public final class AppSettings: ObservableObject {
         return tcpModeEnabled ? "on" : "auto"
     }
 
+    /// (1.0.3): scan transport handed to the core (SetScanTransport).
+    public var scanTransportString: String {
+        return scanUdpTcp ? "udp+tcp" : "udp"
+    }
+
     private init() {
         load()
     }
@@ -307,11 +318,28 @@ public final class AppSettings: ObservableObject {
         }
     }
 
-    /// DNS answer-size cap (1.0.28): only Auto (0) or 512/768/1024/
-    /// 1232 are valid; anything else (e.g. a value stored by an older
-    /// build) reads back as Auto.
+    /// (1.0.3) The manual DNS answer-size choices: Soar class
+    /// boundaries (512+48k). Auto (0) is offered separately.
+    public static let manualMaxAnswerOptions = [512, 752, 992]
+
+    /// DNS answer-size cap. (1.0.3): Soar only works in answer-size
+    /// classes of 512+48k bytes (512, 560, ... 1184, 1232) and floors
+    /// any other value to its class, so the manual choices are class
+    /// boundaries: Auto (0) / 512 / 752 / 992. Legacy values migrate:
+    /// 768 -> 752, 1024 -> 992 (what Soar actually used), 1232 ->
+    /// Auto (1232 is exactly what Auto probes up to). Any other class
+    /// boundary below 1232 is kept; anything else reads back as Auto.
+    /// The load path runs every stored value through this, so the
+    /// migrated value is saved on the next settings save.
     public static func validatedMaxAnswer(_ v: Int) -> Int {
-        return [0, 512, 768, 1024, 1232].contains(v) ? v : 0
+        switch v {
+        case 0: return 0
+        case 768: return 752
+        case 1024: return 992
+        case let x where x >= 1232: return 0
+        case let x where x >= 512 && (x - 512) % 48 == 0: return x
+        default: return 0
+        }
     }
 
     // MTU (1.0.34): 0 = Auto, otherwise 1280/1400/1500.
@@ -331,6 +359,7 @@ public final class AppSettings: ObservableObject {
             mtu: Self.validatedMTU(mtu),
             maxAnswer: Self.validatedMaxAnswer(maxAnswer),
             tcpModeEnabled: tcpModeEnabled,
+            scanUdpTcp: scanUdpTcp,
             autoUpdateSubscriptions: autoUpdateSubscriptions,
             socksPort: socksPort,
             socksUsername: socksUsername,
@@ -377,6 +406,7 @@ public final class AppSettings: ObservableObject {
         mtu = Self.validatedMTU(snap.mtu)
         maxAnswer = Self.validatedMaxAnswer(snap.maxAnswer)
         tcpModeEnabled = snap.tcpModeEnabled
+        scanUdpTcp = snap.scanUdpTcp
         autoUpdateSubscriptions = snap.autoUpdateSubscriptions
         socksPort = snap.socksPort
         socksUsername = snap.socksUsername
@@ -483,7 +513,8 @@ public final class AppSettings: ObservableObject {
             geoBypass: geoBypass,
             bypassDomains: bypassDomains,
             candidates: connectCandidates,
-            probeResolvers: connectProbeResolvers
+            probeResolvers: connectProbeResolvers,
+            scanTransport: scanTransportString
         )
     }
 }

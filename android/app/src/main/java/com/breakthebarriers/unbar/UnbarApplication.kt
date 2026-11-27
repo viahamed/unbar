@@ -57,6 +57,8 @@ class UnbarApplication : MultiDexApplication() {
             container.settingsRepository.settingsFlow.first().let {
                 container.logStore.enabled = it.diagnosticLogsEnabled
             }
+            // (1.0.3): stored DNS answer size 768/1024/1232 -> 752/992/Auto.
+            runCatching { container.settingsRepository.migrateMaxAnswer() }
         }
         // (1.0.15, L4/B3/C2): no WorkManager health worker is scheduled
         // on cold start anymore. The periodic worker reconnected

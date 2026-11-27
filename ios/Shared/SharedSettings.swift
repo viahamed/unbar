@@ -90,8 +90,12 @@ public struct TunnelConfig: Codable {
     public var probeResolvers: String
     public var country: String               // ISO alpha-2, e.g. "IR"
     public var tcpMode: String               // "auto" | "on"
+    /// (1.0.3): resolver scan transport, "udp" (default) or
+    /// "udp+tcp" — the extension hands it to the core so the 30s
+    /// pool probe uses the same transports as the scan.
+    public var scanTransport: String
     public var mtu: Int                      // TUN MTU: 0 = Auto (measure interface MTU at connect), else 1280/1400/1500
-    public var maxAnswer: Int                // DNS answer-size cap: 0 = Auto (probe up to 1232), else 512/768/1024/1232
+    public var maxAnswer: Int                // DNS answer-size cap: 0 = Auto (probe up to 1232), else (1.0.3) 512/752/992
     public var mode: String                  // "vpn" | "socks"
     public var socksPort: Int
     public var socksUsername: String
@@ -107,7 +111,8 @@ public struct TunnelConfig: Codable {
                 socksUsername: String, socksPassword: String,
                 bandwidthUp: Int64, bandwidthDown: Int64,
                 geoBypass: Bool, bypassDomains: String,
-                candidates: String = "", probeResolvers: String = "") {
+                candidates: String = "", probeResolvers: String = "",
+                scanTransport: String = "udp") {
         self.zone = zone
         self.serverKeyB64 = serverKeyB64
         self.resolverMode = resolverMode
@@ -117,6 +122,7 @@ public struct TunnelConfig: Codable {
         self.probeResolvers = probeResolvers
         self.country = country
         self.tcpMode = tcpMode
+        self.scanTransport = scanTransport
         self.mtu = mtu
         self.maxAnswer = maxAnswer
         self.mode = mode
@@ -141,6 +147,7 @@ public struct TunnelConfig: Codable {
             "probeResolvers": probeResolvers,
             "country": country,
             "tcpMode": tcpMode,
+            "scanTransport": scanTransport,
             "mtu": mtu,
             "maxAnswer": maxAnswer,
             "mode": mode,
@@ -178,7 +185,8 @@ public struct TunnelConfig: Codable {
             geoBypass: dict["geoBypass"] as? Bool ?? true,
             bypassDomains: dict["bypassDomains"] as? String ?? "",
             candidates: dict["candidates"] as? String ?? "",
-            probeResolvers: dict["probeResolvers"] as? String ?? ""
+            probeResolvers: dict["probeResolvers"] as? String ?? "",
+            scanTransport: dict["scanTransport"] as? String ?? "udp"
         )
     }
 }
@@ -191,10 +199,15 @@ public struct TunnelConfig: Codable {
 public struct VerifiedResolver: Codable, Equatable {
     public var addr: String
     public var rttMs: Int64
+    /// (1.0.3): which transports carried this resolver — "udp",
+    /// "tcp" or "udp+tcp" (core Stats "transport"). nil = unknown
+    /// (older core); the UI then shows no tag.
+    public var transport: String?
 
-    public init(addr: String, rttMs: Int64) {
+    public init(addr: String, rttMs: Int64, transport: String? = nil) {
         self.addr = addr
         self.rttMs = rttMs
+        self.transport = transport
     }
 }
 
@@ -227,11 +240,16 @@ public struct SoarPathStat: Codable, Equatable {
     public var answerLimit: Int
     public var successes: Int
     public var lastSuccess: String
+    /// (1.0.3): the core's own "healthy" verdict (verified, usable
+    /// now, not on a run of losses). Optional so a snapshot written
+    /// by an older extension build still decodes.
+    public var healthy: Bool?
 
     public init(resolver: String = "", transport: String = "", verified: Bool = false,
                 suspended: Bool = false, rttMs: Int64 = 0, loss: Double = 0,
                 inflight: Int = 0, window: Double = 0, nameLen: Int = 0,
-                answerLimit: Int = 0, successes: Int = 0, lastSuccess: String = "") {
+                answerLimit: Int = 0, successes: Int = 0, lastSuccess: String = "",
+                healthy: Bool? = nil) {
         self.resolver = resolver
         self.transport = transport
         self.verified = verified
@@ -244,6 +262,7 @@ public struct SoarPathStat: Codable, Equatable {
         self.answerLimit = answerLimit
         self.successes = successes
         self.lastSuccess = lastSuccess
+        self.healthy = healthy
     }
 }
 
@@ -305,6 +324,14 @@ public struct StatsSnapshot: Codable {
     public var pipeStallUp: Bool
     public var pipeStallDown: Bool
     public var pathStats: [SoarPathStat]
+    /// (1.0.3): what the core left out of the custom/imported
+    /// resolver list on the last Start / SetProbeResolvers —
+    /// Stats() "resolverListWarnings" (English reasons, for the log)
+    /// and "resolverListDropped" (addresses not used: ranges larger
+    /// than /20 skipped, or the list truncated to 5000). Empty / 0
+    /// on an older core.
+    public var resolverListWarnings: [String]
+    public var resolverListDropped: Int
     public var established: Bool
     public var upLimit: Int64
     public var downLimit: Int64
@@ -328,7 +355,8 @@ public struct StatsSnapshot: Codable {
                 socksUp: Int64 = 0, socksDown: Int64 = 0,
                 pipeStallUp: Bool = false, pipeStallDown: Bool = false,
                 pathStats: [SoarPathStat] = [], established: Bool = false,
-                upLimit: Int64 = 0, downLimit: Int64 = 0) {
+                upLimit: Int64 = 0, downLimit: Int64 = 0,
+                resolverListWarnings: [String] = [], resolverListDropped: Int = 0) {
         self.up = up
         self.down = down
         self.rttMs = rttMs
@@ -356,6 +384,8 @@ public struct StatsSnapshot: Codable {
         self.pipeStallUp = pipeStallUp
         self.pipeStallDown = pipeStallDown
         self.pathStats = pathStats
+        self.resolverListWarnings = resolverListWarnings
+        self.resolverListDropped = resolverListDropped
         self.established = established
         self.upLimit = upLimit
         self.downLimit = downLimit
@@ -392,7 +422,8 @@ public struct StatsSnapshot: Codable {
                 guard let addr = item["addr"] as? String, !addr.isEmpty else { continue }
                 verified.append(VerifiedResolver(
                     addr: addr,
-                    rttMs: (item["rttMs"] as? NSNumber)?.int64Value ?? 0))
+                    rttMs: (item["rttMs"] as? NSNumber)?.int64Value ?? 0,
+                    transport: (item["transport"] as? String).flatMap { $0.isEmpty ? nil : $0 }))
             }
         }
         // (1.0.33): the last scan's own vetted list, same shape.
@@ -402,7 +433,8 @@ public struct StatsSnapshot: Codable {
                 guard let addr = item["addr"] as? String, !addr.isEmpty else { continue }
                 scanVerified.append(VerifiedResolver(
                     addr: addr,
-                    rttMs: (item["rttMs"] as? NSNumber)?.int64Value ?? 0))
+                    rttMs: (item["rttMs"] as? NSNumber)?.int64Value ?? 0,
+                    transport: (item["transport"] as? String).flatMap { $0.isEmpty ? nil : $0 }))
             }
         }
         var dialErrors: [DialErrorEntry] = []
@@ -433,7 +465,8 @@ public struct StatsSnapshot: Codable {
                     nameLen: (item["name_len"] as? NSNumber)?.intValue ?? 0,
                     answerLimit: (item["answer_limit"] as? NSNumber)?.intValue ?? 0,
                     successes: (item["successes"] as? NSNumber)?.intValue ?? 0,
-                    lastSuccess: lastSuccess.hasPrefix("0001") ? "" : lastSuccess))
+                    lastSuccess: lastSuccess.hasPrefix("0001") ? "" : lastSuccess,
+                    healthy: item["healthy"] as? Bool))
             }
         }
         return StatsSnapshot(
@@ -467,7 +500,9 @@ public struct StatsSnapshot: Codable {
             pathStats: pathStats,
             established: bool("established"),
             upLimit: int64("upLimit"),
-            downLimit: int64("downLimit")
+            downLimit: int64("downLimit"),
+            resolverListWarnings: (obj["resolverListWarnings"] as? [String]) ?? [],
+            resolverListDropped: int("resolverListDropped")
         )
     }
 
@@ -513,6 +548,8 @@ public struct StatsSnapshot: Codable {
         pipeStallUp = try c.decodeIfPresent(Bool.self, forKey: .pipeStallUp) ?? false
         pipeStallDown = try c.decodeIfPresent(Bool.self, forKey: .pipeStallDown) ?? false
         pathStats = try c.decodeIfPresent([SoarPathStat].self, forKey: .pathStats) ?? []
+        resolverListWarnings = try c.decodeIfPresent([String].self, forKey: .resolverListWarnings) ?? []
+        resolverListDropped = try c.decodeIfPresent(Int.self, forKey: .resolverListDropped) ?? 0
         established = try c.decodeIfPresent(Bool.self, forKey: .established) ?? false
         upLimit = try c.decodeIfPresent(Int64.self, forKey: .upLimit) ?? 0
         downLimit = try c.decodeIfPresent(Int64.self, forKey: .downLimit) ?? 0

@@ -22,6 +22,39 @@ import kotlinx.serialization.json.longOrNull
  */
 class CoreTunnelBridge {
 
+    companion object {
+        private val checkJson = Json { ignoreUnknownKeys = true }
+
+        /**
+         * (1.0.3): what the Go core will make of a custom resolver
+         * list, without a tunnel — Core.CheckResolverList (gomobile:
+         * static `core.Core.checkResolverList(String): String`).
+         * Returns null when the call or the parse fails (e.g. an
+         * older .aar without the symbol), so the UI shows nothing.
+         */
+        fun checkResolverList(resolversCsv: String): ResolverListCheck? {
+            if (resolversCsv.isBlank()) return null
+            return runCatching {
+                val raw = Core.checkResolverList(resolversCsv)
+                val o = checkJson.parseToJsonElement(raw).jsonObject
+                ResolverListCheck(
+                    count = o["count"]?.jsonPrimitive?.intOrNull ?: 0,
+                    dropped = o["dropped"]?.jsonPrimitive?.intOrNull ?: 0,
+                    warnings = runCatching { o["warnings"]?.jsonArray }.getOrNull()
+                        ?.mapNotNull { runCatching { it.jsonPrimitive.content }.getOrNull()?.takeIf { s -> s.isNotBlank() } }
+                        ?: emptyList()
+                )
+            }.getOrNull()
+        }
+    }
+
+    /** (1.0.3): result of [checkResolverList]. */
+    data class ResolverListCheck(
+        val count: Int,
+        val dropped: Int,
+        val warnings: List<String>
+    )
+
     // (1.0.38): @Volatile so readers outside the @Synchronized
     // setters (stats()/pathStats()/test()/testLatency()) see the
     // latest tunnel without taking the monitor for a parse.
@@ -74,7 +107,8 @@ class CoreTunnelBridge {
     }
 
     // DNS answer-size cap (1.0.28): 0 = Auto (Soar default), otherwise
-    // 512/768/1024/1232. Stored on the Go tunnel; Start() reads it
+    // a Soar class boundary 512+48k (1.0.3: 512/752/992 from the UI).
+    // Stored on the Go tunnel; Start() reads it
     // when building the client config, so it applies on next connect.
     // ensureCreated() so the value also sticks when called before the
     // first connect in this process. Go `int` maps to Java `long`.
@@ -303,6 +337,17 @@ class CoreTunnelBridge {
         runCatching { t.setVetCredentials(zone, serverKeyB64, country, if (tcpMode) "on" else "auto") }
     }
 
+    // (1.0.3): resolver scan transport. Go Tunnel.SetScanTransport
+    // takes "udp" (default) or "udp+tcp"; it applies to the next
+    // scan and to the background pool probe. ensureCreated() so it
+    // sticks when set before the first connect. Needs the rebuilt
+    // .aar (gomobile: core.Tunnel.setScanTransport(String)).
+    @Synchronized
+    fun setScanTransport(udpTcp: Boolean) {
+        val t = runCatching { ensureCreated() }.getOrNull() ?: return
+        runCatching { t.setScanTransport(if (udpTcp) "udp+tcp" else "udp") }
+    }
+
     @Synchronized
     fun setProbeResolvers(resolversCsv: String, discoveryEnabled: Boolean) {
         val t = runCatching { ensureCreated() }.getOrNull() ?: return
@@ -456,7 +501,10 @@ class CoreTunnelBridge {
                         val o = el.jsonObject
                         val addr = o["addr"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
                         val rttMs = o["rttMs"]?.jsonPrimitive?.intOrNull ?: 0
-                        VerifiedResolver(addr = addr, rttMs = rttMs)
+                        // (1.0.3): "transport" — missing on an older
+                        // core, then "" (no tag shown).
+                        val transport = o["transport"]?.jsonPrimitive?.content?.trim().orEmpty()
+                        VerifiedResolver(addr = addr, rttMs = rttMs, transport = transport)
                     }.getOrNull()
                 }
             }
@@ -538,6 +586,10 @@ class CoreTunnelBridge {
                 // sync can drop evicted resolvers from the pool.
                 // Missing on an older core — defaults empty.
                 probeResolvers = stringListOf("probeResolvers"),
+                // (1.0.3): resolver-list warnings (ranges > /20
+                // skipped, 5000 cap). Missing on an older core.
+                resolverListWarnings = stringListOf("resolverListWarnings"),
+                resolverListDropped = intOf("resolverListDropped"),
                 scanRunning = boolOf("scanRunning", "scan_running"),
                 // (1.0.32): true while a running full scan is
                 // paused (Pause button). Missing on an older

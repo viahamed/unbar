@@ -36,6 +36,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -66,6 +68,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -81,6 +84,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.LayoutDirection
@@ -91,6 +95,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.breakthebarriers.unbar.BuildConfig
 import com.breakthebarriers.unbar.R
+import com.breakthebarriers.unbar.data.datastore.MANUAL_MAX_ANSWER_OPTIONS
 import com.breakthebarriers.unbar.data.datastore.ResolverHealthStore
 import com.breakthebarriers.unbar.data.datastore.droppedResolverTokens
 import com.breakthebarriers.unbar.data.datastore.expandedResolverCount
@@ -107,7 +112,9 @@ import com.breakthebarriers.unbar.model.AppSettings
 import com.breakthebarriers.unbar.model.AppThemeMode
 import com.breakthebarriers.unbar.model.ConnectionMode
 import com.breakthebarriers.unbar.model.DiscoveryMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -130,6 +137,8 @@ fun SettingsScreen(
     onSetTcpMode: (Boolean) -> Unit,
     onSetMtu: (Int) -> Unit,
     onSetMaxAnswer: (Int) -> Unit,
+    // (1.0.3): resolver scan over UDP only / UDP + TCP.
+    onSetScanUdpTcp: (Boolean) -> Unit = {},
     onSetSocksConfig: (Int, String, String?) -> Unit,
     onSetBandwidthLimit: (Long, Long) -> Unit,
     onSetIranGeoBypass: (Boolean) -> Unit,
@@ -140,7 +149,10 @@ fun SettingsScreen(
     onSetDiagnosticLogsEnabled: (Boolean) -> Unit,
     onOpenPerAppRouting: () -> Unit,
     onOpenLogs: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    // (1.0.3): live per-path stats for the Path diagnostics panel.
+    // Called off the main thread (it is a Go Stats() call).
+    pathStatsProvider: () -> List<CoreTunnelBridge.SoarPathStat> = { emptyList() }
 ) {
     val context = LocalContext.current
     val initialSocksPassword by socksPasswordFlow.collectAsStateWithLifecycle()
@@ -192,7 +204,8 @@ fun SettingsScreen(
                         R.string.tutorial_settings_group_system,
                         listOf(
                             TutorialTopic(R.string.tutorial_settings_update_title, R.string.tutorial_settings_update_body),
-                            TutorialTopic(R.string.tutorial_settings_logs_title, R.string.tutorial_settings_logs_body)
+                            TutorialTopic(R.string.tutorial_settings_logs_title, R.string.tutorial_settings_logs_body),
+                            TutorialTopic(R.string.tutorial_settings_paths_title, R.string.tutorial_settings_paths_body)
                         )
                     )
                 )
@@ -231,7 +244,9 @@ fun SettingsScreen(
                 onTestResolvers = onTestResolvers,
                 onStopScan = onStopScan,
                 onPauseScan = onPauseScan,
-                onResumeScan = onResumeScan
+                onResumeScan = onResumeScan,
+                scanUdpTcp = settings.scanUdpTcp,
+                onSetScanUdpTcp = onSetScanUdpTcp
             )
         }
 
@@ -289,7 +304,8 @@ fun SettingsScreen(
             onSetShowSpeedsInNotification = onSetShowSpeedsInNotification,
             onSetDiagnosticLogsEnabled = onSetDiagnosticLogsEnabled,
             onOpenLogs = onOpenLogs,
-            onOpenHistory = onOpenHistory
+            onOpenHistory = onOpenHistory,
+            pathStatsProvider = pathStatsProvider
         )
     }
 
@@ -331,7 +347,7 @@ private fun ConnectionSection(
             )
         }
         SwitchRow(
-            label = "TCP Mode",
+            label = stringResource(R.string.tcp_mode_label),
             subtitle = stringResource(R.string.tcp_mode_explanation),
             checked = tcpMode,
             onCheckedChange = onSetTcpMode
@@ -401,7 +417,9 @@ private fun ConnectionSection(
                 onClick = { onSetMaxAnswer(0) },
                 label = { Text(stringResource(R.string.dns_answer_size_auto)) }
             )
-            listOf(512, 768, 1024, 1232).forEach { value ->
+            // (1.0.3): Soar class boundaries (512+48k); 768/1024 were
+            // floored by Soar to 752/992 anyway, and 1232 equals Auto.
+            MANUAL_MAX_ANSWER_OPTIONS.forEach { value ->
                 UnbarFilterChip(
                     selected = maxAnswer == value,
                     onClick = { onSetMaxAnswer(value) },
@@ -411,6 +429,14 @@ private fun ConnectionSection(
         }
         Text(
             text = stringResource(R.string.dns_answer_size_explanation),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        // (1.0.3): the answer size is NOT live — Soar fixes each
+        // path's answer class when the path is created — so say so
+        // right under the chips.
+        Text(
+            text = stringResource(R.string.dns_answer_size_next_connect),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -437,7 +463,9 @@ private fun ResolversSection(
     onTestResolvers: () -> Unit,
     onStopScan: () -> Unit,
     onPauseScan: () -> Unit,
-    onResumeScan: () -> Unit
+    onResumeScan: () -> Unit,
+    scanUdpTcp: Boolean = false,
+    onSetScanUdpTcp: (Boolean) -> Unit = {}
 ) {
     // Custom resolvers field: the text the user types. Normalized
     // (comma-separated, :53 added, stray symbols stripped) and saved
@@ -614,7 +642,16 @@ private fun ResolversSection(
             onTestResolvers = onTestResolvers,
             onStopScan = onStopScan,
             onPauseScan = onPauseScan,
-            onResumeScan = onResumeScan
+            onResumeScan = onResumeScan,
+            scanUdpTcp = scanUdpTcp,
+            onSetScanUdpTcp = onSetScanUdpTcp,
+            // (1.0.3): the list the core will expand (Custom /
+            // Import only), for the CheckResolverList summary.
+            resolverListCsv = when (discoveryMode) {
+                DiscoveryMode.CUSTOM -> customResolversJoined
+                DiscoveryMode.IMPORT -> importedResolvers.joinToString(",")
+                DiscoveryMode.BUILTIN -> ""
+            }
         )
 
         // (Hygiene, 1.0.15): resolver changes apply on reconnect.
@@ -860,7 +897,10 @@ private fun ResolversHealthSection(
     onTestResolvers: () -> Unit,
     onStopScan: () -> Unit,
     onPauseScan: () -> Unit,
-    onResumeScan: () -> Unit
+    onResumeScan: () -> Unit,
+    scanUdpTcp: Boolean = false,
+    onSetScanUdpTcp: (Boolean) -> Unit = {},
+    resolverListCsv: String = ""
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
@@ -888,6 +928,34 @@ private fun ResolversHealthSection(
             scanStatus.scanVerifiedCount > 0
         )
     val showStepper = testing || scanCompleted
+
+    // (1.0.3): scan transport, above the Scan button. UDP (default)
+    // is the classic scan; UDP + TCP also keeps resolvers that answer
+    // only over TCP/53 (each resolver is probed over both in
+    // parallel, so the scan takes longer). Saved at once; locked
+    // while a scan runs (the running scan keeps its mode).
+    Text(
+        text = stringResource(R.string.scan_over_label),
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.SemiBold
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        UnbarFilterChip(
+            selected = !scanUdpTcp,
+            onClick = { if (!testing) onSetScanUdpTcp(false) },
+            label = { Text(stringResource(R.string.scan_over_udp)) }
+        )
+        UnbarFilterChip(
+            selected = scanUdpTcp,
+            onClick = { if (!testing) onSetScanUdpTcp(true) },
+            label = { Text(stringResource(R.string.scan_over_udp_tcp)) }
+        )
+    }
+    Text(
+        text = stringResource(R.string.scan_over_note),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 
     // (1.0.32): Stop / Pause / Resume sit next to Test while a scan
     // runs. Test is disabled while testing; Stop cancels the scan
@@ -948,6 +1016,61 @@ private fun ResolversHealthSection(
         )
     }
 
+    // (1.0.3): pre-scan check of the Custom / Import list with the
+    // core's own expansion (Core.CheckResolverList, no tunnel needed):
+    // how many resolvers will be used and what is left out (ranges
+    // wider than /20 skipped, 5000 cap). Runs off the main thread and
+    // re-runs when the list changes. Null (older .aar, empty list or
+    // Built-in) shows nothing. The core's warning lines are English
+    // and name the exact ranges, so they are shown LTR as details
+    // under the localized summary.
+    val listCheck by produceState<CoreTunnelBridge.ResolverListCheck?>(null, resolverListCsv, discoveryMode) {
+        value = if (discoveryMode == DiscoveryMode.BUILTIN || resolverListCsv.isBlank()) {
+            null
+        } else {
+            withContext(Dispatchers.Default) { CoreTunnelBridge.checkResolverList(resolverListCsv) }
+        }
+    }
+    listCheck?.let { check ->
+        Text(
+            text = stringResource(R.string.resolver_list_check_count, check.count),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (check.dropped > 0) {
+            Text(
+                text = stringResource(R.string.resolver_list_check_dropped, check.dropped),
+                style = MaterialTheme.typography.bodySmall,
+                color = UnbarOrange
+            )
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Column {
+                    check.warnings.take(5).forEach { w ->
+                        Text(
+                            text = w,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // (1.0.3): the core reports resolver-list entries it could not
+    // use — CIDR ranges larger than /20 are skipped and the expanded
+    // list is capped at 5000 (Stats() "resolverListDropped"). Shown
+    // in Custom / Import mode only (Built-in never trips it), and
+    // only when the pre-scan check above is unavailable (it already
+    // says the same thing).
+    if (discoveryMode != DiscoveryMode.BUILTIN && scanStatus.resolverListDropped > 0 && listCheck == null) {
+        Text(
+            text = stringResource(R.string.resolver_list_trimmed_warning, scanStatus.resolverListDropped),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error
+        )
+    }
+
 if (discoveryMode == DiscoveryMode.BUILTIN && sortedRemembered.isNotEmpty()) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -993,7 +1116,7 @@ if (discoveryMode == DiscoveryMode.BUILTIN && sortedRemembered.isNotEmpty()) {
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
             sortedRemembered.take(16).forEach { entry ->
-                RememberedResolverRow(addr = entry.addr, rttMs = entry.rttMs)
+                RememberedResolverRow(addr = entry.addr, rttMs = entry.rttMs, transport = entry.transport)
             }
         }
     }
@@ -1172,7 +1295,8 @@ private fun SystemDiagnosticsSection(
     onSetShowSpeedsInNotification: (Boolean) -> Unit,
     onSetDiagnosticLogsEnabled: (Boolean) -> Unit,
     onOpenLogs: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    pathStatsProvider: () -> List<CoreTunnelBridge.SoarPathStat>
 ) {
     val notificationsAllowed by notificationsAllowedFlow.collectAsStateWithLifecycle()
     val isIgnoringBattery by isIgnoringBatteryFlow.collectAsStateWithLifecycle()
@@ -1342,6 +1466,9 @@ SettingsCard(title = stringResource(R.string.section_diagnostics)) {
         label = stringResource(R.string.history_title),
         onClick = onOpenHistory
     )
+    HorizontalDivider()
+    // (1.0.3): Path diagnostics — live per-path state of the tunnel.
+    PathDiagnosticsPanel(pathStatsProvider = pathStatsProvider)
     // Check for update: one tap checks GitHub Releases for a newer
     // build. While a check runs the row is disabled and shows a
     // spinner instead of the chevron. Hidden in F-Droid builds
@@ -1414,6 +1541,198 @@ SettingsCard(title = stringResource(R.string.section_diagnostics)) {
                     }
                 }
             )
+        }
+    }
+}
+
+// (1.0.3) Path diagnostics: the Go core's Stats() "pathStats" array
+// (soar.PathStat, parsed by CoreTunnelBridge) shown per path — state,
+// transport, RTT, loss, window, answer limit and query-name length —
+// with a Copy button for bug reports. Collapsed by default; while
+// open it re-reads the stats every 3 s (off the main thread). Nested
+// radius: the 24dp outer card with 16dp padding holds 8dp inner
+// panels. Numbers and IPs are forced LTR so the Persian layout never
+// mirrors them.
+private fun pathStateRes(p: CoreTunnelBridge.SoarPathStat): Int = when {
+    p.suspended -> R.string.path_state_suspended
+    !p.verified -> R.string.path_state_unverified
+    p.healthy -> R.string.path_state_healthy
+    else -> R.string.path_state_degraded
+}
+
+private fun pathDiagnosticsReport(paths: List<CoreTunnelBridge.SoarPathStat>): String {
+    if (paths.isEmpty()) return "Unbar ${BuildConfig.VERSION_NAME} path diagnostics: no paths"
+    val header = "Unbar ${BuildConfig.VERSION_NAME} path diagnostics: ${paths.size} paths, " +
+        "${paths.count { it.healthy }} healthy"
+    val lines = paths.map { p ->
+        val state = when {
+            p.suspended -> "suspended"
+            !p.verified -> "unverified"
+            p.healthy -> "healthy"
+            else -> "degraded"
+        }
+        "${p.resolver} state=$state transport=${p.transport} rtt=${p.rttMs}ms " +
+            "loss=${"%.2f".format(java.util.Locale.US, p.loss)} window=${"%.1f".format(java.util.Locale.US, p.window)} " +
+            "answer_limit=${p.answerLimit} name_len=${p.nameLen} inflight=${p.inflight}"
+    }
+    return (listOf(header) + lines).joinToString("\n")
+}
+
+@Composable
+private fun PathDiagnosticsPanel(
+    pathStatsProvider: () -> List<CoreTunnelBridge.SoarPathStat>
+) {
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+    var expanded by remember { mutableStateOf(false) }
+    var paths by remember { mutableStateOf<List<CoreTunnelBridge.SoarPathStat>>(emptyList()) }
+    LaunchedEffect(expanded) {
+        while (expanded) {
+            paths = withContext(Dispatchers.IO) {
+                runCatching { pathStatsProvider() }.getOrDefault(emptyList())
+            }
+            delay(3_000L)
+        }
+    }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.path_diag_title),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = stringResource(R.string.path_diag_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (expanded) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (paths.isEmpty()) {
+                        stringResource(R.string.path_diag_empty)
+                    } else {
+                        stringResource(R.string.path_diag_summary, paths.size, paths.count { it.healthy })
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedButton(
+                    onClick = {
+                        clipboard.setText(AnnotatedString(pathDiagnosticsReport(paths)))
+                        Toast.makeText(context, context.getString(R.string.path_diag_copied), Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Icon(
+                        Icons.Rounded.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.copy))
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                paths.forEach { p -> PathDiagnosticsRow(p) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PathDiagnosticsRow(p: CoreTunnelBridge.SoarPathStat) {
+    val stateColor = when {
+        p.suspended || !p.verified -> UnbarOrange
+        p.healthy -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(InnerPanelRadius),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        text = p.resolver.ifBlank { "—" },
+                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Text(
+                    text = stringResource(pathStateRes(p)),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = stateColor
+                )
+            }
+            val loss = "%.0f%%".format(java.util.Locale.US, p.loss * 100.0)
+            val window = "%.1f".format(java.util.Locale.US, p.window)
+            PathMetricLine(
+                stringResource(R.string.path_diag_transport) to p.transport.ifBlank { "—" },
+                stringResource(R.string.path_diag_rtt) to "${p.rttMs} ms",
+                stringResource(R.string.path_diag_loss) to loss
+            )
+            PathMetricLine(
+                stringResource(R.string.path_diag_window) to window,
+                stringResource(R.string.path_diag_answer_limit) to "${p.answerLimit}",
+                stringResource(R.string.path_diag_name_len) to "${p.nameLen}"
+            )
+        }
+    }
+}
+
+@Composable
+private fun PathMetricLine(vararg items: Pair<String, String>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        items.forEach { (label, value) ->
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                    )
+                }
+            }
         }
     }
 }
@@ -1509,7 +1828,7 @@ private fun NavigationRow(
 // (1.0.16, item 4, Model A): one remembered healthy resolver. The IP is monospace with the ":53" dimmed beside it; the copy icon copies the full "IP:53" (same pattern as AboutScreen's CopyableAddressRow). The ping is shown small, after the address.
 // The row is numbers + an IP (mathematical, left-to-right): forced LTR so the
 // Persian RTL locale neither mirrors the row nor reverses the IP octets.
-@Composable private fun RememberedResolverRow(addr: String, rttMs: Int) {
+@Composable private fun RememberedResolverRow(addr: String, rttMs: Int, transport: String = "") {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     val ip = addr.substringBeforeLast(':')
@@ -1532,6 +1851,9 @@ private fun NavigationRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                // (1.0.3): transport tag between ip:port and the ping.
+                // Unknown (entries saved before 1.0.3) -> no tag.
+                TransportTag(transport)
                 Text(
                     text = "  $rttMs ms",
                     style = MaterialTheme.typography.bodySmall,
@@ -1552,6 +1874,36 @@ private fun NavigationRow(
                     .size(20.dp)
             )
         }
+    }
+}
+
+// (1.0.3): small transport tag on a remembered resolver row: "UDP"
+// on the blue container, "TCP" on the orange container, "UDP·TCP"
+// on blue with orange text (blue and orange only in this UI). Pill
+// radius 8dp (InnerPanelRadius) with 6/1dp padding; text centred.
+@Composable private fun TransportTag(transport: String) {
+    val t = transport.lowercase().replace(" ", "")
+    val (label, container, content) = when (t) {
+        "udp" -> Triple("UDP", UnbarBlue.copy(alpha = 0.16f), MaterialTheme.colorScheme.primary)
+        "tcp" -> Triple("TCP", UnbarOrange.copy(alpha = 0.20f), UnbarOrange)
+        "udp+tcp", "tcp+udp" -> Triple("UDP·TCP", UnbarBlue.copy(alpha = 0.16f), UnbarOrange)
+        else -> return
+    }
+    Box(
+        modifier = Modifier
+            .padding(start = 6.dp)
+            .background(container, RoundedCornerShape(InnerPanelRadius))
+            .padding(horizontal = 6.dp, vertical = 1.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = content,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
     }
 }
 

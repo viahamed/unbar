@@ -3,7 +3,9 @@ package core
 import (
 	"context"
 	"crypto/ed25519"
+	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"net"
 	"strings"
 	"syscall"
@@ -12,28 +14,6 @@ import (
 
 	"github.com/getlantern/soar"
 )
-
-// TestDoHCacheHit (1.0.11): putCachedDoH/getCachedDoH round-trip —
-// the cached answer is returned with the caller's transaction ID.
-func TestDoHCacheHit(t *testing.T) {
-	tun := NewTunnel()
-	query := buildDNSQuery(0x1234, "example.com")
-	resp := append([]byte(nil), query...)
-	resp[0], resp[1] = 0x12, 0x34
-	tun.putCachedDoH("1.1.1.1:53", query, resp)
-	query2 := buildDNSQuery(0x5678, "example.com")
-	got := tun.getCachedDoH("1.1.1.1:53", query2)
-	if got == nil {
-		t.Fatal("cache miss for the same query with a different ID")
-	}
-	if got[0] != 0x56 || got[1] != 0x78 {
-		t.Fatalf("cached response ID = %02x%02x, want 5678", got[0], got[1])
-	}
-	// A different name must miss.
-	if got := tun.getCachedDoH("1.1.1.1:53", buildDNSQuery(0x5678, "example.org")); got != nil {
-		t.Fatal("cache hit for a different name")
-	}
-}
 
 func TestNormalizeResolverEntry(t *testing.T) {
 	cases := []struct{ in, want string }{
@@ -118,6 +98,31 @@ func TestStatsHasServerCountry(t *testing.T) {
 // SO_REUSEPORT so the second bind succeeds.
 func startFakeDNSResponder(t *testing.T, valid bool) (string, func()) {
 	t.Helper()
+	return startFakeDNSResponderFunc(t, func(q []byte) [][]byte {
+		resp := fakeAAnswer(q)
+		if !valid {
+			resp[0] ^= 0xFF // wrong transaction ID
+		}
+		return [][]byte{resp}
+	})
+}
+
+// fakeAAnswer builds a NOERROR reply to q (an uncompressed one-question
+// query) with one A record, 93.184.216.34.
+func fakeAAnswer(q []byte) []byte {
+	resp := append([]byte(nil), q...)
+	resp[2] |= 0x80  // QR=1
+	resp[3] &^= 0x0F // RCODE=0
+	binary.BigEndian.PutUint16(resp[6:8], 1)
+	binary.BigEndian.PutUint16(resp[8:10], 0)
+	binary.BigEndian.PutUint16(resp[10:12], 0)
+	return append(resp, 0xc0, 0x0c, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4, 93, 184, 216, 34)
+}
+
+// startFakeDNSResponderFunc answers each query with the packets reply
+// returns, in order.
+func startFakeDNSResponderFunc(t *testing.T, reply func(q []byte) [][]byte) (string, func()) {
+	t.Helper()
 	setReusePort := func(network, address string, c syscall.RawConn) error {
 		var serr error
 		if err := c.Control(func(fd uintptr) {
@@ -146,18 +151,15 @@ func startFakeDNSResponder(t *testing.T, valid bool) (string, func()) {
 			if n < 12 {
 				continue
 			}
-			resp := append([]byte(nil), buf[:n]...)
-			if !valid {
-				resp[0] ^= 0xFF // wrong transaction ID
-			}
-			resp[2] |= 0x80  // QR=1
-			resp[3] &^= 0x0F // RCODE=0
+			q := append([]byte(nil), buf[:n]...)
 			d := net.Dialer{LocalAddr: laddr, Control: setReusePort}
 			back, err := d.Dial("udp", addr.String())
 			if err != nil {
 				continue
 			}
-			_, _ = back.Write(resp)
+			for _, resp := range reply(q) {
+				_, _ = back.Write(resp)
+			}
 			back.Close()
 		}
 	}()
@@ -214,6 +216,51 @@ func TestProbeResolverRejectsBadReply(t *testing.T) {
 	}
 	if ok, rtt := probeResolver("invalid:53"); ok || rtt != 0 {
 		t.Fatalf("probeResolver(unresolvable) = (%v, %v), want (false, 0)", ok, rtt)
+	}
+}
+
+// TestProbeResolverValidation (1.0.3): a mismatched packet is skipped
+// and reading continues; a reply without an A record, or echoing a
+// different question, does not count.
+func TestProbeResolverValidation(t *testing.T) {
+	cases := []struct {
+		name  string
+		reply func(q []byte) [][]byte
+		want  bool
+	}{
+		{"wrong ID then right", func(q []byte) [][]byte {
+			bad := fakeAAnswer(q)
+			bad[1] ^= 0xFF
+			return [][]byte{bad, fakeAAnswer(q)}
+		}, true},
+		{"0x20 case echo", func(q []byte) [][]byte {
+			r := fakeAAnswer(q)
+			r[13] = 'E' // "Example"
+			return [][]byte{r}
+		}, true},
+		{"different question", func(q []byte) [][]byte {
+			r := fakeAAnswer(q)
+			r[13] = 'x'
+			return [][]byte{r}
+		}, false},
+		{"no answer records", func(q []byte) [][]byte {
+			r := fakeAAnswer(q)
+			binary.BigEndian.PutUint16(r[6:8], 0)
+			return [][]byte{r[:len(q)]}
+		}, false},
+		{"SERVFAIL", func(q []byte) [][]byte {
+			r := fakeAAnswer(q)
+			r[3] |= 2
+			return [][]byte{r}
+		}, false},
+	}
+	for _, tc := range cases {
+		addr, stop := startFakeDNSResponderFunc(t, tc.reply)
+		ok, _ := probeResolver(addr)
+		stop()
+		if ok != tc.want {
+			t.Errorf("%s: probeResolver = %v, want %v", tc.name, ok, tc.want)
+		}
 	}
 }
 
@@ -297,7 +344,7 @@ func TestVerifiedResolversFrom(t *testing.T) {
 	// Cap: 20 verified paths yield at most 16, still RTT-ranked.
 	var many []soar.PathStat
 	for i := 0; i < 20; i++ {
-		many = append(many, soar.PathStat{Resolver: "10.0.0.1:53", Verified: true, RTT: time.Duration(20-i) * time.Millisecond})
+		many = append(many, soar.PathStat{Resolver: fmt.Sprintf("10.0.0.%d:53", i+1), Verified: true, RTT: time.Duration(20-i) * time.Millisecond})
 	}
 	if got := verifiedResolversFrom(many, 16); len(got) != 16 {
 		t.Fatalf("verifiedResolversFrom(20 paths, 16) has %d entries, want 16", len(got))
@@ -400,8 +447,8 @@ func TestSetProbeResolversDerivesList(t *testing.T) {
 	// CIDR in the custom list expands through the setter, the same
 	// as through Start.
 	tun.SetProbeResolvers("2.188.21.0/30", false)
-	if len(tun.probeList) != 4 {
-		t.Fatalf("CIDR /30: probeList = %d entries, want 4", len(tun.probeList))
+	if len(tun.probeList) != 3 { // .0 skipped (1.0.3)
+		t.Fatalf("CIDR /30: probeList = %d entries, want 3", len(tun.probeList))
 	}
 }
 
@@ -416,8 +463,8 @@ func TestExpandResolverEntriesDedupes(t *testing.T) {
 		t.Fatalf("duplicate IPs: got %d entries, want 2: %v", len(out), out)
 	}
 	out = expandResolverEntries("2.188.21.0/30, 2.188.21.1:53")
-	if len(out) != 4 {
-		t.Fatalf("CIDR overlapping a single IP: got %d entries, want 4: %v", len(out), out)
+	if len(out) != 3 { // .0 skipped (1.0.3)
+		t.Fatalf("CIDR overlapping a single IP: got %d entries, want 3: %v", len(out), out)
 	}
 	// /0 (the whole IPv4 space) is still skipped outright.
 	if out := expandResolverEntries("2.188.21.0/0"); len(out) != 0 {
@@ -431,7 +478,7 @@ func TestExpandResolverEntriesDedupes(t *testing.T) {
 // (the scan then reports only stage-1 results).
 func TestVetResolversNeedsCredentials(t *testing.T) {
 	tun := NewTunnel()
-	if got := tun.vetResolvers(context.Background(), []string{"1.1.1.1:53"}); got != nil {
+	if got := tun.vetResolvers(context.Background(), []string{"1.1.1.1:53"}, nil); got != nil {
 		t.Fatalf("vet without credentials: got %v, want nil", got)
 	}
 }
@@ -529,13 +576,20 @@ func TestSetMaxAnswer(t *testing.T) {
 	if tun.maxAnswer != 0 {
 		t.Fatalf("fresh tunnel maxAnswer = %d, want 0 (Auto)", tun.maxAnswer)
 	}
-	for _, v := range []int{512, 768, 1024, 1232} {
+	for _, v := range []int{512, 560, 752, 992, 1184, 1232} {
 		tun.SetMaxAnswer(v)
 		if tun.maxAnswer != v {
 			t.Fatalf("SetMaxAnswer(%d): maxAnswer = %d", v, tun.maxAnswer)
 		}
 	}
-	for _, v := range []int{-1, 100, 9999} {
+	// 1.0.3: legacy values snap to the class Soar really uses.
+	for v, want := range map[int]int{768: 752, 1024: 992} {
+		tun.SetMaxAnswer(v)
+		if tun.maxAnswer != want {
+			t.Fatalf("SetMaxAnswer(%d): maxAnswer = %d, want %d", v, tun.maxAnswer, want)
+		}
+	}
+	for _, v := range []int{-1, 100, 9999, 1000, 1280} {
 		tun.SetMaxAnswer(v)
 		if tun.maxAnswer != 0 {
 			t.Fatalf("SetMaxAnswer(%d): maxAnswer = %d, want 0 (Auto)", v, tun.maxAnswer)
@@ -544,72 +598,88 @@ func TestSetMaxAnswer(t *testing.T) {
 }
 
 // TestExpandResolverEntries: a CIDR range in the custom resolver list
-// expands to every address in the range with port :53; plain entries
-// are kept as-is; oversized ranges and invalid entries are skipped;
-// the total expanded list is capped.
+// expands to the addresses in the range with port :53, skipping .0
+// and .255 in IPv4 ranges (1.0.3); plain entries are kept as-is.
 func TestExpandResolverEntries(t *testing.T) {
-	// A /24 expands to 256 entries, including .0 and .255.
 	got := expandResolverEntries("2.188.21.0/24")
-	if len(got) != 256 {
-		t.Fatalf("expandResolverEntries(/24) has %d entries, want 256", len(got))
+	if len(got) != 254 {
+		t.Fatalf("expandResolverEntries(/24) has %d entries, want 254", len(got))
 	}
-	if got[0] != "2.188.21.0:53" || got[255] != "2.188.21.255:53" {
-		t.Fatalf("expandResolverEntries(/24) first/last = %q/%q, want 2.188.21.0:53/2.188.21.255:53", got[0], got[255])
+	if got[0] != "2.188.21.1:53" || got[253] != "2.188.21.254:53" {
+		t.Fatalf("expandResolverEntries(/24) first/last = %q/%q", got[0], got[253])
 	}
-	if got[1] != "2.188.21.1:53" || got[128] != "2.188.21.128:53" {
-		t.Fatalf("expandResolverEntries(/24) middle entries wrong: %v", got[1:3])
+	// A /20 (4096 addresses) is the largest allowed range: 16 /24s,
+	// each minus .0 and .255.
+	if got := expandResolverEntries("10.0.0.0/20"); len(got) != 4096-32 {
+		t.Fatalf("expandResolverEntries(/20) has %d entries, want 4064", len(got))
 	}
-
-	// A /20 (4096 addresses) is the largest allowed range.
-	if got := expandResolverEntries("10.0.0.0/20"); len(got) != 4096 {
-		t.Fatalf("expandResolverEntries(/20) has %d entries, want 4096", len(got))
+	// /31 and /32 keep every address.
+	if got := expandResolverEntries("10.0.0.255/32, 10.0.1.0/31"); len(got) != 3 {
+		t.Fatalf("/32 + /31 = %v, want 3 entries", got)
 	}
-	// A /19 (8192 addresses) is skipped entirely.
-	if got := expandResolverEntries("10.0.0.0/19"); len(got) != 0 {
-		t.Fatalf("expandResolverEntries(/19) has %d entries, want 0 (skipped)", len(got))
+	// A /19 (8192 addresses) is skipped entirely, with a warning.
+	out, warns, dropped := expandResolverEntriesWarn("10.0.0.0/19, 1.1.1.1:53")
+	if len(out) != 1 || len(warns) != 1 || dropped != 8192 {
+		t.Fatalf("/19: out=%d warns=%v dropped=%d", len(out), warns, dropped)
+	}
+	if !strings.Contains(warns[0], "10.0.0.0/19") {
+		t.Fatalf("warning does not name the range: %q", warns[0])
 	}
 
 	// Mixed plain + CIDR + plain keeps order and expands in place.
 	got = expandResolverEntries("1.1.1.1:53, 2.188.21.0/30, 8.8.8.8:53")
-	want := []string{"1.1.1.1:53", "2.188.21.0:53", "2.188.21.1:53", "2.188.21.2:53", "2.188.21.3:53", "8.8.8.8:53"}
-	if len(got) != len(want) {
+	want := []string{"1.1.1.1:53", "2.188.21.1:53", "2.188.21.2:53", "2.188.21.3:53", "8.8.8.8:53"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Fatalf("expandResolverEntries(mixed) = %v, want %v", got, want)
 	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Fatalf("expandResolverEntries(mixed)[%d] = %q, want %q", i, got[i], want[i])
-		}
-	}
 
-	// Invalid CIDR entries are ignored silently; plain entries
-	// (existing behaviour) are kept as-is.
-	got = expandResolverEntries("1.2.3.4/33, not-an-ip/24, 1.1.1.1:53")
-	if len(got) != 1 || got[0] != "1.1.1.1:53" {
-		t.Fatalf("expandResolverEntries(invalid) = %v, want [1.1.1.1:53]", got)
+	// Invalid CIDR entries are ignored, with a warning; plain entries
+	// are kept as-is.
+	out, warns, _ = expandResolverEntriesWarn("1.2.3.4/33, not-an-ip/24, 1.1.1.1:53")
+	if len(out) != 1 || out[0] != "1.1.1.1:53" || len(warns) != 2 {
+		t.Fatalf("invalid: out=%v warns=%v", out, warns)
 	}
 	if got := expandResolverEntries(""); len(got) != 0 {
 		t.Fatalf("expandResolverEntries(\"\") = %v, want empty", got)
 	}
-	if got := expandResolverEntries(" , , "); len(got) != 0 {
-		t.Fatalf("expandResolverEntries(blanks) = %v, want empty", got)
+	if _, w, d := expandResolverEntriesWarn(" , , "); len(w) != 0 || d != 0 {
+		t.Fatalf("blanks: warnings=%v dropped=%d", w, d)
 	}
 
-	// Total cap: two /20 ranges would be 8192 entries; the list
-	// stops at 5000.
-	got = expandResolverEntries("10.0.0.0/20, 10.0.16.0/20")
-	if len(got) != 5000 {
-		t.Fatalf("expandResolverEntries(two /20s) has %d entries, want 5000 (capped)", len(got))
-	}
-	if got[4095] != "10.0.15.255:53" || got[4096] != "10.0.16.0:53" {
-		t.Fatalf("expandResolverEntries(two /20s) boundary = %q/%q, want 10.0.15.255:53/10.0.16.0:53", got[4095], got[4096])
+	// Total cap: two /20 ranges would be 8128 entries; the list
+	// stops at 5000 and says how many were left out.
+	out, warns, dropped = expandResolverEntriesWarn("10.0.0.0/20, 10.0.16.0/20")
+	if len(out) != 5000 || dropped != 8128-5000 || len(warns) != 1 {
+		t.Fatalf("two /20s: out=%d dropped=%d warns=%v", len(out), dropped, warns)
 	}
 
 	// The helper feeds both call sites: SetProbeResolvers expands a
-	// custom CIDR into the probe list.
+	// custom CIDR into the probe list and publishes the warnings.
 	tun := NewTunnel()
-	tun.SetProbeResolvers("2.188.21.0/30", false)
-	if len(tun.probeList) != 4 || tun.probeList[0] != "2.188.21.0:53" || tun.probeList[3] != "2.188.21.3:53" {
-		t.Fatalf("SetProbeResolvers(CIDR) probeList = %v, want 2.188.21.0:53..2.188.21.3:53", tun.probeList)
+	tun.SetProbeResolvers("2.188.21.0/30, 10.0.0.0/16", false)
+	if len(tun.probeList) != 3 || tun.probeList[0] != "2.188.21.1:53" {
+		t.Fatalf("SetProbeResolvers(CIDR) probeList = %v", tun.probeList)
+	}
+	var stats struct {
+		Warnings []string `json:"resolverListWarnings"`
+		Dropped  int      `json:"resolverListDropped"`
+	}
+	if err := json.Unmarshal([]byte(tun.Stats()), &stats); err != nil {
+		t.Fatal(err)
+	}
+	if len(stats.Warnings) != 1 || stats.Dropped != 65536 {
+		t.Fatalf("Stats warnings=%v dropped=%d", stats.Warnings, stats.Dropped)
+	}
+	var chk struct {
+		Count    int      `json:"count"`
+		Dropped  int      `json:"dropped"`
+		Warnings []string `json:"warnings"`
+	}
+	if err := json.Unmarshal([]byte(CheckResolverList("2.188.21.0/24")), &chk); err != nil {
+		t.Fatal(err)
+	}
+	if chk.Count != 254 || chk.Dropped != 0 || chk.Warnings == nil || len(chk.Warnings) != 0 {
+		t.Fatalf("CheckResolverList = %+v", chk)
 	}
 }
 
@@ -798,6 +868,43 @@ func TestScanPauseResume(t *testing.T) {
 	}
 }
 
+// TestScanPauseHoldsQueuedProbes (1.0.3): with far more resolvers
+// than workers, Pause must stop the scan after at most one probe per
+// worker — the pre-1.0.3 scan let every already-queued goroutine
+// probe after Pause, so the count kept rising in 2s steps.
+func TestScanPauseHoldsQueuedProbes(t *testing.T) {
+	blackhole, stopBH := startBlackHoleDNSResponder(t)
+	defer stopBH()
+	tun := NewTunnel()
+	list := make([]string, 200)
+	for i := range list {
+		list[i] = blackhole
+	}
+	tun.probeList = list
+	done := make(chan struct{})
+	go func() {
+		tun.probeResolversOnce()
+		close(done)
+	}()
+	time.Sleep(300 * time.Millisecond)
+	tun.PauseScan()
+	time.Sleep(probeResolverTimeout + 500*time.Millisecond)
+	frozen := tun.testedResolvers.Load()
+	if frozen > scanWorkers {
+		t.Fatalf("tested %d after pause, want <= %d (one in-flight probe per worker)", frozen, scanWorkers)
+	}
+	time.Sleep(probeResolverTimeout + 500*time.Millisecond)
+	if got := tun.testedResolvers.Load(); got != frozen {
+		t.Fatalf("testedResolvers advanced while paused: %d -> %d", frozen, got)
+	}
+	tun.StopScan() // Stop wins over Pause
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("StopScan did not end a paused scan")
+	}
+}
+
 // TestSetVetCredentials (1.0.35): the scan's vetting credentials can
 // be set from the selected server's config without starting the
 // tunnel, so a scan before the first connect can vet. Invalid
@@ -806,7 +913,7 @@ func TestScanPauseResume(t *testing.T) {
 func TestSetVetCredentials(t *testing.T) {
 	tun := NewTunnel()
 	// No credentials yet: vetting is impossible.
-	if got := tun.vetResolvers(context.Background(), []string{"1.2.3.4:53"}); got != nil {
+	if got := tun.vetResolvers(context.Background(), []string{"1.2.3.4:53"}, nil); got != nil {
 		t.Fatalf("vetResolvers without credentials = %v, want nil", got)
 	}
 	// Valid credentials are stored.
@@ -829,5 +936,43 @@ func TestSetVetCredentials(t *testing.T) {
 	tun.SetVetCredentials("other.zone", "not-base64!", "IR", "auto")
 	if tun.zone != "r.example.net" {
 		t.Fatalf("zone after bad-key SetVetCredentials = %q, want r.example.net", tun.zone)
+	}
+}
+
+// TestNextHealthyCursor (1.0.3): the next background round starts at
+// the first resolver after the probed window that survived eviction.
+func TestNextHealthyCursor(t *testing.T) {
+	prev := []string{"a", "b", "c", "d", "e", "f"}
+	// Window [0,2) = a,b; b evicted → next is c, now at index 1.
+	if got := nextHealthyCursor(prev, 0, 2, []string{"a", "c", "d", "e", "f"}); got != 1 {
+		t.Fatalf("cursor = %d, want 1", got)
+	}
+	// Window [4,6) wraps to a; nothing evicted → a at 0.
+	if got := nextHealthyCursor(prev, 4, 2, prev); got != 0 {
+		t.Fatalf("cursor = %d, want 0", got)
+	}
+	// Window [2,4) = c,d; c,d and e evicted → next survivor f at 3.
+	if got := nextHealthyCursor(prev, 2, 2, []string{"a", "b", "f"}); got != 2 {
+		t.Fatalf("cursor = %d, want 2", got)
+	}
+	if got := nextHealthyCursor(prev, 0, 2, nil); got != 0 {
+		t.Fatalf("empty list cursor = %d, want 0", got)
+	}
+}
+
+// TestVerifiedResolversDedupe (1.0.3): a resolver with a UDP and a
+// TCP path counts once, with the faster RTT.
+func TestVerifiedResolversDedupe(t *testing.T) {
+	ps := []soar.PathStat{
+		{Resolver: "1.1.1.1:53", Transport: "udp", Verified: true, RTT: 80 * time.Millisecond},
+		{Resolver: "1.1.1.1:53", Transport: "tcp", Verified: true, RTT: 50 * time.Millisecond},
+		{Resolver: "8.8.8.8:53", Transport: "udp", Verified: true, RTT: 60 * time.Millisecond},
+	}
+	got := verifiedResolversFrom(ps, 0)
+	if len(got) != 2 || got[0].Addr != "1.1.1.1:53" || got[0].RTTMs != 50 || got[1].Addr != "8.8.8.8:53" {
+		t.Fatalf("verifiedResolversFrom = %+v", got)
+	}
+	if countUnique([]string{"a", "b", "a"}) != 2 {
+		t.Fatal("countUnique")
 	}
 }

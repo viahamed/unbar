@@ -1,12 +1,12 @@
 /* Unbar — English strings (formal) */
 
-"about.license" = "Licensed under the Unbar Source-Available License";
+"about.license" = "Licensed under GNU GPL v3.0";
 "about.line1" = "A DNS-tunnel VPN client based on Soar,\nby Break The Barriers.";
 "about.line2" = "Built for total blackouts,\nwhen DNS is the only way out.";
 "about.soar_version" = "Soar tunnel protocol version: v0.2.5";
 "about.source" = "Source code";
 "about.soar" = "Soar";
-"about.title" = "About";
+"about.title" = "About Unbar";
 "about.version" = "Version %@";
 
 "common.cancel" = "Cancel";
@@ -135,10 +135,10 @@
 "tab.servers" = "Servers";
 "tab.settings" = "Settings";
 
-"about.donate_text" = "If Unbar™ helped you, a small donation keeps it going.";
+"about.donate_text" = "If Unbar helped you, a small donation keeps it going.";
 "about.donate_title" = "Donation";
 "about.donate_ton" = "TON";
-"about.donate_usdt" = "USDT (BEP20)";
+"about.donate_usdt" = "USDT · BEP20";
 "about.telegram" = "Telegram channel @Unbarapp";
 
 "common.back" = "Back";
@@ -176,7 +176,7 @@
 "settings.copy_all_resolvers" = "Copy all %d";
 "settings.history" = "Connection history";
 "settings.dns_answer_size_auto" = "Auto";
-"settings.dns_answer_size_explanation" = "Maximum downstream data one DNS answer may carry. Auto lets the app probe up to 1232 bytes. Try a smaller value if apps stall or load slowly on a lossy network.";
+"settings.dns_answer_size_explanation" = "Maximum downstream data one DNS answer may carry. Auto lets the app probe up to 1232 bytes (the largest size), so there is no separate 1232 option. The tunnel works in steps of 48 bytes (512, 560 … 1232), so the manual choices 512, 752 and 992 are exact steps. Try a smaller value if apps stall or load slowly on a lossy network.";
 "settings.dns_answer_size_label" = "DNS answer size";
 "settings.mtu_explanation" = "Maximum packet size for the VPN tunnel. Auto measures your network and picks the best size. Try 1280 if pages stall or load slowly, or 1500 for faster downloads on a stable connection.";
 "settings.mtu_label" = "MTU (VPN mode only)";
@@ -193,8 +193,8 @@
 "settings.scan_stage2_title" = "Soar handshake vetting";
 "settings.scan_stage3_title" = "Ranking + saving verified resolvers";
 "settings.scan_tested" = "Scanned %d of %d";
-"settings.tcp_mode" = "TCP mode";
-"settings.tcp_mode_explanation" = "Forces DNS queries over TCP/53 instead of UDP/53. Use it only when UDP is blocked, as it is slower. When off, TCP is still used where UDP fails.";
+"settings.tcp_mode" = "TCP Mode";
+"settings.tcp_mode_explanation" = "Adds a TCP/53 path for every resolver next to UDP. Helps when UDP is blocked, but uses more battery. When off, TCP is used only where UDP fails.";
 "settings.test_resolvers" = "Scan resolvers";
 "settings.stop_scan" = "Stop";
 "settings.pause_scan" = "Pause";
@@ -229,9 +229,9 @@
 "tutorial.settings.group_routing" = "Routing";
 "tutorial.settings.group_system" = "System & diagnostics";
 "tutorial.servers.add.title" = "Add server";
-"tutorial.servers.add.body" = "Tap + to add a new server: enter the server name, zone, and the server's public key. Without a server, you cannot connect.";
+"tutorial.servers.add.body" = "Tap + to add a new server: enter the server name, zone, and the server's public key. Without a server, you cannot connect. Tip: keep the tunnel domain (zone) short — every DNS query carries the zone name, so a shorter name leaves more room for data in each query.";
 "tutorial.servers.import.title" = "Import config and QR";
-"tutorial.servers.import.body" = "Instead of entering the details by hand, import an unbar:// link or scan a QR code of the config; the server is added automatically.";
+"tutorial.servers.import.body" = "Instead of entering the details by hand, import an unbar:// link or scan a QR code of the config; the server is added automatically. Resolver lists can be imported too: in Settings > Resolvers choose Import and pick a .txt file of resolver IPs and ranges (e.g. 0.0.0.0/24). The list is cleaned, de-duplicated and sorted automatically, scanned exactly like Custom, and your Custom list stays as it is.";
 "tutorial.servers.subscription.title" = "Subscription";
 "tutorial.servers.subscription.body" = "Enter a subscription link and the server list will update automatically from that link. Servers you added by hand are left untouched.";
 "tutorial.servers.latency.title" = "Latency test and server selection";
@@ -239,17 +239,17 @@
 "tutorial.servers.edit.title" = "Edit, delete, and export";
 "tutorial.servers.edit.body" = "Tap a server to edit or delete it. Export config shares a server's config as a link or a QR code.";
 "tutorial.settings.vpn.title" = "VPN mode / SOCKS mode";
-"tutorial.settings.vpn.body" = "VPN mode routes all of the phone's traffic through the tunnel; SOCKS mode only serves apps that have the proxy configured. You change it here in Settings — the Home card has no mode switch — and a change applies on the next connection. For everyday use, choose VPN mode.";
+"tutorial.settings.vpn.body" = "VPN mode routes all of the phone's traffic through the tunnel; SOCKS mode only serves apps that have the proxy configured. You change it here in Settings — the Home card has no mode switch — and a change applies on the next connection. For everyday use, choose VPN mode. Answers to DNS lookups are cached for both modes; if the tunnel drops for a moment, names resolved in the last day still answer so apps keep working.";
 "tutorial.settings.tcp.title" = "TCP mode";
-"tutorial.settings.tcp.body" = "Forces DNS queries over TCP/53 instead of UDP/53. Use it only when UDP is blocked, as it is slower. When off, TCP is still used where UDP fails.";
+"tutorial.settings.tcp.body" = "Adds a TCP/53 path for every resolver next to UDP. Helps when UDP is blocked, but uses more battery. When off, TCP is used only where UDP fails. It applies on the next connect.";
 "tutorial.settings.mtu.title" = "MTU";
 "tutorial.settings.mtu.body" = "MTU is the size of network packets on the tunnel (default Auto). In Auto, the active interface MTU is measured and 200 bytes are subtracted (clamped to 1280–1500); the new value applies on the next connection. Usually there is no need to change it.";
 "tutorial.settings.answer_size.title" = "DNS answer size";
-"tutorial.settings.answer_size.body" = "The maximum size of each DNS answer (default Auto). Auto picks the best value; change it only if you have a problem.";
+"tutorial.settings.answer_size.body" = "The maximum size of each DNS answer (default Auto). Auto probes up to 1232 bytes and picks the best value; the manual choices 512, 752 and 992 cap it lower (the tunnel works in 48-byte steps). Change it only if you have a problem; a change applies on the next connect.";
 "tutorial.settings.resolvers.title" = "Resolvers";
-"tutorial.settings.resolvers.body" = "Resolvers are the DNS servers the tunnel uses. Built-in uses the built-in list of Iranian resolvers; in Custom mode only the resolvers you entered yourself are used.";
+"tutorial.settings.resolvers.body" = "Resolvers are the DNS servers the tunnel uses. Built-in uses the built-in list of Iranian resolvers; in Custom mode only the resolvers you entered yourself are used; Import uses only the list loaded from a .txt file (single IPs and ranges, cleaned and sorted automatically). Built-in remembers the healthy resolvers separately for each network — your mobile carrier or Wi-Fi — so reconnecting on a known network starts from resolvers that worked there.";
 "tutorial.settings.test_resolvers.title" = "Scan resolvers and health";
-"tutorial.settings.test_resolvers.body" = "The Scan resolvers button checks the resolvers in three stages: first DNS and RTT screening, then a Soar handshake on all stage-1 responders (the verified count rises live and it works even before connecting), and finally ranking and saving every verified resolver into one pool. The Active resolvers card shows how many resolvers are currently carrying traffic — dead ones are replaced automatically, so there is no need to scan again.";
+"tutorial.settings.test_resolvers.body" = "The Scan resolvers button checks the resolvers in three stages: first DNS and RTT screening, then a Soar handshake on all stage-1 responders (the verified count rises live and it works even before connecting), and finally ranking and saving every verified resolver into one pool. Scan over picks the transport: UDP (default) or UDP + TCP, which also keeps resolvers that answer only over TCP/53 — the scan takes longer. Each remembered resolver shows a tag for the transport that verified it: UDP, TCP or UDP·TCP; it is listed once even when it has both paths. Pause holds a scan and Resume continues it; Stop keeps what was found so far. In Custom and Import modes the card shows how many resolvers your list gives, and warns when a range wider than /20 is skipped or the list is capped at 5000. The Active resolvers card shows how many resolvers are currently carrying traffic — dead ones are replaced automatically, so there is no need to scan again.";
 "tutorial.settings.proxy.title" = "Local SOCKS proxy";
 "tutorial.settings.proxy.body" = "While the VPN is connected, a SOCKS proxy also runs on the phone (default port 1080). Set it in your browser or other apps so that only that app uses the tunnel.";
 "tutorial.settings.bandwidth.title" = "Bandwidth limit";
@@ -289,7 +289,7 @@
 
 /* (1.0.2) Resolver list import */
 "settings.resolver_import" = "Import";
-"import.note" = "Load a .txt file of resolver IPs. Single IPs and ranges (e.g. 2.188.21.0/24), one per line or separated by commas or spaces.";
+"import.note" = "Load a .txt file of resolver IPs. Single IPs and ranges (e.g. 0.0.0.0/24), one per line or separated by commas or spaces.";
 "import.note_custom_kept" = "The app cleans and sorts the list automatically. Your Custom list stays as it is.";
 "import.choose_file" = "Choose .txt file";
 "import.replace_file" = "Replace file";
@@ -310,3 +310,40 @@
 "import.fix_ranges" = "%1$d ranges corrected to their network address";
 "import.fix_dash" = "%1$d dash ranges converted to CIDR";
 "import.ignored" = "Ignored %1$d lines (IPv4 resolvers only): %2$@";
+
+/* (1.0.3) Path diagnostics */
+"paths.title" = "Path diagnostics";
+"paths.empty" = "No paths yet. Connect to see path diagnostics.";
+"paths.summary" = "%d paths · %d healthy";
+"paths.transport" = "Transport";
+"paths.rtt" = "RTT";
+"paths.loss" = "Loss";
+"paths.window" = "Window";
+"paths.answer_limit" = "Answer limit";
+"paths.name_len" = "Name length";
+"paths.state.healthy" = "Healthy";
+"paths.state.degraded" = "Degraded";
+"paths.state.suspended" = "Suspended";
+"paths.state.unverified" = "Unverified";
+"tutorial.settings.paths.title" = "Path diagnostics";
+"tutorial.settings.paths.body" = "Settings > Path diagnostics shows, while connected, every resolver path the tunnel uses: its state (healthy, degraded, suspended or unverified), transport (UDP/TCP), RTT, loss, window, the accepted DNS answer limit and the query-name length. It refreshes every 3 seconds while open. Copy puts the whole table on the clipboard, ready to paste into a bug report.";
+
+/* (1.0.3) DNS answer size applies on next connect */
+"settings.dns_answer_size_next_connect" = "The DNS answer size applies on the next connect.";
+
+/* (1.0.3) Resolver list trimmed by the core (ranges > /20 skipped, 5000 cap) */
+"settings.resolver_list_trimmed_warning" = "Some ranges were too large (wider than /20) and were skipped, or the list was truncated to 5000 resolvers — %d addresses were not scanned.";
+
+/* (1.0.3) About redesign */
+"about.by_btb" = "by Break The Barriers";
+"about.chip_app" = "App v%@";
+"about.chip_core" = "Soar core v0.2.5";
+"about.chip_license" = "GPL-3.0";
+"about.link_website" = "Website";
+"about.link_telegram" = "Telegram channel";
+
+/* 1.0.3: scan transport, resolver list check */
+"settings.scan_over" = "Scan over";
+"settings.scan_over_note" = "UDP + TCP also keeps resolvers that answer only over TCP; the scan takes longer.";
+"settings.resolver_list_check_count" = "This list will use %d resolvers.";
+"settings.resolver_list_check_dropped" = "%d addresses will be left out (ranges wider than /20 are skipped; the list is capped at 5000).";

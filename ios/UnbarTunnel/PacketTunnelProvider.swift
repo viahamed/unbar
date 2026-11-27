@@ -73,6 +73,9 @@ public class PacketTunnelProvider: NEPacketTunnelProvider {
     // queue and cleared synchronously by the resume, and the
     // pause job re-checks it after every blocking step.
     private var pathMonitor: NWPathMonitor?
+    // (1.0.3): the resolver-memory network key last seen by the
+    // path monitor (nil = global pool).
+    private var lastNetworkKey: String?
     private var networkPaused = false
     // Set in stopTunnel so a path callback already in flight
     // cannot pause or resume a provider that is being torn down.
@@ -135,7 +138,12 @@ public class PacketTunnelProvider: NEPacketTunnelProvider {
         // effective MTU before anything uses it (Go tunstack via
         // SetMTU and the TUN interface via the network settings).
         // A manual value passes through unchanged.
-        let effectiveMtu = resolveMTU(config.mtu)
+        // (1.0.3): the active interface (NWPathMonitor) drives both
+        // MTU Auto and the per-network resolver memory.
+        let activeInterface = currentActiveInterfaceName()
+        ResolverHealthStore.shared.interfaceNameOverride = activeInterface
+        lastNetworkKey = ResolverHealthStore.shared.currentNetworkKey()
+        let effectiveMtu = resolveMTU(config.mtu, interfaceName: activeInterface)
         if config.mtu == 0 {
             SharedLog.append("MTU Auto resolved to \(effectiveMtu)")
             config.mtu = effectiveMtu
@@ -184,13 +192,18 @@ public class PacketTunnelProvider: NEPacketTunnelProvider {
         // below can tell evicted resolvers apart.
         lastHandedProbeAddrs = Set(config.probeResolvers
             .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty })
+        // (1.0.3): the 30s pool probe uses the scan transport too, so
+        // a resolver kept by a UDP + TCP scan (TCP-only) is not
+        // evicted by UDP-only probes. Before setHealthyProbeResolvers
+        // so the first round already uses it.
+        tunnel.setScanTransport(config.scanTransport)
         tunnel.setHealthyProbeResolvers(config.probeResolvers)
         // One MTU drives the whole data plane: the Go tunstack (via
         // SetMTU) and the TUN interface (via the network settings
         // below). Applies on next connect.
         tunnel.setMTU(config.mtu)
         // DNS answer-size cap (1.0.28): 0 = Auto, otherwise
-        // 512/768/1024/1232. Applies on next connect.
+        // (1.0.3) a Soar class boundary 512/752/992. Applies on next connect.
         tunnel.setMaxAnswer(config.maxAnswer)
 
         if config.mode == "socks" {
@@ -292,7 +305,59 @@ public class PacketTunnelProvider: NEPacketTunnelProvider {
         pathMonitor = nil
     }
 
+    /// (1.0.3): the active physical interface of a path — the
+    /// first of availableInterfaces that is Wi-Fi, cellular or
+    /// wired (never our own utun, which reports as .other).
+    private func activeInterfaceName(_ path: Network.NWPath) -> String? {
+        let physical = path.availableInterfaces.first {
+            $0.type == .wifi || $0.type == .cellular || $0.type == .wiredEthernet
+        }
+        return physical?.name ?? path.availableInterfaces.first?.name
+    }
+
+    /// (1.0.3): the active interface name right now. Uses the
+    /// running monitor when there is one; otherwise (first start:
+    /// the monitor only starts once the tunnel is up) a short-lived
+    /// monitor is read, bounded to 0.5s. nil when unknown.
+    private func currentActiveInterfaceName() -> String? {
+        if let path = pathMonitor?.currentPath, path.status == .satisfied {
+            return activeInterfaceName(path)
+        }
+        let monitor = NWPathMonitor()
+        let queue = DispatchQueue(label: "org.breakthebarriers.unbar.pathprobe")
+        let semaphore = DispatchSemaphore(value: 0)
+        var name: String?
+        monitor.pathUpdateHandler = { [weak self] path in
+            // Runs on `queue`; read back through queue.sync below.
+            name = self?.activeInterfaceName(path)
+            semaphore.signal()
+        }
+        monitor.start(queue: queue)
+        _ = semaphore.wait(timeout: .now() + 0.5)
+        monitor.cancel()
+        return queue.sync { name }
+    }
+
     private func pathDidChange(_ path: Network.NWPath) {
+        // (1.0.3): per-network resolver memory follows the active
+        // interface. A changed interface/network resets the synced
+        // sets so the next stats tick merges the live verified set
+        // into the NEW network's pool and hands that pool to the
+        // core.
+        if path.status == .satisfied {
+            let name = activeInterfaceName(path)
+            let store = ResolverHealthStore.shared
+            let oldKey = lastNetworkKey
+            store.interfaceNameOverride = name
+            let newKey = store.currentNetworkKey()
+            if newKey != oldKey {
+                lastNetworkKey = newKey
+                lastSyncedVerifiedAddrs = []
+                lastSeenProbeAddrs = []
+                let label = newKey.map { String($0.split(separator: ":").first ?? "") } ?? "global"
+                SharedLog.append("Resolver memory: network=\(label) pool=\(store.load().count)")
+            }
+        }
         // Satisfied means a usable path exists; anything else
         // (unsatisfied, or requiresConnection) means the tunnel
         // cannot send, so it pauses like a total loss.
@@ -547,7 +612,7 @@ public class PacketTunnelProvider: NEPacketTunnelProvider {
         // evict nothing.
         let evicted: Set<String> = probeAddrs.isEmpty ? [] : lastHandedProbeAddrs.subtracting(probeAddrs)
         ResolverHealthStore.shared.merge(verified.map {
-            RememberedResolver(addr: $0.addr, rttMs: Int($0.rttMs), checkedAtMs: 0)
+            RememberedResolver(addr: $0.addr, rttMs: Int($0.rttMs), checkedAtMs: 0, transport: $0.transport)
         }, evicting: evicted)
         // Hand the pool to the Go core when it changed, so its
         // 30s loop rotates over the fresh pool. (The old code
@@ -705,7 +770,8 @@ private final class PacketBridge {
 /// MTU Auto: resolve the MTU setting to the effective value used
 /// for the Go tunstack (via SetMTU) and the TUN interface (via the
 /// network settings). A manual value (1280/1400/1500) is used
-/// as-is. Auto (0) measures the active network interface MTU and
+/// as-is. Auto (0) measures the active network interface MTU (1.0.3:
+/// the interface NWPathMonitor reports as active) and
 /// subtracts the tunnel encapsulation overhead (IP + UDP + DNS
 /// framing), so the TUN MTU fits the real path instead of
 /// guessing; it falls back to 1280 (the safe value) when the
@@ -713,30 +779,42 @@ private final class PacketBridge {
 private let mtuAutoOverhead = 200
 private let mtuAutoFallback = 1280
 
-private func resolveMTU(_ mtuSetting: Int) -> Int {
+private func resolveMTU(_ mtuSetting: Int, interfaceName: String? = nil) -> Int {
     if mtuSetting != 0 { return mtuSetting }
-    let ifaceMtu = readInterfaceMTU()
+    let ifaceMtu = readInterfaceMTU(preferred: interfaceName)
     let effective = (ifaceMtu ?? mtuAutoFallback) - mtuAutoOverhead
     return min(max(effective, 1280), 1500)
 }
 
-/// Read the MTU of the first usable (non-loopback) interface via
-/// getifaddrs: the AF_LINK entry's if_data carries ifi_mtu.
-private func readInterfaceMTU() -> Int? {
+/// Read an interface MTU via getifaddrs: the AF_LINK entry's
+/// if_data carries ifi_mtu. (1.0.3): when `preferred` (the active
+/// interface from NWPathMonitor currentPath.availableInterfaces) is
+/// given, that interface's MTU is used; with no name, or no match,
+/// it falls back to the old behaviour — the first usable
+/// (non-loopback) interface.
+private func readInterfaceMTU(preferred: String? = nil) -> Int? {
     var ifaddr: UnsafeMutablePointer<ifaddrs>?
     guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return nil }
     defer { freeifaddrs(ifaddr) }
+    var firstUsable: Int?
     var cursor: UnsafeMutablePointer<ifaddrs>? = first
     while let ptr = cursor {
         let ifa = ptr.pointee
-        if ifa.ifa_addr.pointee.sa_family == UInt8(AF_LINK) {
+        if let sa = ifa.ifa_addr, sa.pointee.sa_family == UInt8(AF_LINK) {
             let name = String(cString: ifa.ifa_name)
             if name != "lo0", let data = ifa.ifa_data {
                 let mtu = Int(data.assumingMemoryBound(to: if_data.self).pointee.ifi_mtu)
-                if mtu > 0 { return mtu }
+                if mtu > 0 {
+                    if let wanted = preferred {
+                        if name == wanted { return mtu }
+                        if firstUsable == nil { firstUsable = mtu }
+                    } else {
+                        return mtu
+                    }
+                }
             }
         }
         cursor = ifa.ifa_next
     }
-    return nil
+    return firstUsable
 }

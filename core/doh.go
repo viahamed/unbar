@@ -52,19 +52,25 @@ func dohURLForResolver(resolver string) string {
 	}
 }
 
-// resolveViaDoH sends the raw DNS query to the resolver's DoH endpoint
+// resolveViaDoH answers a raw DNS query for the SOCKS5 data plane
+// (Android): from the shared DNS cache (dnscache.go) when fresh,
+// otherwise via DoH through the tunnel, falling back to a stale cached
+// answer (serve-stale) when the DoH query fails.
+func (t *Tunnel) resolveViaDoH(resolver string, query []byte) []byte {
+	return sharedDNSCache.resolveCached(resolver, query, t.fetchDoH)
+}
+
+// fetchDoH sends the raw DNS query to the resolver's DoH endpoint
 // over HTTPS through the DNS tunnel (port 443) and returns the raw DNS
-// response bytes, or nil on any failure.
+// response bytes, or nil on any failure. No caching here.
 //
 // RFC 8484 §4.1: the query is sent with transaction ID 0 so the answer
 // is cacheable at the DoH server, and the original ID is restored on
 // the response. Without this, every query is a fresh lookup upstream
 // and concurrent queries over one connection can collide on ID.
-func (t *Tunnel) resolveViaDoH(resolver string, query []byte) []byte {
-	// Fast path: a cached answer (1.0.11) — repeated queries for the
-	// same name are answered from memory, no tunnel round-trip.
-	if cached := t.getCachedDoH(resolver, query); cached != nil {
-		return cached
+func (t *Tunnel) fetchDoH(resolver string, query []byte) []byte {
+	if len(query) < 12 {
+		return nil
 	}
 	client := t.getDoHClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -91,45 +97,5 @@ func (t *Tunnel) resolveViaDoH(resolver string, query []byte) []byte {
 		return nil
 	}
 	body[0], body[1] = id0, id1
-	t.putCachedDoH(resolver, query, body)
 	return body
-}
-
-// getCachedDoH returns a copy of the cached DoH response for query,
-// with the transaction ID set to the query's own ID, or nil on a miss
-// or expiry. Same keying as the TUN data plane's cache: resolver +
-// query with the transaction ID zeroed.
-func (t *Tunnel) getCachedDoH(resolver string, query []byte) []byte {
-	if len(query) < 2 {
-		return nil
-	}
-	t.dohDnsMu.Lock()
-	defer t.dohDnsMu.Unlock()
-	e, ok := t.dohDnsCache[dnsCacheKey(resolver, query)]
-	if !ok || time.Now().After(e.expiresAt) {
-		return nil
-	}
-	resp := append([]byte(nil), e.resp...)
-	resp[0], resp[1] = query[0], query[1]
-	return resp
-}
-
-// putCachedDoH stores a DoH response for 60s, keyed by its query.
-// The stored copy has the transaction ID zeroed; getCachedDoH stamps
-// the caller's ID on the copy it returns.
-func (t *Tunnel) putCachedDoH(resolver string, query, resp []byte) {
-	if len(query) < 2 || len(resp) < 12 {
-		return
-	}
-	t.dohDnsMu.Lock()
-	defer t.dohDnsMu.Unlock()
-	if t.dohDnsCache == nil {
-		t.dohDnsCache = make(map[string]dnsCacheEntry)
-	}
-	stored := append([]byte(nil), resp...)
-	stored[0], stored[1] = 0, 0
-	t.dohDnsCache[dnsCacheKey(resolver, query)] = dnsCacheEntry{
-		resp:      stored,
-		expiresAt: time.Now().Add(60 * time.Second),
-	}
 }

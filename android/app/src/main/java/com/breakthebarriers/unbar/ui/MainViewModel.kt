@@ -290,6 +290,11 @@ fun disconnect() {
     tunnelManager.requestDisconnect()
 }
 
+// (1.0.3): live per-path stats for Settings > Path diagnostics.
+// A Go Stats() call — the panel calls it off the main thread.
+fun currentPathStats(): List<com.breakthebarriers.unbar.data.tunnel.CoreTunnelBridge.SoarPathStat> =
+    tunnelManager.bridge.pathStats()
+
 fun testResolvers() {
     tunnelManager.testResolvers()
 }
@@ -773,6 +778,15 @@ fun setDiagnosticLogsEnabled(enabled: Boolean) {
 
 fun setTcpMode(enabled: Boolean) {
     viewModelScope.launch { settingsRepo.setTcpMode(enabled) }
+}
+
+// (1.0.3): resolver scan over UDP only or UDP + TCP. Saved, then
+// handed to the Go core at once (next scan + background probe).
+fun setScanUdpTcp(enabled: Boolean) {
+    viewModelScope.launch {
+        settingsRepo.setScanUdpTcp(enabled)
+        tunnelManager.applyLiveSettings(settings.value.copy(scanUdpTcp = enabled))
+    }
 }
 
 fun setMtu(mtu: Int) {

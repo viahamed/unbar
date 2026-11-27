@@ -1,1 +1,1 @@
-DNS-tunnel VPN for internet blackouts, when DNS is the only way out
+VPN تونل DNS برای قطعی کامل اینترنت، وقتی DNS تنها راه خروج است

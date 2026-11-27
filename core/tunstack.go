@@ -60,20 +60,7 @@ type tunDevice struct {
 	closed bool
 	done   chan struct{}
 	wg     sync.WaitGroup
-	// dnsMu/dnsCache: a small DNS response cache (60s). Apps re-query
-	// without a cache every query is a slow round trip through the DNS
-	// tunnel, so the app waits on DNS for every connection. A hit
-	// answers instantly from memory. Keyed by resolver + query with the
-	// 2-byte transaction ID zeroed, so the same question asked with a
-	// different ID (or to the same resolver) still hits.
-	dnsMu    sync.Mutex
-	dnsCache map[string]dnsCacheEntry
-}
-
-// dnsCacheEntry is one cached DNS answer with its expiry.
-type dnsCacheEntry struct {
-	resp      []byte
-	expiresAt time.Time
+	// DNS answers are cached in the shared sharedDNSCache (dnscache.go).
 }
 
 type connKey struct {
@@ -556,70 +543,18 @@ func (d *tunDevice) answerDNS(srcIP [4]byte, srcPort uint16, dstIP [4]byte, reso
 	if len(query) < 12 {
 		return // malformed: a DNS header alone is 12 bytes
 	}
-	// Fast path: a cached answer.
-	if resp := d.getCachedDNS(resolver, query); resp != nil {
-		d.writeDNSReply(srcIP, srcPort, dstIP, resp)
-		return
+	// Shared DNS cache (dnscache.go): a fresh hit answers from memory;
+	// otherwise plain UDP to the resolver, then DoH through the tunnel
+	// (shared with the SOCKS5 data plane), then a stale cached answer.
+	var doh func(string, []byte) []byte
+	if d.tunnel != nil {
+		doh = d.tunnel.fetchDoH
 	}
-	resp := d.resolveDirectUDP(resolver, query)
-	if resp == nil {
-		// DoH fallback, shared with the SOCKS5 UDP relay (see doh.go):
-		// the query goes over HTTPS through the DNS tunnel.
-		resp = d.tunnel.resolveViaDoH(resolver, query)
-	}
+	resp := sharedDNSCache.resolveCached(resolver, query, d.resolveDirectUDP, doh)
 	if resp == nil {
 		return
 	}
-	d.putCachedDNS(resolver, query, resp)
 	d.writeDNSReply(srcIP, srcPort, dstIP, resp)
-}
-
-// dnsCacheKey returns the cache key for a DNS query: the resolver plus
-// the query bytes with the transaction ID zeroed, so the same question
-// asked with a different ID is the same entry (keyed by the query
-// minus its ID).
-func dnsCacheKey(resolver string, query []byte) string {
-	k := make([]byte, 0, len(resolver)+1+len(query))
-	k = append(k, resolver...)
-	k = append(k, 0)
-	k = append(k, query...)
-	if len(k) >= len(resolver)+3 {
-		k[len(resolver)+1], k[len(resolver)+2] = 0, 0
-	}
-	return string(k)
-}
-
-// getCachedDNS returns a copy of the cached response for query, with the
-// transaction ID set to the query's own ID, or nil on a miss or expiry.
-func (d *tunDevice) getCachedDNS(resolver string, query []byte) []byte {
-	if len(query) < 2 {
-		return nil
-	}
-	d.dnsMu.Lock()
-	defer d.dnsMu.Unlock()
-	e, ok := d.dnsCache[dnsCacheKey(resolver, query)]
-	if !ok || time.Now().After(e.expiresAt) {
-		return nil
-	}
-	resp := append([]byte(nil), e.resp...)
-	resp[0], resp[1] = query[0], query[1]
-	return resp
-}
-
-// putCachedDNS stores a DNS response for 60s, keyed by its query.
-func (d *tunDevice) putCachedDNS(resolver string, query, resp []byte) {
-	if len(query) < 2 || len(resp) < 12 {
-		return
-	}
-	d.dnsMu.Lock()
-	defer d.dnsMu.Unlock()
-	if d.dnsCache == nil {
-		d.dnsCache = make(map[string]dnsCacheEntry)
-	}
-	d.dnsCache[dnsCacheKey(resolver, query)] = dnsCacheEntry{
-		resp:      append([]byte(nil), resp...),
-		expiresAt: time.Now().Add(60 * time.Second),
-	}
 }
 
 // writeDNSReply builds the UDP reply for a DNS response and writes it to

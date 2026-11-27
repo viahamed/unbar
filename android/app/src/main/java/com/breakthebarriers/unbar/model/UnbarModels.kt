@@ -135,6 +135,14 @@ data class TunnelStats(
     // pool minus evicted resolvers. The sync drops evicted entries
     // from the stored pool. Empty on an older core.
     val probeResolvers: List<String> = emptyList(),
+    // (1.0.3): what the core left out of the custom/imported resolver
+    // list on the last Start / SetProbeResolvers — Stats()
+    // "resolverListWarnings" (English reasons, for the log) and
+    // "resolverListDropped" (addresses not used: ranges larger than
+    // /20 skipped, or the list truncated to 5000). Empty / 0 on an
+    // older core.
+    val resolverListWarnings: List<String> = emptyList(),
+    val resolverListDropped: Int = 0,
     val scanRunning: Boolean = false,
     // (1.0.32): true while a running full scan is paused
     // (Pause button). Missing on an older core — defaults
@@ -154,7 +162,11 @@ data class TunnelStats(
 // remembered healthy list — plain-DNS responders never do.
 data class VerifiedResolver(
     val addr: String,
-    val rttMs: Int
+    val rttMs: Int,
+    // (1.0.3): which transports carried this resolver — "udp",
+    // "tcp" or "udp+tcp" (Go Stats "transport"); "" = unknown
+    // (older core), shown with no tag.
+    val transport: String = ""
 )
 
 // One failed SOCKS dial from the Go core (DIAGNOSTIC 1.0.7).
@@ -186,6 +198,12 @@ data class AppSettings(
     val importedAtMs: Long = 0L,
     val discoveryCountry: String = "IR",
     val tcpMode: Boolean = false,
+    // (1.0.3): resolver scan transport. false = UDP only (default,
+    // the pre-1.0.3 scan); true = UDP + TCP/53 — a resolver that
+    // answers only over TCP is kept too (the scan takes longer).
+    // Handed to the Go core (SetScanTransport) before each scan
+    // and at connect (the background pool probe uses it too).
+    val scanUdpTcp: Boolean = false,
     // MTU for the VPN tunnel (VPN mode only; SOCKS mode has no TUN).
     // 0 = Auto (1.0.34): measure the active network interface MTU
     // and subtract the tunnel encapsulation overhead, so the TUN
@@ -195,7 +213,8 @@ data class AppSettings(
     // on next connect.
     val mtu: Int = 0,
     // DNS answer-size cap (1.0.28): 0 = Auto (the Soar default —
-    // paths probe up to 1232 bytes), otherwise 512/768/1024/1232.
+    // paths probe up to 1232 bytes), otherwise (1.0.3) a Soar class
+    // boundary: 512/752/992 (legacy 768/1024/1232 are migrated).
     // Smaller answers are more likely to arrive on a lossy path,
     // larger ones carry more downstream data per round-trip.
     // Applied to the tunnel core on next connect.

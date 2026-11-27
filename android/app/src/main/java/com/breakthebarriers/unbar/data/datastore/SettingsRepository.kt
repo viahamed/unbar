@@ -92,6 +92,7 @@ class SettingsRepository(
         val CUSTOM_RESOLVERS = stringPreferencesKey("custom_resolvers")
         val DISCOVERY_COUNTRY = stringPreferencesKey("discovery_country")
         val TCP_MODE = booleanPreferencesKey("tcp_mode")
+        val SCAN_UDP_TCP = booleanPreferencesKey("scan_udp_tcp")
         val MTU = intPreferencesKey("mtu")
         val MAX_ANSWER = intPreferencesKey("max_answer")
         val SHOW_SPEEDS_IN_NOTIFICATION = booleanPreferencesKey("show_speeds_in_notification")
@@ -143,6 +144,7 @@ class SettingsRepository(
             importedAtMs = prefs[Keys.IMPORTED_AT_MS] ?: 0L,
             discoveryCountry = prefs[Keys.DISCOVERY_COUNTRY]?.ifBlank { "IR" } ?: "IR",
             tcpMode = prefs[Keys.TCP_MODE] ?: false,
+            scanUdpTcp = prefs[Keys.SCAN_UDP_TCP] ?: false,
             // MTU (1.0.34): 0 = Auto (measure the interface MTU at
             // connect and subtract the tunnel overhead); otherwise
             // 1280/1400/1500. Anything else is stored as Auto (0).
@@ -232,6 +234,12 @@ class SettingsRepository(
         context.unbarDataStore.edit { it[Keys.TCP_MODE] = enabled }
     }
 
+    // (1.0.3): resolver scan over UDP only (false, default) or
+    // UDP + TCP (true).
+    suspend fun setScanUdpTcp(enabled: Boolean) {
+        context.unbarDataStore.edit { it[Keys.SCAN_UDP_TCP] = enabled }
+    }
+
     // MTU (1.0.34): 0 = Auto, otherwise 1280/1400/1500.
     // Anything else is stored as Auto (0).
     suspend fun setMtu(mtu: Int) {
@@ -242,8 +250,9 @@ class SettingsRepository(
         return if (value == 0 || value == 1280 || value == 1400 || value == 1500) value else 0
     }
 
-    // DNS answer-size cap (1.0.28): 0 = Auto, otherwise
-    // 512/768/1024/1232. Anything else is stored as Auto (0).
+    // DNS answer-size cap (1.0.28; 1.0.3 class boundaries): 0 = Auto,
+    // otherwise 512/752/992 (see normalizeMaxAnswer). Anything else
+    // is stored as Auto (0).
     suspend fun setMaxAnswer(value: Int) {
         context.unbarDataStore.edit { it[Keys.MAX_ANSWER] = validMaxAnswer(value) }
     }
@@ -300,11 +309,25 @@ class SettingsRepository(
         context.unbarDataStore.edit { it[Keys.AUTO_UPDATE_SUBSCRIPTIONS] = enabled }
     }
 
-    // DNS answer-size cap (1.0.28): only Auto (0) or 512/768/1024/
-    // 1232 are valid; anything else (e.g. a value stored by an older
-    // build) reads back as Auto.
-    private fun validMaxAnswer(value: Int): Int =
-        if (value == 0 || value == 512 || value == 768 || value == 1024 || value == 1232) value else 0
+    // DNS answer-size cap. (1.0.3): Soar only works in answer-size
+    // classes of 512+48k bytes (512, 560, ... 1184, 1232) and floors
+    // any other value to its class, so the manual choices are class
+    // boundaries now: Auto (0) / 512 / 752 / 992. Legacy values are
+    // migrated: 768 -> 752 and 1024 -> 992 (what Soar actually used
+    // for them), 1232 -> Auto (1232 is exactly what Auto probes up
+    // to). Any other class boundary below 1232 is kept as is;
+    // anything else reads back as Auto.
+    private fun validMaxAnswer(value: Int): Int = normalizeMaxAnswer(value)
+
+    // (1.0.3): persist the migration once, so the stored value
+    // matches what the UI shows (the read path already normalizes).
+    suspend fun migrateMaxAnswer() {
+        context.unbarDataStore.edit { prefs ->
+            val stored = prefs[Keys.MAX_ANSWER] ?: return@edit
+            val normalized = normalizeMaxAnswer(stored)
+            if (normalized != stored) prefs[Keys.MAX_ANSWER] = normalized
+        }
+    }
 
     private fun parseLineList(raw: String?): List<String> {
         if (raw.isNullOrBlank()) return emptyList()
@@ -530,4 +553,19 @@ fun droppedResolverTokens(raw: String): List<String> {
     return splitResolverTokens(raw)
         .filter { cleanResolverToken(it) == null }
         .distinct()
+}
+
+// (1.0.3) DNS answer-size cap normalization, shared by the read
+// path, the setter and the one-time migration. Mirrors the core's
+// normalizeMaxAnswer except that 1232 maps to Auto here (the manual
+// 1232 option was removed: it equals Auto).
+val MANUAL_MAX_ANSWER_OPTIONS = listOf(512, 752, 992)
+
+fun normalizeMaxAnswer(value: Int): Int = when {
+    value == 0 -> 0
+    value == 768 -> 752
+    value == 1024 -> 992
+    value >= 1232 -> 0
+    value >= 512 && (value - 512) % 48 == 0 -> value
+    else -> 0
 }

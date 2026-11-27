@@ -150,12 +150,12 @@
     <string name="scan_tested">اسکن‌شده: %1$d از %2$d</string>
     <string name="scan_saved">ذخیره‌شده: %1$d</string>
     <string name="custom_resolvers_cidr_note">بازه‌های CIDR هم پشتیبانی می‌شوند — مثلاً 0.0.0.0/24 کل بازه را اسکن می‌کند.</string>
-    <string name="tcp_mode_explanation">کوئری‌های DNS را به‌جای UDP/53 از TCP/53 می‌فرستد. فقط وقتی از آن استفاده کنید که UDP مسدود است، چون کندتر است. در حالت خاموش هم TCP همان‌جا که UDP جواب ندهد به کار می‌رود.</string>
+    <string name="tcp_mode_explanation">برای هر ریزالور، کنار UDP یک مسیر TCP/53 هم اضافه می‌کند. وقتی UDP مسدود است کمک می‌کند، ولی باتری بیشتری مصرف می‌کند. در حالت خاموش، TCP فقط جایی به کار می‌رود که UDP جواب ندهد.</string>
     <string name="mtu_label">MTU (فقط حالت VPN)</string>
     <string name="mtu_auto">خودکار</string>
     <string name="mtu_explanation">حداکثر اندازه‌ی بسته برای تونل VPN. «خودکار» شبکه‌ی شما را اندازه می‌گیرد و بهترین اندازه را انتخاب می‌کند. اگر صفحه‌ها گیر می‌کنند یا کند باز می‌شوند ۱۲۸۰ را امتحان کنید، و برای دانلود سریع‌تر در یک اتصال پایدار ۱۵۰۰ را.</string>
     <string name="dns_answer_size_label">سایز جواب DNS</string>
-    <string name="dns_answer_size_explanation">حداکثر داده‌ی دان‌استریم که یک جواب DNS می‌تواند حمل کند. «خودکار» به برنامه اجازه می‌دهد تا ۱۲۳۲ بایت را امتحان کند. اگر در شبکه‌ای با لاس بالا اپ‌ها گیر می‌کنند یا کند باز می‌شوند، مقدار کوچک‌تری را امتحان کنید.</string>
+    <string name="dns_answer_size_explanation">حداکثر داده‌ی دان‌استریم که یک جواب DNS می‌تواند حمل کند. «خودکار» به برنامه اجازه می‌دهد تا ۱۲۳۲ بایت (بیشترین اندازه) را امتحان کند، برای همین گزینهٔ جداگانهٔ ۱۲۳۲ وجود ندارد. تونل با پله‌های ۴۸ بایتی کار می‌کند (۵۱۲، ۵۶۰ … ۱۲۳۲)، پس گزینه‌های دستی ۵۱۲، ۷۵۲ و ۹۹۲ دقیقاً روی همین پله‌ها هستند. اگر در شبکه‌ای با لاس بالا اپ‌ها گیر می‌کنند یا کند باز می‌شوند، مقدار کوچک‌تری را امتحان کنید.</string>
     <string name="dns_answer_size_auto">خودکار</string>
     <string name="applies_on_reconnect">تغییرات اتصال با اتصال بعدی اعمال می‌شوند.</string>
     <string name="iran_geo_bypass">عبور مستقیم ایران (‎.ir و IPهای ایران)</string>
@@ -190,11 +190,11 @@
     <string name="about_line_1">کلاینت VPN تونل DNS بر پایهٔ Soar،\nاز Break The Barriers.</string>
     <string name="about_line_2">ساخته‌شده برای قطعی‌های کامل اینترنت،\nزمانی که DNS تنها راه خروج است.</string>
     <string name="about_soar_version">نسخه‌ی پروتکل تونل Soar: v0.2.5</string>
-    <string name="about_license">منتشرشده تحت مجوز Apache License 2.0</string>
+    <string name="about_license">منتشرشده تحت مجوز GNU GPL نسخه ۳</string>
     <string name="about_telegram_channel">کانال تلگرام @Unbarapp</string>
     <string name="donate_title">حمایت مالی</string>
     <string name="donate_text">اگر آنبار برایتان مفید بود، با یک حمایت کوچک به ادامه‌ی آن کمک کنید.</string>
-    <string name="donate_usdt_bep20">USDT (BEP20)</string>
+    <string name="donate_usdt_bep20">USDT · BEP20</string>
     <string name="donate_ton">TON</string>
 
     <!-- Notification -->
@@ -207,9 +207,9 @@
 
     <!-- Servers Tutorial -->
     <string name="tutorial_servers_add_title">افزودن سرور</string>
-    <string name="tutorial_servers_add_body">از دکمه + سرور جدید اضافه کنید: نام، zone و کلید عمومی سرور را وارد کنید. بدون سرور نمی‌توانید وصل شوید.</string>
+    <string name="tutorial_servers_add_body">از دکمه + سرور جدید اضافه کنید: نام، zone و کلید عمومی سرور را وارد کنید. بدون سرور نمی‌توانید وصل شوید. نکته: دامنهٔ تونل (zone) را کوتاه بگیرید — هر کوئری DNS نام zone را با خودش می‌برد، پس نام کوتاه‌تر یعنی جای بیشتر برای داده در هر کوئری.</string>
     <string name="tutorial_servers_import_title">ایمپورت کانفیگ و QR</string>
-    <string name="tutorial_servers_import_body">به‌جای وارد کردن دستی، لینک unbar:// را ایمپورت کنید یا QR کانفیگ را اسکن کنید؛ سرور خودکار اضافه می‌شود.</string>
+    <string name="tutorial_servers_import_body">به‌جای وارد کردن دستی، لینک unbar:// را ایمپورت کنید یا QR کانفیگ را اسکن کنید؛ سرور خودکار اضافه می‌شود. لیست ریزالور را هم می‌توانید وارد کنید: در تنظیمات &gt; ریزالورها گزینهٔ «وارد کردن» را بزنید و یک فایل ‎.txt‎ از آی‌پی‌ها و رنج‌های ریزالور (مثل 0.0.0.0/24) انتخاب کنید. لیست خودکار تمیز، بدون تکرار و مرتب می‌شود، دقیقاً مثل سفارشی اسکن می‌شود و لیست سفارشی شما دست نمی‌خورد.</string>
     <string name="tutorial_servers_subscription_title">اشتراک</string>
     <string name="tutorial_servers_subscription_body">آدرس اشتراک را وارد کنید تا لیست سرورها خودکار از آن آدرس به‌روز شود. سرورهای دستی دست نمی‌خورند.</string>
     <string name="tutorial_servers_latency_title">تست تأخیر و انتخاب سرور</string>
@@ -224,17 +224,17 @@
     <string name="tutorial_settings_group_routing">مسیریابی</string>
     <string name="tutorial_settings_group_system">سیستم و عیب‌یابی</string>
     <string name="tutorial_settings_mode_title">حالت VPN / SOCKS</string>
-    <string name="tutorial_settings_mode_body">حالت VPN همه ترافیک گوشی را از تونل می‌گذراند؛ حالت SOCKS فقط برنامه‌هایی که پروکسی را تنظیم کرده‌اند. از کارت وضعیت در صفحهٔ اصلی هم می‌توانید عوضش کنید — عوض کردن موقع وصل بودن در حالت جدید دوباره وصل می‌شود. برای استفاده روزمره VPN را انتخاب کنید.</string>
+    <string name="tutorial_settings_mode_body">حالت VPN همه ترافیک گوشی را از تونل می‌گذراند؛ حالت SOCKS فقط برنامه‌هایی که پروکسی را تنظیم کرده‌اند. از کارت وضعیت در صفحهٔ اصلی هم می‌توانید عوضش کنید — عوض کردن موقع وصل بودن در حالت جدید دوباره وصل می‌شود. برای استفاده روزمره VPN را انتخاب کنید. پاسخ‌های DNS در هر دو حالت در حافظه نگه داشته می‌شوند؛ اگر تونل لحظه‌ای قطع شود، نام‌هایی که در یک روز گذشته پیدا شده‌اند همچنان جواب می‌گیرند تا برنامه‌ها از کار نیفتند.</string>
     <string name="tutorial_settings_tcp_title">حالت TCP</string>
-    <string name="tutorial_settings_tcp_body">کوئری‌های DNS را به‌جای UDP/53 از TCP/53 می‌فرستد. فقط وقتی از آن استفاده کنید که UDP مسدود است، چون کندتر است. در حالت خاموش هم TCP همان‌جا که UDP جواب ندهد به کار می‌رود.</string>
+    <string name="tutorial_settings_tcp_body">برای هر ریزالور، کنار UDP یک مسیر TCP/53 هم اضافه می‌کند. وقتی UDP مسدود است کمک می‌کند، ولی باتری بیشتری مصرف می‌کند. در حالت خاموش، TCP فقط جایی به کار می‌رود که UDP جواب ندهد. از اتصال بعدی اعمال می‌شود.</string>
     <string name="tutorial_settings_mtu_title">MTU</string>
     <string name="tutorial_settings_mtu_body">MTU اندازه بسته‌های شبکه روی تونل است (پیش‌فرض خودکار). در حالت خودکار، MTU اینترفیس فعال اندازه‌گیری و ۲۰۰ بایت کم می‌شود (بین ۱۲۸۰ تا ۱۵۰۰)؛ مقدار جدید روی اتصال بعدی اعمال می‌شود. معمولاً نیازی به تغییر نیست.</string>
     <string name="tutorial_settings_answer_title">اندازه پاسخ DNS</string>
-    <string name="tutorial_settings_answer_body">حداکثر حجم هر پاسخ DNS است (پیش‌فرض خودکار). گزینه خودکار بهترین مقدار را انتخاب می‌کند؛ فقط در صورت مشکل آن را تغییر دهید.</string>
+    <string name="tutorial_settings_answer_body">حداکثر حجم هر پاسخ DNS است (پیش‌فرض خودکار). خودکار تا ۱۲۳۲ بایت را امتحان می‌کند و بهترین مقدار را انتخاب می‌کند؛ گزینه‌های دستی ۵۱۲، ۷۵۲ و ۹۹۲ سقف را پایین‌تر می‌گذارند (تونل با پله‌های ۴۸ بایتی کار می‌کند). فقط در صورت مشکل آن را تغییر دهید؛ تغییر با اتصال بعدی اعمال می‌شود.</string>
     <string name="tutorial_settings_resolvers_title">ریزالورها</string>
-    <string name="tutorial_settings_resolvers_body">ریزالورها سرورهای DNS هستند که تونل از آن‌ها استفاده می‌کند. حالت داخلی از لیست داخلی ریزالورهای ایرانی استفاده می‌کند؛ در حالت سفارشی فقط ریزالورهایی که خودتان وارد کرده‌اید به کار می‌روند.</string>
+    <string name="tutorial_settings_resolvers_body">ریزالورها سرورهای DNS هستند که تونل از آن‌ها استفاده می‌کند. حالت داخلی از لیست داخلی ریزالورهای ایرانی استفاده می‌کند؛ در حالت سفارشی فقط ریزالورهایی که خودتان وارد کرده‌اید به کار می‌روند؛ حالت «وارد کردن» فقط از لیستی استفاده می‌کند که از یک فایل ‎.txt‎ بارگذاری شده (آی‌پی تکی و رنج، خودکار تمیز و مرتب می‌شود). حالت داخلی ریزالورهای سالم را برای هر شبکه — اپراتور موبایل یا وای‌فای — جداگانه به خاطر می‌سپارد، پس اتصال دوباره روی شبکهٔ آشنا از ریزالورهایی شروع می‌شود که همان‌جا کار کرده‌اند.</string>
     <string name="tutorial_settings_test_title">اسکن ریزالورها و سلامت</string>
-    <string name="tutorial_settings_test_body">دکمه اسکن ریزالورها در سه مرحله ریزالورها را بررسی می‌کند: اول غربال DNS و RTT، بعد هندشیک Soar روی همه جواب‌دهنده‌های مرحله اول (شمارنده تأییدشده‌ها زنده بالا می‌رود و حتی قبل از وصل شدن کار می‌کند)، و در آخر رتبه‌بندی و ذخیره همه ریزالورهای تأییدشده در یک استخر. کارت ریزالورهای فعال نشان می‌دهد چند ریزالور در حال حاضر ترافیک را حمل می‌کنند؛ ریزالورهای ازکارافتاده خودکار جایگزین می‌شوند و نیازی به اسکن دوباره نیست.</string>
+    <string name="tutorial_settings_test_body">دکمه اسکن ریزالورها در سه مرحله ریزالورها را بررسی می‌کند: اول غربال DNS و RTT، بعد هندشیک Soar روی همه جواب‌دهنده‌های مرحله اول (شمارنده تأییدشده‌ها زنده بالا می‌رود و حتی قبل از وصل شدن کار می‌کند)، و در آخر رتبه‌بندی و ذخیره همه ریزالورهای تأییدشده در یک استخر. «اسکن روی» نوع انتقال را تعیین می‌کند: UDP (پیش‌فرض) یا UDP + TCP که ریزالورهایی را هم نگه می‌دارد که فقط از راه TCP/53 جواب می‌دهند — اسکن طولانی‌تر می‌شود. کنار هر ریزالور ذخیره‌شده برچسب انتقالی که با آن تأیید شده دیده می‌شود: UDP، TCP یا UDP·TCP؛ هر ریزالور فقط یک بار فهرست می‌شود، حتی اگر هر دو مسیر را داشته باشد. «مکث» اسکن را نگه می‌دارد و «ادامه» آن را ادامه می‌دهد؛ «توقف» نتیجه‌های تا آن لحظه را نگه می‌دارد. در حالت سفارشی و «وارد کردن»، کارت نشان می‌دهد لیست شما چند ریزالور می‌دهد و اگر رنجی بزرگ‌تر از ‎/20‎ کنار گذاشته شود یا لیست به ۵۰۰۰ محدود شود، هشدار می‌دهد. کارت ریزالورهای فعال نشان می‌دهد چند ریزالور در حال حاضر ترافیک را حمل می‌کنند؛ ریزالورهای ازکارافتاده خودکار جایگزین می‌شوند و نیازی به اسکن دوباره نیست.</string>
     <string name="tutorial_settings_proxy_title">پروکسی SOCKS محلی</string>
     <string name="tutorial_settings_proxy_body">وقتی VPN وصل است، یک پروکسی SOCKS هم روی گوشی اجرا می‌شود (پیش‌فرض پورت 1080). آن را در مرورگر یا برنامه‌های دیگر تنظیم کنید تا فقط آن برنامه از تونل استفاده کند.</string>
     <string name="tutorial_settings_bandwidth_title">محدودیت پهنای باند</string>
@@ -275,7 +275,7 @@
     <string name="tutorial_home_streams_body">تونل در حال حاضر چند استریم را حمل می‌کند. استریم بیشتر معمولاً یعنی برنامه یا دانلود فعال بیشتر.</string>
     <!-- (1.0.2) وارد کردن لیست ریزالور -->
     <string name="discovery_import">وارد کردن</string>
-    <string name="import_note">یک فایل ‎.txt‎ با آی‌پی ریزالورها انتخاب کنید. آی‌پی تکی و رنج (مثل 2.188.21.0/24)، هر کدام در یک خط یا جدا با کاما یا فاصله.</string>
+    <string name="import_note">یک فایل ‎.txt‎ با آی‌پی ریزالورها انتخاب کنید. آی‌پی تکی و رنج (مثل 0.0.0.0/24)، هر کدام در یک خط یا جدا با کاما یا فاصله.</string>
     <string name="import_note_custom_kept">برنامه لیست را خودکار تمیز و مرتب می‌کند. لیست Custom شما دست نمی‌خورد.</string>
     <string name="import_choose_file">انتخاب فایل ‎.txt‎</string>
     <string name="import_replace_file">جایگزینی فایل</string>
@@ -296,4 +296,41 @@
     <string name="import_fix_ranges">%1$d رنج به آدرس شبکهٔ درست اصلاح شد</string>
     <string name="import_fix_dash">%1$d رنج خط‌تیره‌دار به CIDR تبدیل شد</string>
     <string name="import_ignored">%1$d خط نادیده گرفته شد (فقط ریزالور IPv4): %2$s</string>
+    <!-- (1.0.3) Path diagnostics -->
+    <string name="path_diag_title">عیب‌یابی مسیرها</string>
+    <string name="path_diag_subtitle">وضعیت زندهٔ هر مسیر ریزالور هنگام اتصال</string>
+    <string name="path_diag_empty">هنوز مسیری نیست. برای دیدن عیب‌یابی مسیرها وصل شوید.</string>
+    <string name="path_diag_summary">%1$d مسیر · %2$d سالم</string>
+    <string name="path_diag_copied">عیب‌یابی مسیرها کپی شد</string>
+    <string name="path_diag_transport">انتقال</string>
+    <string name="path_diag_rtt">RTT</string>
+    <string name="path_diag_loss">اتلاف</string>
+    <string name="path_diag_window">پنجره</string>
+    <string name="path_diag_answer_limit">سقف پاسخ</string>
+    <string name="path_diag_name_len">طول نام</string>
+    <string name="path_state_healthy">سالم</string>
+    <string name="path_state_degraded">ضعیف</string>
+    <string name="path_state_suspended">معلق</string>
+    <string name="path_state_unverified">تأییدنشده</string>
+    <string name="tutorial_settings_paths_title">عیب‌یابی مسیرها</string>
+    <string name="tutorial_settings_paths_body">تنظیمات &gt; سیستم و عیب‌یابی &gt; عیب‌یابی مسیرها، هنگام اتصال همهٔ مسیرهای ریزالوری را که تونل استفاده می‌کند نشان می‌دهد: وضعیت (سالم، ضعیف، معلق یا تأییدنشده)، نوع انتقال (UDP/TCP)، RTT، اتلاف، پنجره، سقف پذیرفته‌شدهٔ پاسخ DNS و طول نام کوئری. تا وقتی باز است هر ۳ ثانیه به‌روز می‌شود. دکمهٔ کپی کل جدول را در کلیپ‌بورد می‌گذارد تا در گزارش مشکل بچسبانید.</string>
+    <!-- (1.0.3) DNS answer size applies on next connect -->
+    <string name="dns_answer_size_next_connect">اندازهٔ پاسخ DNS با اتصال بعدی اعمال می‌شود.</string>
+    <!-- (1.0.3) Resolver list trimmed by the core (ranges > /20 skipped, 5000 cap) -->
+    <string name="resolver_list_trimmed_warning">برخی رنج‌ها بیش از حد بزرگ بودند (بزرگ‌تر از /20) و کنار گذاشته شدند، یا لیست به ۵۰۰۰ ریزالور کوتاه شد — %1$d آدرس اسکن نشد.</string>
+    <!-- (1.0.3) About redesign -->
+    <string name="about_by_btb">by Break The Barriers</string>
+    <string name="about_chip_app">App v%1$s</string>
+    <string name="about_chip_core">Soar core v0.2.5</string>
+    <string name="about_chip_license" translatable="false">GPL-3.0</string>
+    <string name="about_link_website">وب‌سایت</string>
+    <string name="about_link_telegram">کانال تلگرام</string>
+    <string name="about_link_source">کد منبع</string>
+    <string name="copied">کپی شد</string>
+    <!-- 1.0.3: TCP mode label, scan transport, resolver list check -->
+    <string name="tcp_mode_label">حالت TCP</string>
+    <string name="scan_over_label">اسکن روی</string>
+    <string name="scan_over_note">‏UDP + TCP ریزالورهایی را هم نگه می‌دارد که فقط از راه TCP جواب می‌دهند؛ اسکن طولانی‌تر می‌شود.</string>
+    <string name="resolver_list_check_count">این لیست از %1$d ریزالور استفاده می‌کند.</string>
+    <string name="resolver_list_check_dropped">%1$d آدرس کنار گذاشته می‌شود (رنج‌های بزرگ‌تر از ‎/20‎ رد می‌شوند و لیست حداکثر ۵۰۰۰ تاست).</string>
 </resources>

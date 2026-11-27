@@ -49,6 +49,9 @@ public struct SettingsView: View {
 // Soar-verified pool, ~600 entries), refreshed whenever the
 // view appears or a scan finishes.
 @State private var remembered: [RememberedResolver] = []
+// (1.0.3): the core's pre-scan check of the Custom / Import list
+// (CoreCheckResolverList), refreshed off the main thread.
+@State private var listCheck: ResolverListCheck?
 
 public init() {}
 
@@ -144,6 +147,8 @@ private var settingsTutorialSections: [TutorialSection] {
                           bodyKey: "tutorial.settings.update.body"),
             TutorialTopic(titleKey: "tutorial.settings.logs.title",
                           bodyKey: "tutorial.settings.logs.body"),
+            TutorialTopic(titleKey: "tutorial.settings.paths.title",
+                          bodyKey: "tutorial.settings.paths.body"),
         ]),
     ]
 }
@@ -176,11 +181,16 @@ private var connectionSection: some View {
             Text(loc.tr("settings.dns_answer_size_label"))
             HStack(spacing: 8) {
                 answerSizeChip(0)
-                ForEach([512, 768, 1024, 1232], id: \.self) { value in
+                // (1.0.3): Soar class boundaries; 768/1024 were
+                // floored to 752/992 anyway and 1232 equals Auto.
+                ForEach(AppSettings.manualMaxAnswerOptions, id: \.self) { value in
                     answerSizeChip(value)
                 }
             }
             NoteText(loc.tr("settings.dns_answer_size_explanation"))
+            // (1.0.3): not live — Soar fixes each path's answer
+            // class when the path is created.
+            NoteText(loc.tr("settings.dns_answer_size_next_connect"))
         }
     }
 }
@@ -206,14 +216,17 @@ private func mtuChip(_ value: Int) -> some View {
     .buttonStyle(PlainButtonStyle())
 }
 
-// DNS answer-size cap (1.0.28): 0 = Auto, otherwise 512/768/1024/
-// 1232. Same chip style as MTU, with tighter spacing/padding so all
-// five options fit one row. Auto-saves on tap (no Save button),
-// applies on next connect.
+// DNS answer-size cap (1.0.28; 1.0.3 class boundaries): 0 = Auto,
+// otherwise 512/752/992. Same chip style as MTU, with tighter
+// spacing/padding so all options fit one row. Auto-saves on tap (no
+// Save button), applies on next connect (logged as such).
 private func answerSizeChip(_ value: Int) -> some View {
     let selected = settings.maxAnswer == value
     let label = value == 0 ? loc.tr("settings.dns_answer_size_auto") : "\(value)"
-    return Button(action: { settings.maxAnswer = value }) {
+    return Button(action: {
+        settings.maxAnswer = value
+        SharedLog.append("DNS answer size set to \(value == 0 ? "Auto" : "\(value)"); applies on next connect")
+    }) {
         Text(label)
             .font(.system(size: 15, weight: selected ? .semibold : .regular))
             .lineLimit(1)
@@ -319,8 +332,60 @@ private var oversizeCustom: [String] {
     return ResolverNormalization.oversizeResolverRanges(customText)
 }
 
+/// (1.0.3): one "Scan over" chip — same look as the MTU chips
+/// (34pt capsule, text centred, blue only). Locked while a scan
+/// runs (the running scan keeps the mode it started with).
+private func scanOverChip(udpTcp: Bool) -> some View {
+    let selected = settings.scanUdpTcp == udpTcp
+    return Button(action: { if !scanInProgress { settings.scanUdpTcp = udpTcp } }) {
+        Text(udpTcp ? "UDP + TCP" : "UDP")
+            .font(.system(size: 15, weight: selected ? .semibold : .regular))
+            .lineLimit(1)
+            .padding(.horizontal, 16)
+            .frame(height: 34, alignment: .center)
+            .background(selected ? Color("BrandBlue") : Color("SurfaceVariant"))
+            .foregroundColor(selected ? .white : Color("BrandBlue"))
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color("BrandBlue"), lineWidth: selected ? 0 : 1)
+            )
+    }
+    .buttonStyle(PlainButtonStyle())
+}
+
+/// (1.0.3): the list the core will expand — Custom / Import only.
+private var checkListCsv: String {
+    return settings.resolverMode == .builtIn ? "" : settings.effectiveResolvers
+}
+
+/// (1.0.3): recompute the core's list check off the main thread.
+private func refreshListCheck() {
+    let csv = checkListCsv
+    guard !csv.isEmpty else {
+        listCheck = nil
+        return
+    }
+    DispatchQueue.global(qos: .userInitiated).async {
+        let result = VPNManager.checkResolverList(csv)
+        DispatchQueue.main.async {
+            // Drop a stale answer if the list changed meanwhile.
+            if csv == checkListCsv { listCheck = result }
+        }
+    }
+}
+
 private var testResolversRow: some View {
     VStack(alignment: .leading, spacing: 8) {
+        // (1.0.3): scan transport, above the Scan button. UDP is the
+        // classic scan; UDP + TCP also keeps resolvers that answer
+        // only over TCP/53 (the scan takes longer). Auto-saves.
+        Text(loc.tr("settings.scan_over"))
+        HStack(spacing: 10) {
+            scanOverChip(udpTcp: false)
+            scanOverChip(udpTcp: true)
+        }
+        NoteText(loc.tr("settings.scan_over_note"))
         // (1.0.32): Stop / Pause / Resume sit next to Test while a
         // scan runs. Test is disabled while testing; Stop cancels
         // the scan (partial results kept); Pause holds it and
@@ -357,7 +422,42 @@ private var testResolversRow: some View {
         if scanInProgress || scanFinished {
             scanStepper
         }
+        // (1.0.3): pre-scan check with the core's own expansion
+        // (CoreCheckResolverList, no tunnel): how many resolvers the
+        // Custom / Import list gives and what is left out (ranges
+        // wider than /20, 5000 cap). The core's warning lines are
+        // English and name the exact ranges: shown LTR as details.
+        if settings.resolverMode != .builtIn, let check = listCheck {
+            NoteText(loc.tr("settings.resolver_list_check_count", check.count))
+            if check.dropped > 0 {
+                Text(loc.tr("settings.resolver_list_check_dropped", check.dropped))
+                    .font(.footnote)
+                    .foregroundColor(Color("BrandOrange"))
+                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(check.warnings.prefix(5).enumerated()), id: \.offset) { _, w in
+                        Text(w)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .environment(\.layoutDirection, .leftToRight)
+            }
+        }
+        // (1.0.3): the core reports resolver-list entries it could
+        // not use — CIDR ranges larger than /20 are skipped and the
+        // expanded list is capped at 5000 (Stats()
+        // "resolverListDropped"). Custom / Import only, and only when
+        // the pre-scan check above is unavailable (it says the same).
+        if settings.resolverMode != .builtIn && vpn.scanListDropped > 0 && listCheck == nil {
+            Text(loc.tr("settings.resolver_list_trimmed_warning", vpn.scanListDropped))
+                .font(.footnote)
+                .foregroundColor(Color("BrandOrange"))
+        }
     }
+    .onAppear(perform: refreshListCheck)
+    .onChange(of: checkListCsv) { _ in refreshListCheck() }
 }
 
 // MARK: - B1 scan stepper
@@ -544,6 +644,8 @@ private func rememberedRow(_ entry: RememberedResolver) -> some View {
             Text(entry.addr)
                 .font(.subheadline)
                 .foregroundColor(.primary)
+            // (1.0.3): transport tag between ip:port and the ping.
+            transportTag(entry.transport)
             Spacer()
             Text("\(entry.rttMs) ms")
                 .font(.caption)
@@ -557,6 +659,36 @@ private func rememberedRow(_ entry: RememberedResolver) -> some View {
         .environment(\.layoutDirection, .leftToRight)
     }
     .buttonStyle(PlainButtonStyle())
+}
+
+/// (1.0.3): small transport tag on a remembered row — "UDP" on a
+/// blue container, "TCP" on an orange container, "UDP·TCP" blue
+/// container with orange text (blue and orange only). Unknown
+/// (entries saved before 1.0.3) shows nothing. Pill radius 8,
+/// text centred.
+@ViewBuilder
+private func transportTag(_ transport: String?) -> some View {
+    switch (transport ?? "").lowercased().replacingOccurrences(of: " ", with: "") {
+    case "udp":
+        tagPill("UDP", fill: Color("BrandBlue").opacity(0.16), text: Color("BrandBlue"))
+    case "tcp":
+        tagPill("TCP", fill: Color("BrandOrange").opacity(0.20), text: Color("BrandOrange"))
+    case "udp+tcp", "tcp+udp":
+        tagPill("UDP·TCP", fill: Color("BrandBlue").opacity(0.16), text: Color("BrandOrange"))
+    default:
+        EmptyView()
+    }
+}
+
+private func tagPill(_ label: String, fill: Color, text: Color) -> some View {
+    Text(label)
+        .font(.system(size: 11, weight: .semibold))
+        .lineLimit(1)
+        .multilineTextAlignment(.center)
+        .foregroundColor(text)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 1)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(fill))
 }
 
 private var proxySection: some View {
@@ -652,6 +784,11 @@ private var supportSection: some View {
         }
         NavigationLink(destination: LogsView().environmentObject(loc)) {
             Text(loc.tr("settings.logs"))
+        }
+        // (1.0.3): live per-path diagnostics (state, transport,
+        // RTT, loss, window, answer limit, name length) + Copy.
+        NavigationLink(destination: PathDiagnosticsView().environmentObject(loc)) {
+            Text(loc.tr("paths.title"))
         }
         NavigationLink(destination: AboutView().environmentObject(loc)) {
             Text(loc.tr("settings.about"))
@@ -756,4 +893,138 @@ private func save() {
     vpn.applySettings()
 }
 
+}
+
+
+// MARK: - Path diagnostics (1.0.3)
+
+/// Path diagnostics: the core's Stats() "pathStats" array, as the
+/// extension writes it into the shared stats snapshot, shown per
+/// path — state, transport, RTT, loss, window, answer limit and
+/// query-name length — with a Copy button for bug reports.
+/// Re-read every 3 s while the page is open. Nested radius: 24
+/// outer card / 16 padding / 8 inner panels. Numbers and IPs are
+/// forced LTR so the Persian layout never mirrors them.
+struct PathDiagnosticsView: View {
+    @EnvironmentObject private var loc: LocalizationManager
+    @State private var paths: [SoarPathStat] = []
+    @State private var copied = false
+    private let timer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
+                    Text(paths.isEmpty
+                         ? loc.tr("paths.empty")
+                         : loc.tr("paths.summary", paths.count, paths.filter { isHealthy($0) }.count))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Button(action: copyReport) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "doc.on.doc")
+                            Text(copied ? loc.tr("common.copied") : loc.tr("common.copy"))
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Color("BrandBlue"))
+                    }
+                }
+                ForEach(Array(paths.enumerated()), id: \.offset) { _, path in
+                    row(path)
+                }
+            }
+            .padding(UnbarRadius.cardPadding)
+            .background(Color("Surface"))
+            .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
+            .padding()
+        }
+        .background(Color("AppBackground"))
+        .navigationBarTitle(loc.tr("paths.title"), displayMode: .inline)
+        .onAppear(perform: reload)
+        .onReceive(timer) { _ in reload() }
+    }
+
+    private func reload() {
+        guard let data = AppGroup.defaults?.data(forKey: SharedKey.stats),
+              let snapshot = StatsSnapshot.decode(data),
+              snapshot.state != "stopped" else {
+            paths = []
+            return
+        }
+        paths = snapshot.pathStats
+    }
+
+    private func isHealthy(_ p: SoarPathStat) -> Bool {
+        // Older extension builds have no "healthy" key: approximate.
+        return p.healthy ?? (p.verified && !p.suspended && p.loss < 0.5)
+    }
+
+    private func stateKey(_ p: SoarPathStat) -> String {
+        if p.suspended { return "paths.state.suspended" }
+        if !p.verified { return "paths.state.unverified" }
+        return isHealthy(p) ? "paths.state.healthy" : "paths.state.degraded"
+    }
+
+    private func stateColor(_ p: SoarPathStat) -> Color {
+        if p.suspended || !p.verified { return Color("BrandOrange") }
+        return isHealthy(p) ? Color("BrandBlue") : .secondary
+    }
+
+    private func row(_ p: SoarPathStat) -> some View {
+        VStack(spacing: 6) {
+            HStack {
+                Text(p.resolver.isEmpty ? "—" : p.resolver)
+                    .font(.system(.subheadline, design: .monospaced).weight(.semibold))
+                    .environment(\.layoutDirection, .leftToRight)
+                Spacer()
+                Text(loc.tr(stateKey(p)))
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(stateColor(p))
+            }
+            HStack(spacing: 0) {
+                metric(loc.tr("paths.transport"), p.transport.isEmpty ? "—" : p.transport)
+                metric(loc.tr("paths.rtt"), "\(p.rttMs) ms")
+                metric(loc.tr("paths.loss"), String(format: "%.0f%%", locale: Locale(identifier: "en_US_POSIX"), p.loss * 100))
+            }
+            HStack(spacing: 0) {
+                metric(loc.tr("paths.window"), String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), p.window))
+                metric(loc.tr("paths.answer_limit"), "\(p.answerLimit)")
+                metric(loc.tr("paths.name_len"), "\(p.nameLen)")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color("SurfaceVariant"))
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.inner, style: .continuous))
+    }
+
+    private func metric(_ label: String, _ value: String) -> some View {
+        VStack(spacing: 2) {
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            Text(value)
+                .font(.system(.caption, design: .monospaced))
+                .environment(\.layoutDirection, .leftToRight)
+        }
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
+    }
+
+    private func copyReport() {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        var lines = ["Unbar \(version) path diagnostics: \(paths.count) paths, \(paths.filter { isHealthy($0) }.count) healthy"]
+        for p in paths {
+            let state: String
+            if p.suspended { state = "suspended" }
+            else if !p.verified { state = "unverified" }
+            else { state = isHealthy(p) ? "healthy" : "degraded" }
+            lines.append("\(p.resolver) state=\(state) transport=\(p.transport) rtt=\(p.rttMs)ms "
+                + String(format: "loss=%.2f window=%.1f", locale: Locale(identifier: "en_US_POSIX"), p.loss, p.window)
+                + " answer_limit=\(p.answerLimit) name_len=\(p.nameLen) inflight=\(p.inflight)")
+        }
+        UIPasteboard.general.string = lines.joined(separator: "\n")
+        copied = true
+    }
 }

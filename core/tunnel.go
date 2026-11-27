@@ -111,29 +111,48 @@ func normalizeResolverEntry(entry string) string {
 // expandResolverEntries parses a comma-separated custom resolver list
 // into individual "host:port" entries. A plain entry is kept as-is
 // (existing behaviour). An entry with "/" is a CIDR range and expands
-// to EVERY address in the range, each with port :53 (e.g.
-// "2.188.21.0/24" becomes "2.188.21.0:53" ... "2.188.21.255:53",
-// including .0 and .255).
+// to the addresses in the range, each with port :53 (e.g.
+// "2.188.21.0/24" becomes "2.188.21.1:53" ... "2.188.21.254:53").
+// 1.0.3: in IPv4 ranges of /30 or wider, addresses ending in .0 or
+// .255 (network/broadcast addresses, never resolvers) are skipped;
+// /31 and /32 keep every address.
 //
 // Safety caps: a single range with more than maxResolverRangeSize
 // addresses (larger than a /20) is skipped entirely, and the total
-// expanded list is capped at maxExpandedResolvers entries. Invalid
-// entries are ignored silently — this never errors and never panics.
+// expanded list is capped at maxExpandedResolvers entries. Since
+// 1.0.3 neither is silent: expandResolverEntriesWarn reports both
+// (and unparseable CIDR entries) as warnings, which Start and
+// SetProbeResolvers publish in Stats() ("resolverListWarnings",
+// "resolverListDropped") and CheckResolverList returns. This never
+// errors and never panics.
 const (
 	maxResolverRangeSize = 4096
 	maxExpandedResolvers = 5000
 )
 
 func expandResolverEntries(resolvers string) []string {
-	var out []string
+	out, _, _ := expandResolverEntriesWarn(resolvers)
+	return out
+}
+
+// expandResolverEntriesWarn is expandResolverEntries plus the
+// user-facing warnings for everything it left out, and dropped: how
+// many addresses were not used because of the two caps.
+func expandResolverEntriesWarn(resolvers string) (out []string, warnings []string, dropped int) {
+	warnings = []string{}
 	seen := make(map[string]struct{})
-	add := func(entry string) bool {
+	cappedOut := 0
+	add := func(entry string) {
 		if _, dup := seen[entry]; dup {
-			return false
+			return
+		}
+		if len(out) >= maxExpandedResolvers {
+			seen[entry] = struct{}{}
+			cappedOut++
+			return
 		}
 		seen[entry] = struct{}{}
 		out = append(out, entry)
-		return true
 	}
 	for _, entry := range strings.Split(resolvers, ",") {
 		entry = strings.TrimSpace(entry)
@@ -141,34 +160,82 @@ func expandResolverEntries(resolvers string) []string {
 			continue
 		}
 		if !strings.Contains(entry, "/") {
-			if len(out) >= maxExpandedResolvers {
-				return out
-			}
 			add(entry)
 			continue
 		}
 		_, ipnet, err := net.ParseCIDR(entry)
 		if err != nil {
+			warnings = append(warnings, fmt.Sprintf("Ignored %q: not a valid IP range.", entry))
 			continue
 		}
 		ones, bits := ipnet.Mask.Size()
 		if bits-ones > 12 {
-			// More than 4096 addresses — skip the whole range.
+			n := "more than a million"
+			if bits-ones < 31 {
+				n = fmt.Sprintf("%d", 1<<(bits-ones))
+			}
+			warnings = append(warnings, fmt.Sprintf("Skipped %s: %s addresses; ranges are limited to /%d (%d addresses).", entry, n, bits-12, maxResolverRangeSize))
+			if bits-ones < 31 {
+				dropped += 1 << (bits - ones)
+			} else {
+				dropped += 1 << 30
+			}
 			continue
 		}
 		count := 1 << (bits - ones)
 		base := ipnet.IP
-		if v4 := base.To4(); v4 != nil {
+		v4 := base.To4()
+		if v4 != nil {
 			base = v4
 		}
+		skipEdges := v4 != nil && ones <= 30
 		for i := 0; i < count; i++ {
-			if len(out) >= maxExpandedResolvers {
-				return out
+			ip := addIPOffset(base, i)
+			if skipEdges && (ip[3] == 0 || ip[3] == 255) {
+				continue
 			}
-			add(addIPOffset(base, i).String() + ":53")
+			add(ip.String() + ":53")
 		}
 	}
-	return out
+	if cappedOut > 0 {
+		warnings = append(warnings, fmt.Sprintf("The list is limited to %d resolvers; %d more were not used.", maxExpandedResolvers, cappedOut))
+		dropped += cappedOut
+	}
+	return out, warnings, dropped
+}
+
+// setResolverListWarningsLocked records (and logs) the warnings from
+// expanding the custom resolver list. Caller holds t.mu.
+func (t *Tunnel) setResolverListWarningsLocked(warnings []string, dropped int) {
+	if warnings == nil {
+		warnings = []string{}
+	}
+	t.resolverListWarnings = warnings
+	t.resolverListDropped = dropped
+	for _, w := range warnings {
+		log.Printf("event=resolver_list_warning msg=%q", w)
+	}
+}
+
+// CheckResolverList (1.0.3) expands a comma-separated custom resolver
+// list exactly as Start / SetProbeResolvers will, without touching any
+// tunnel, and returns JSON for the settings screen:
+//
+//	{"count":4094,"dropped":8192,"warnings":["Skipped 10.0.0.0/19: ..."]}
+//
+// count is how many resolvers will be used, dropped how many addresses
+// were left out by the /20 range limit and the 5000-entry cap, and
+// warnings the user-facing reasons (empty array when nothing was left
+// out). Edge addresses .0/.255 skipped in IPv4 ranges are not counted
+// as dropped and produce no warning.
+func CheckResolverList(resolvers string) string {
+	out, warnings, dropped := expandResolverEntriesWarn(resolvers)
+	b, _ := json.Marshal(struct {
+		Count    int      `json:"count"`
+		Dropped  int      `json:"dropped"`
+		Warnings []string `json:"warnings"`
+	}{len(out), dropped, warnings})
+	return string(b)
 }
 
 // addIPOffset returns base + offset, treating the address bytes as a
@@ -203,6 +270,11 @@ type Tunnel struct {
 	serverKey  ed25519.PublicKey
 	vetCountry string
 	vetTCPMode string
+	// scanTransport (1.0.3) is the stage-1 scan transport set by
+	// SetScanTransport: scanTransportUDP (default, the pre-1.0.3
+	// behaviour) or scanTransportUDPTCP (a resolver passes when it
+	// answers over UDP or TCP/53). Guarded by mu.
+	scanTransport string
 	// serverCountry is the ISO country code of the tunnel server
 	// (e.g. "DE"), from a geoip lookup through the tunnel. "" until
 	// resolved or when the lookup fails. Shown on the status card
@@ -254,7 +326,7 @@ type Tunnel struct {
 	mtu int
 	// maxAnswer is the DNS answer-size cap the user chose (1.0.28):
 	// 0 = Auto (the Soar default — paths probe up to 1232 bytes),
-	// otherwise one of 512/768/1024/1232. Start() passes it to the
+	// otherwise a Soar class boundary 512+48k (see SetMaxAnswer). Start() passes it to the
 	// Soar client as MaxAnswer. A manual value caps how much
 	// downstream data one DNS answer may carry; smaller answers are
 	// more likely to arrive on a lossy path, larger ones carry more
@@ -293,6 +365,12 @@ type Tunnel struct {
 	// background 30s loop NEVER probes this list (see
 	// probeHealthyLoop); only the manual Test button scans it.
 	probeList []string
+	// resolverListWarnings / resolverListDropped (1.0.3): what the
+	// last Start / SetProbeResolvers left out of the custom resolver
+	// list (oversized ranges, the 5000 cap, invalid ranges), for
+	// Stats(). Guarded by mu. Never nil after NewTunnel.
+	resolverListWarnings []string
+	resolverListDropped  int
 	// healthyProbeList is the pool the background 30s loop
 	// re-probes: the remembered verified resolvers (the whole
 	// pool in Built-in mode, the custom list in Custom mode),
@@ -321,6 +399,10 @@ type Tunnel struct {
 	// in healthyProbeList (1.0.53 rotation): the list is now the
 	// whole pool (~600), so each round probes only the next 16.
 	healthyProbeCursor int
+	// healthyProbeGen counts SetHealthyProbeResolvers calls (1.0.3),
+	// so a probe round that raced a list replacement does not move
+	// the fresh list's cursor.
+	healthyProbeGen uint64
 	// healthyResolvers is the Soar-verified healthy count (atomic):
 	// how many resolver paths the tunnel client reports as verified
 	// and not suspended on the last Stats() read. A plain-DNS reply
@@ -372,9 +454,9 @@ type Tunnel struct {
 	// Stop still wins over a pause. Reset to false when a scan
 	// starts.
 	scanPaused atomic.Bool
-	state           atomic.Value // "stopped" | "connecting" | "connected"
-	stopCh          chan struct{}
-	stopOnce        sync.Once
+	state      atomic.Value // "stopped" | "connecting" | "connected"
+	stopCh     chan struct{}
+	stopOnce   sync.Once
 	// startupSem bounds how many tunnel streams may be in their
 	// STARTUP phase at once (1.0.11). When ~124 streams open at
 	// once in VPN mode, none completes its connection preface
@@ -386,13 +468,6 @@ type Tunnel struct {
 	// released on first response, after startupSlotMaxHold, or on
 	// close — whichever comes first.
 	startupSem chan struct{}
-	// dohDnsMu/dohDnsCache: a small DNS response cache (60s) for the
-	// DoH path, keyed by resolver + query with the transaction ID
-	// zeroed (same pattern as the TUN data plane's cache). Repeated
-	// queries for the same name are answered from memory without a
-	// tunnel round-trip, so DNS opens far fewer streams.
-	dohDnsMu    sync.Mutex
-	dohDnsCache map[string]dnsCacheEntry
 }
 
 // NewTunnel creates a Tunnel. It is not started; call Start.
@@ -430,18 +505,34 @@ func (t *Tunnel) SetVetCredentials(zone, serverKeyB64, country, tcpMode string) 
 	t.vetTCPMode = tcpMode
 }
 
-// SetMaxAnswer sets the DNS answer-size cap for the next connect
-// (1.0.28): 0 = Auto (the Soar default — paths probe up to 1232
-// bytes), otherwise one of 512/768/1024/1232. Any other value is
+// SetMaxAnswer sets the DNS answer-size cap. It takes effect on the
+// NEXT connect only (1.0.3: Soar v0.2.5 fixes each path's answer-size
+// class when the path is created, from unexported config, and has no
+// API to change it on a running client).
+//
+// 0 = Auto (the Soar default — paths probe up to 1232 bytes).
+// Soar only works in answer-size classes of 512+48k bytes (k = 0..15):
+// 512, 560, 608, 656, 704, 752, 800, 848, 896, 944, 992, 1040, 1088,
+// 1136, 1184, 1232. A class-boundary value is stored as is. The legacy
+// values 768 and 1024 (1.0.28) are still accepted and stored as the
+// class Soar actually uses for them, 752 and 992. Anything else is
 // coerced to Auto (0).
 func (t *Tunnel) SetMaxAnswer(n int) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	switch n {
-	case 0, 512, 768, 1024, 1232:
-		t.maxAnswer = n
+	t.maxAnswer = normalizeMaxAnswer(n)
+}
+
+// normalizeMaxAnswer maps a requested answer cap to the value Soar
+// applies (see SetMaxAnswer).
+func normalizeMaxAnswer(n int) int {
+	switch {
+	case n == 768 || n == 1024:
+		return 512 + (n-512)/48*48 // 752, 992
+	case n >= 512 && n <= 1232 && (n-512)%48 == 0:
+		return n
 	default:
-		t.maxAnswer = 0
+		return 0
 	}
 }
 
@@ -486,6 +577,8 @@ func clientConfig(zone string, key ed25519.PublicKey, res []string, discoveryEna
 		MaxStreams:  soarMaxStreams, // 1.0.8: default 64 is too few for VPN mode
 		MaxInflight: soarMaxInflight,
 		MaxAnswer:   maxAnswer,
+		// 1.0.3: larger UDP socket buffers (udpbuf.go).
+		ListenPacket: clientListenPacket,
 	}
 }
 
@@ -515,7 +608,8 @@ func (t *Tunnel) Start(zone, serverKeyB64, resolvers string, discoveryEnabled bo
 		tcpMode = "auto"
 	}
 	var res []string
-	expanded := expandResolverEntries(resolvers)
+	expanded, listWarnings, listDropped := expandResolverEntriesWarn(resolvers)
+	t.setResolverListWarningsLocked(listWarnings, listDropped)
 	res = expanded
 	// Discovery OFF with no explicit list means "use the internal Iran
 	// list": substitute the bundled pre-verified Iranian resolvers as
@@ -1027,6 +1121,9 @@ type resolverProbe struct {
 	Responding  bool
 	RTTMs       int64
 	LastChecked time.Time
+	// Transport (1.0.3) is which transports answered the stage-1
+	// probe: "udp", "tcp" or "udp+tcp"; "" when not responding.
+	Transport string
 }
 
 // healthyProbeEvictMisses is how many consecutive background
@@ -1078,6 +1175,7 @@ func (t *Tunnel) SetHealthyProbeResolvers(addrsCsv string) {
 	t.healthyProbeList = addrs
 	t.healthyProbeMiss = make(map[string]int, len(addrs))
 	t.healthyProbeCursor = 0
+	t.healthyProbeGen++
 }
 
 // SetDiscoveryCandidates sets the extra resolvers the Soar client
@@ -1126,12 +1224,33 @@ func (t *Tunnel) probeHealthyOnce() {
 		count = n
 	}
 	start := t.healthyProbeCursor % n
-	t.healthyProbeCursor = (start + count) % n
+	gen := t.healthyProbeGen
 	t.healthyProbeMu.Unlock()
+	// 1.0.3: probe over the same transports as the scan, so a
+	// resolver kept by a UDP+TCP scan (it answers only over TCP)
+	// is not evicted by UDP-only background probes.
+	t.mu.Lock()
+	mode := normalizeScanTransport(t.scanTransport)
+	t.mu.Unlock()
 	window := make([]string, 0, count)
 	for i := 0; i < count; i++ {
 		window = append(window, list[(start+i)%n])
 	}
+	// 1.0.3: the cursor is set AFTER the round, from the post-eviction
+	// list. It used to be advanced up front by count on the
+	// pre-eviction length: every resolver evicted in the window
+	// shifted the rest of the list left, so the next round skipped
+	// that many resolvers (and with a shorter list the modulo landed
+	// somewhere else entirely). Now the next round starts at the
+	// first resolver after the window that is still in the list.
+	defer func() {
+		t.healthyProbeMu.Lock()
+		defer t.healthyProbeMu.Unlock()
+		if t.healthyProbeGen != gen {
+			return // list replaced meanwhile; its cursor is already 0
+		}
+		t.healthyProbeCursor = nextHealthyCursor(list, start, count, t.healthyProbeList)
+	}()
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 8)
 	for _, r := range window {
@@ -1140,7 +1259,7 @@ func (t *Tunnel) probeHealthyOnce() {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			healthy, _ := probeResolver(addr)
+			healthy, _, _ := probeResolverMode(addr, mode)
 			t.healthyProbeMu.Lock()
 			defer t.healthyProbeMu.Unlock()
 			if healthy {
@@ -1163,6 +1282,29 @@ func (t *Tunnel) probeHealthyOnce() {
 	wg.Wait()
 }
 
+// nextHealthyCursor returns where the next background probe round
+// starts in cur (the list after this round's evictions): the index of
+// the first resolver following the window [start, start+count) of
+// prev (the list the round was planned on) that is still in cur.
+// 0 when none is (or cur is empty).
+func nextHealthyCursor(prev []string, start, count int, cur []string) int {
+	if len(cur) == 0 || len(prev) == 0 {
+		return 0
+	}
+	pos := make(map[string]int, len(cur))
+	for i, a := range cur {
+		if _, ok := pos[a]; !ok {
+			pos[a] = i
+		}
+	}
+	for j := 0; j < len(prev); j++ {
+		if i, ok := pos[prev[(start+count+j)%len(prev)]]; ok {
+			return i
+		}
+	}
+	return 0
+}
+
 // SetProbeResolvers sets the full resolver list the stage-1 prober
 // and the Test button scan use, from the current settings — without
 // starting a tunnel. It mirrors how Start derives the probe list:
@@ -1177,7 +1319,8 @@ func (t *Tunnel) probeHealthyOnce() {
 func (t *Tunnel) SetProbeResolvers(resolvers string, discoveryEnabled bool) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	res := expandResolverEntries(resolvers)
+	res, listWarnings, listDropped := expandResolverEntriesWarn(resolvers)
+	t.setResolverListWarningsLocked(listWarnings, listDropped)
 	probeList := res
 	if discoveryEnabled {
 		probeList = append([]string(nil), bundledIRResolvers...)
@@ -1202,6 +1345,30 @@ func (t *Tunnel) TestResolvers() {
 		return
 	}
 	go t.probeResolversOnce()
+}
+
+// scanWorkers is the full scan's fixed probe concurrency: with a 2s
+// per-probe deadline the worst case for the 2,462 built-in list is
+// ~2.5 min.
+const scanWorkers = 32
+
+// waitScanRunnable blocks while the scan is paused and reports
+// whether the scan may continue (false once ctx is cancelled — Stop
+// wins over Pause).
+func (t *Tunnel) waitScanRunnable(ctx context.Context) bool {
+	for {
+		if ctx.Err() != nil {
+			return false
+		}
+		if !t.scanPaused.Load() {
+			return true
+		}
+		select {
+		case <-ctx.Done():
+			return false
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
 }
 
 func (t *Tunnel) probeResolversOnce() {
@@ -1236,6 +1403,7 @@ func (t *Tunnel) probeResolversOnce() {
 	}()
 	t.mu.Lock()
 	list := append([]string(nil), t.probeList...)
+	mode := normalizeScanTransport(t.scanTransport)
 	t.mu.Unlock()
 	if len(list) == 0 {
 		t.probeMu.Lock()
@@ -1246,56 +1414,56 @@ func (t *Tunnel) probeResolversOnce() {
 	results := make(map[string]resolverProbe, len(list))
 	var resMu sync.Mutex
 	var wg sync.WaitGroup
-	// 32 concurrent probes (was 8): with a 2s per-probe deadline
-	// the worst case for the 2,462 built-in list drops from ~15 min
-	// to ~2.5 min.
-	sem := make(chan struct{}, 32)
-	now := time.Now()
 	// finish writes the (possibly partial, when stopped) results.
 	finish := func() {
 		t.probeMu.Lock()
 		t.probeResults = results
 		t.probeMu.Unlock()
 	}
-	for _, r := range list {
-		// Stop: once cancelled, launch no more probes; wait for
-		// the in-flight ones, keep what they found, and return.
-		select {
-		case <-ctx.Done():
-			wg.Wait()
-			finish()
-			return
-		default:
-		}
+	// 1.0.3: a fixed pool of scanWorkers workers pulling the next
+	// resolver from a shared index (was: one goroutine per resolver
+	// gated by a 32-slot semaphore, which checked Pause only once,
+	// before queueing on the semaphore — so after Pause every
+	// already-queued goroutine still probed). Each worker checks
+	// Stop and Pause before EVERY probe, so Pause takes effect
+	// within one probe deadline (2s) and Stop likewise.
+	var next atomic.Int64
+	workers := scanWorkers
+	if len(list) < workers {
+		workers = len(list)
+	}
+	for w := 0; w < workers; w++ {
 		wg.Add(1)
-		go func(addr string) {
+		go func() {
 			defer wg.Done()
-			// Pause: wait while paused; Stop still wins.
-			for t.scanPaused.Load() {
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(100 * time.Millisecond):
+			for {
+				if !t.waitScanRunnable(ctx) {
+					return // stopped
 				}
+				i := int(next.Add(1) - 1)
+				if i >= len(list) {
+					return
+				}
+				addr := list[i]
+				healthy, rtt, transport := probeResolverMode(addr, mode)
+				t.testedResolvers.Add(1)
+				if healthy {
+					t.respondingResolvers.Add(1)
+				}
+				resMu.Lock()
+				// 1.0.3: LastChecked is when THIS probe finished,
+				// not when the scan started.
+				results[addr] = resolverProbe{Responding: healthy, RTTMs: rtt.Milliseconds(), LastChecked: time.Now(), Transport: transport}
+				resMu.Unlock()
 			}
-			// Stop: skip if cancelled before acquiring a slot.
-			select {
-			case <-ctx.Done():
-				return
-			case sem <- struct{}{}:
-				defer func() { <-sem }()
-			}
-			healthy, rtt := probeResolver(addr)
-			t.testedResolvers.Add(1)
-			if healthy {
-				t.respondingResolvers.Add(1)
-			}
-			resMu.Lock()
-			results[addr] = resolverProbe{Responding: healthy, RTTMs: rtt.Milliseconds(), LastChecked: now}
-			resMu.Unlock()
-		}(r)
+		}()
 	}
 	wg.Wait()
+	if ctx.Err() != nil {
+		// Stopped: keep what the in-flight probes found and return.
+		finish()
+		return
+	}
 	finish()
 	// Stage 2 (1.0.33): Soar-vet the responders. The scan
 	// used to report verified=0 whenever the tunnel was not
@@ -1312,9 +1480,18 @@ func (t *Tunnel) probeResolversOnce() {
 	// scan, so scanRunning stays true and Stop still aborts
 	// it via ctx.
 	responding := make([]verifiedResolver, 0, len(results))
+	// 1.0.3: resolvers that answered ONLY over TCP/53 in stage 1
+	// (possible only in UDP+TCP scan mode) get a TCP path from the
+	// start in the vetting client (soar StreamOnly) — a UDP path
+	// would only time out, and TCP "auto" adds the TCP sibling too
+	// late for the vetting window.
+	tcpOnly := map[string]bool{}
 	for addr, r := range results {
 		if r.Responding {
-			responding = append(responding, verifiedResolver{Addr: addr, RTTMs: r.RTTMs})
+			responding = append(responding, verifiedResolver{Addr: addr, RTTMs: r.RTTMs, Transport: r.Transport})
+			if r.Transport == "tcp" {
+				tcpOnly[addr] = true
+			}
 		}
 	}
 	sort.Slice(responding, func(i, j int) bool { return responding[i].RTTMs < responding[j].RTTMs })
@@ -1322,7 +1499,7 @@ func (t *Tunnel) probeResolversOnce() {
 	for _, vr := range responding {
 		addrs = append(addrs, vr.Addr)
 	}
-	verified := t.vetResolvers(ctx, addrs)
+	verified := t.vetResolvers(ctx, addrs, tcpOnly)
 	t.probeMu.Lock()
 	t.scanVerified = verified
 	t.probeMu.Unlock()
@@ -1339,7 +1516,7 @@ func (t *Tunnel) probeResolversOnce() {
 // closed before returning. (1.0.35): no 16 cap — the whole
 // responding list is vetted and every verified path is
 // returned; the app ranks them and saves the top 16.
-func (t *Tunnel) vetResolvers(ctx context.Context, addrs []string) []verifiedResolver {
+func (t *Tunnel) vetResolvers(ctx context.Context, addrs []string, tcpOnly map[string]bool) []verifiedResolver {
 	if len(addrs) == 0 {
 		return nil
 	}
@@ -1354,6 +1531,10 @@ func (t *Tunnel) vetResolvers(ctx context.Context, addrs []string) []verifiedRes
 		return nil
 	}
 	cfg := clientConfig(zone, key, addrs, false, country, tcpMode, maxAnswer, nil)
+	if len(tcpOnly) > 0 {
+		cfg.StreamOnly = func(r string) bool { return tcpOnly[r] }
+	}
+	uniqueAddrs := countUnique(addrs)
 	vc, err := soar.NewClient(cfg)
 	if err != nil {
 		return nil
@@ -1397,7 +1578,7 @@ func (t *Tunnel) vetResolvers(ctx context.Context, addrs []string) []verifiedRes
 		// candidate has verified (a small Custom list finishes
 		// fast); otherwise keep polling until the deadline so
 		// the full responding list gets its chance.
-		if len(verified) >= len(addrs) {
+		if len(verified) >= uniqueAddrs {
 			return verified
 		}
 		if time.Now().After(deadline) {
@@ -1409,6 +1590,15 @@ func (t *Tunnel) vetResolvers(ctx context.Context, addrs []string) []verifiedRes
 		case <-time.After(vetPollInterval):
 		}
 	}
+}
+
+// countUnique returns how many distinct strings ss holds.
+func countUnique(ss []string) int {
+	seen := make(map[string]struct{}, len(ss))
+	for _, s := range ss {
+		seen[s] = struct{}{}
+	}
+	return len(seen)
 }
 
 // StopScan cancels a running full scan (Stop button). In-flight
@@ -1454,7 +1644,7 @@ func (t *Tunnel) LastScanResult() string {
 	responding := make([]verifiedResolver, 0, total)
 	for addr, r := range t.probeResults {
 		if r.Responding {
-			responding = append(responding, verifiedResolver{Addr: addr, RTTMs: r.RTTMs})
+			responding = append(responding, verifiedResolver{Addr: addr, RTTMs: r.RTTMs, Transport: r.Transport})
 		}
 	}
 	t.probeMu.Unlock()
@@ -1471,6 +1661,12 @@ func (t *Tunnel) LastScanResult() string {
 // round-trip time from just before the query is written to just after a
 // valid reply is read. A plain TCP connect would only prove the port is
 // open, not that it answers DNS. On any failure it returns (false, 0).
+//
+// 1.0.3: a reply counts only when it echoes our transaction ID AND our
+// question (same name, case-insensitive, type A, class IN), has QR=1,
+// RCODE=0, and carries at least one A record. A packet that does not
+// match (wrong ID, wrong question — e.g. a late or spoofed reply) no
+// longer fails the probe: reading continues until the deadline.
 func probeResolver(addr string) (bool, time.Duration) {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -1487,7 +1683,7 @@ func probeResolver(addr string) (bool, time.Duration) {
 	defer conn.Close()
 	// 2s deadline (was 3s): with 32 concurrent probes the worst
 	// case for the 2,462 built-in list is ~2.5 min instead of ~15.
-	_ = conn.SetDeadline(time.Now().Add(2 * time.Second))
+	_ = conn.SetDeadline(time.Now().Add(probeResolverTimeout))
 	id := uint16(rand.Intn(0x10000))
 	query := buildDNSQuery(id, "example.com")
 	start := time.Now()
@@ -1495,16 +1691,251 @@ func probeResolver(addr string) (bool, time.Duration) {
 		return false, 0
 	}
 	resp := make([]byte, 2048)
-	n, err := conn.Read(resp)
-	if err != nil || n < 12 {
+	for {
+		n, err := conn.Read(resp)
+		if err != nil {
+			return false, 0 // deadline (or socket error)
+		}
+		switch probeReplyVerdict(query, resp[:n]) {
+		case probeReplyOK:
+			return true, time.Since(start)
+		case probeReplyBad:
+			return false, 0
+		}
+		// probeReplyIgnore: not an answer to our query; keep reading.
+	}
+}
+
+// probeResolverTimeout is one stage-1 probe's deadline.
+const probeResolverTimeout = 2 * time.Second
+
+// Stage-1 scan transports (1.0.3), see SetScanTransport.
+const (
+	scanTransportUDP    = "udp"
+	scanTransportUDPTCP = "udp+tcp"
+)
+
+// normalizeScanTransport maps a SetScanTransport argument to
+// scanTransportUDP or scanTransportUDPTCP. Anything that is not a
+// recognised UDP+TCP spelling is UDP (the default).
+func normalizeScanTransport(mode string) string {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "udp+tcp", "udp_tcp", "udptcp", "udp,tcp", "both", "tcp":
+		return scanTransportUDPTCP
+	}
+	return scanTransportUDP
+}
+
+// SetScanTransport (1.0.3) sets the transports the resolver scan's
+// stage 1 (and the background healthy-pool probe) uses:
+// "udp" (default) — one UDP DNS query, the pre-1.0.3 behaviour; or
+// "udp+tcp" — the same query over UDP and over TCP/53 in parallel,
+// and a resolver passes when EITHER answers (each probe still has
+// the 2s deadline, so a resolver costs at most ~2s either way).
+// Unknown values fall back to "udp". Takes effect on the next scan
+// (a running scan keeps the mode it started with) and on the next
+// background probe round. Safe to call before Start.
+func (t *Tunnel) SetScanTransport(mode string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.scanTransport = normalizeScanTransport(mode)
+}
+
+// mergeTransport adds one path transport ("udp" / "tcp") to an
+// accumulated transport tag ("", "udp", "tcp", "udp+tcp").
+func mergeTransport(acc, add string) string {
+	add = strings.ToLower(strings.TrimSpace(add))
+	if add != "udp" && add != "tcp" {
+		return acc
+	}
+	switch acc {
+	case "":
+		return add
+	case add, "udp+tcp":
+		return acc
+	}
+	return "udp+tcp"
+}
+
+// probeResolverMode runs the stage-1 probe for addr in the given scan
+// mode and reports whether the resolver passed, its RTT (the faster
+// transport that answered) and which transports answered ("udp",
+// "tcp", "udp+tcp"; "" when none). In UDP mode it is probeResolver.
+// In UDP+TCP mode the UDP and TCP probes run concurrently, so the
+// worst case per resolver stays one probe deadline.
+func probeResolverMode(addr, mode string) (bool, time.Duration, string) {
+	if mode != scanTransportUDPTCP {
+		ok, rtt := probeResolver(addr)
+		if !ok {
+			return false, 0, ""
+		}
+		return true, rtt, "udp"
+	}
+	type res struct {
+		ok  bool
+		rtt time.Duration
+	}
+	tcpCh := make(chan res, 1)
+	go func() {
+		ok, rtt := probeResolverTCP(addr)
+		tcpCh <- res{ok, rtt}
+	}()
+	uOK, uRTT := probeResolver(addr)
+	tr := <-tcpCh
+	switch {
+	case uOK && tr.ok:
+		rtt := uRTT
+		if tr.rtt < rtt {
+			rtt = tr.rtt
+		}
+		return true, rtt, "udp+tcp"
+	case uOK:
+		return true, uRTT, "udp"
+	case tr.ok:
+		return true, tr.rtt, "tcp"
+	}
+	return false, 0, ""
+}
+
+// probeResolverTCP (1.0.3) is probeResolver over TCP/53: it connects
+// to the resolver, sends the same example.com A query with the
+// RFC 1035 4.2.2 two-byte length prefix and applies the same reply
+// validation (matching ID, echoed question, QR=1, RCODE=0, at least
+// one A record). Messages that are not an answer to our query are
+// skipped until the deadline. The RTT is measured from just before
+// the query is written (after the TCP connect) to the valid reply,
+// so it is comparable with the UDP probe. Connect + exchange share
+// one probeResolverTimeout deadline. On any failure it returns
+// (false, 0).
+func probeResolverTCP(addr string) (bool, time.Duration) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		host, port = addr, "53"
+	}
+	deadline := time.Now().Add(probeResolverTimeout)
+	d := net.Dialer{Deadline: deadline}
+	conn, err := d.Dial("tcp", net.JoinHostPort(host, port))
+	if err != nil {
 		return false, 0
 	}
-	// A valid response echoes our ID, has QR=1 and RCODE=0.
-	if binary.BigEndian.Uint16(resp[0:2]) == id &&
-		resp[2]&0x80 != 0 && resp[3]&0x0F == 0 {
-		return true, time.Since(start)
+	defer conn.Close()
+	_ = conn.SetDeadline(deadline)
+	id := uint16(rand.Intn(0x10000))
+	query := buildDNSQuery(id, "example.com")
+	start := time.Now()
+	if _, err := conn.Write(frameTCPDNS(query)); err != nil {
+		return false, 0
 	}
-	return false, 0
+	for {
+		msg, err := readTCPDNSMessage(conn)
+		if err != nil {
+			return false, 0 // deadline, EOF or a malformed frame
+		}
+		switch probeReplyVerdict(query, msg) {
+		case probeReplyOK:
+			return true, time.Since(start)
+		case probeReplyBad:
+			return false, 0
+		}
+	}
+}
+
+// frameTCPDNS prefixes a DNS message with its two-byte big-endian
+// length, as DNS over TCP requires (RFC 1035 4.2.2).
+func frameTCPDNS(msg []byte) []byte {
+	out := make([]byte, 2+len(msg))
+	binary.BigEndian.PutUint16(out[0:2], uint16(len(msg)))
+	copy(out[2:], msg)
+	return out
+}
+
+// readTCPDNSMessage reads one length-prefixed DNS message from r.
+// A zero length is an error (no valid DNS message is empty).
+func readTCPDNSMessage(r io.Reader) ([]byte, error) {
+	var hdr [2]byte
+	if _, err := io.ReadFull(r, hdr[:]); err != nil {
+		return nil, err
+	}
+	n := int(binary.BigEndian.Uint16(hdr[:]))
+	if n == 0 {
+		return nil, errors.New("dns over tcp: zero-length message")
+	}
+	msg := make([]byte, n)
+	if _, err := io.ReadFull(r, msg); err != nil {
+		return nil, err
+	}
+	return msg, nil
+}
+
+type probeReply int
+
+const (
+	probeReplyIgnore probeReply = iota // not an answer to our query
+	probeReplyOK                       // valid answer with an A record
+	probeReplyBad                      // our answer, but an error / no A record
+)
+
+// probeReplyVerdict classifies one packet received for query.
+func probeReplyVerdict(query, resp []byte) probeReply {
+	if len(resp) < 12 || len(query) < 12 {
+		return probeReplyIgnore
+	}
+	if resp[0] != query[0] || resp[1] != query[1] || resp[2]&0x80 == 0 {
+		return probeReplyIgnore
+	}
+	if binary.BigEndian.Uint16(resp[4:6]) != 1 {
+		return probeReplyIgnore
+	}
+	// Question echo: query's question section is bytes 12..end
+	// (buildDNSQuery writes no compression and no extra sections).
+	q := query[12:]
+	if len(resp) < 12+len(q) || !dnsQuestionEqual(resp[12:12+len(q)], q) {
+		return probeReplyIgnore
+	}
+	if resp[3]&0x0F != 0 {
+		return probeReplyBad
+	}
+	an := int(binary.BigEndian.Uint16(resp[6:8]))
+	off := 12 + len(q)
+	for i := 0; i < an; i++ {
+		n, ok := skipDNSName(resp, off)
+		if !ok || n+10 > len(resp) {
+			return probeReplyBad
+		}
+		typ := binary.BigEndian.Uint16(resp[n : n+2])
+		class := binary.BigEndian.Uint16(resp[n+2 : n+4])
+		rdlen := int(binary.BigEndian.Uint16(resp[n+8 : n+10]))
+		if n+10+rdlen > len(resp) {
+			return probeReplyBad
+		}
+		if typ == 1 && class == 1 && rdlen == 4 {
+			return probeReplyOK
+		}
+		off = n + 10 + rdlen
+	}
+	return probeReplyBad
+}
+
+// dnsQuestionEqual compares two uncompressed question sections,
+// ignoring ASCII case in the name (resolvers may apply 0x20 case
+// randomisation or echo a normalised name).
+func dnsQuestionEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		x, y := a[i], b[i]
+		if 'A' <= x && x <= 'Z' {
+			x += 'a' - 'A'
+		}
+		if 'A' <= y && y <= 'Z' {
+			y += 'a' - 'A'
+		}
+		if x != y {
+			return false
+		}
+	}
+	return true
 }
 
 // buildDNSQuery builds a minimal DNS query (one A question) for name.
@@ -1965,6 +2396,12 @@ func (t *Tunnel) recordDialError(addr string, err error) {
 type verifiedResolver struct {
 	Addr  string `json:"addr"`
 	RTTMs int64  `json:"rttMs"`
+	// Transport (1.0.3) is which transports carried this resolver:
+	// "udp", "tcp" or "udp+tcp". For stage 2 it is the union of the
+	// resolver's verified Soar paths (PathStat.Transport); for the
+	// stage-1 LastScanResult list it is which probes answered.
+	// Omitted when unknown, so older readers see the old shape.
+	Transport string `json:"transport,omitempty"`
 }
 
 // verifiedResolversFrom derives the Soar-verified resolver list from
@@ -1991,6 +2428,7 @@ type verifiedResolver struct {
 // nil, so Stats always emits a JSON array.
 func verifiedResolversFrom(pathStats []soar.PathStat, cap int) []verifiedResolver {
 	verified := []verifiedResolver{}
+	index := make(map[string]int, len(pathStats))
 	for _, ps := range pathStats {
 		if !ps.Verified || ps.Suspended {
 			continue
@@ -2001,7 +2439,23 @@ func verifiedResolversFrom(pathStats []soar.PathStat, cap int) []verifiedResolve
 		if ps.RTT <= 0 {
 			continue // verified but never answered with a measurable time
 		}
-		verified = append(verified, verifiedResolver{Addr: ps.Resolver, RTTMs: ps.RTT.Milliseconds()})
+		// 1.0.3: one entry per resolver address. With TCP mode on
+		// (or auto adding TCP siblings) a resolver has a UDP AND a
+		// TCP path; counting both double-counted healthy resolvers
+		// and broke vetResolvers' len(verified) >= len(addrs) early
+		// exit. Keep the faster path's RTT.
+		// The transport field carries which transports verified
+		// (union of the resolver's paths: udp, tcp or udp+tcp).
+		rtt := ps.RTT.Milliseconds()
+		if i, dup := index[ps.Resolver]; dup {
+			if rtt < verified[i].RTTMs {
+				verified[i].RTTMs = rtt
+			}
+			verified[i].Transport = mergeTransport(verified[i].Transport, ps.Transport)
+			continue
+		}
+		index[ps.Resolver] = len(verified)
+		verified = append(verified, verifiedResolver{Addr: ps.Resolver, RTTMs: rtt, Transport: mergeTransport("", ps.Transport)})
 	}
 	sort.Slice(verified, func(i, j int) bool { return verified[i].RTTMs < verified[j].RTTMs })
 	if cap > 0 && len(verified) > cap {
@@ -2035,6 +2489,9 @@ func (t *Tunnel) Stats() string {
 	totalResolvers := t.resolverTotal
 	maxStreams := t.maxStreams
 	socks := t.socks
+	listWarnings := append([]string{}, t.resolverListWarnings...)
+	listDropped := t.resolverListDropped
+	scanTransport := normalizeScanTransport(t.scanTransport)
 	// DIAGNOSTIC (1.0.14, D1): snapshot the tunnel client pointer
 	// under t.mu, then release the lock before calling
 	// PathStats()/Established() — never hold t.mu during the call.
@@ -2136,8 +2593,8 @@ func (t *Tunnel) Stats() string {
 	scanVerified := append([]verifiedResolver{}, t.scanVerified...)
 	t.probeMu.Unlock()
 	b, _ := json.Marshal(map[string]interface{}{
-		"up":               t.up.Load(),
-		"down":             t.down.Load(),
+		"up":   t.up.Load(),
+		"down": t.down.Load(),
 		// (1.0.51) True wire payload bytes; see wireUp/wireDown above.
 		"wireUp":           wireUp,
 		"wireDown":         wireDown,
@@ -2148,6 +2605,10 @@ func (t *Tunnel) Stats() string {
 		"geoError":         geoError,
 		"healthyResolvers": healthyResolvers,
 		"totalResolvers":   totalResolvers,
+		// 1.0.3: what the custom resolver list expansion left out
+		// (see CheckResolverList). Empty array / 0 when nothing.
+		"resolverListWarnings": listWarnings,
+		"resolverListDropped":  listDropped,
 		// Two-stage resolver health (1.0.16): stage-1 responders vs
 		// stage-2 Soar-verified paths, plus whether a full scan is
 		// currently running.
@@ -2160,14 +2621,16 @@ func (t *Tunnel) Stats() string {
 		"probeResolvers":      probeResolvers,
 		"scanRunning":         t.scanRunning.Load(),
 		"scanPaused":          t.scanPaused.Load(),
-		"testedResolvers":     t.testedResolvers.Load(),
-		"dialErrors":          dialErrs,
-		"activeStreams":       activeStreams,
-		"maxStreams":          maxStreams,
-		"socksUp":             socksUp,
-		"socksDown":           socksDown,
-		"pipeStallUp":         pipeStallUp,
-		"pipeStallDown":       pipeStallDown,
+		// 1.0.3: the stage-1 scan transport ("udp" | "udp+tcp").
+		"scanTransport":   scanTransport,
+		"testedResolvers": t.testedResolvers.Load(),
+		"dialErrors":      dialErrs,
+		"activeStreams":   activeStreams,
+		"maxStreams":      maxStreams,
+		"socksUp":         socksUp,
+		"socksDown":       socksDown,
+		"pipeStallUp":     pipeStallUp,
+		"pipeStallDown":   pipeStallDown,
 		// DIAGNOSTIC (1.0.14, D1): Tunnel resolver-path health
 		// (one entry per resolver path) + whether a session with
 		// the server is established.

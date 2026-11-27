@@ -405,6 +405,7 @@ UnbarTheme(themeMode = themeMode) {
                         onImportResolverList = viewModel::importResolverList,
                         onClearImportedResolvers = viewModel::clearImportedResolvers,
                         onSetTcpMode = viewModel::setTcpMode,
+                        onSetScanUdpTcp = viewModel::setScanUdpTcp,
                         onSetMtu = viewModel::setMtu,
                         onSetMaxAnswer = viewModel::setMaxAnswer,
                         onSetSocksConfig = viewModel::setSocksConfig,
@@ -417,7 +418,8 @@ UnbarTheme(themeMode = themeMode) {
                         onSetDiagnosticLogsEnabled = viewModel::setDiagnosticLogsEnabled,
                         onOpenPerAppRouting = { navController.navigate(Routes.PER_APP) },
                         onOpenLogs = { navController.navigate(Routes.LOGS) },
-                        onOpenHistory = { navController.navigate(Routes.HISTORY) }
+                        onOpenHistory = { navController.navigate(Routes.HISTORY) },
+                        pathStatsProvider = viewModel::currentPathStats
                     )
                 }
 

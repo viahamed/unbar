@@ -1,112 +1,264 @@
-// AboutView.swift — the approved About text and brand logo.
+// AboutView.swift — (1.0.3) About redesign, the user-approved final
+// mockup ("F"), matching Android's AboutScreen:
 //
-// "A DNS-tunnel VPN client based on Soar, by Break The Barriers."
-// "Built for total blackouts, when DNS is the only way out."
-// Each sentence is split over two lines with a comma, centred.
-// The logo is the approved wordmark (light/dark variants from the
-// asset catalog); it is not redesigned here.
+//  1. Blue hero card (UnbarRadius.hero = 24, like the Home status
+//     card): app-icon tile | thin divider | Break The Barriers tile
+//     (white tile in light; #101722 tile with the dark BTB logo variant
+//     in dark — asset-catalog appearances), the "Unbar" wordmark (white
+//     "Un", orange "bar"), "by Break The Barriers", the tagline, and two
+//     chips: "App v<CFBundleShortVersionString>" (read at runtime) and
+//     "Soar core v0.2.5".
+//  2. Links card: Website, Telegram channel, Source code — icon tile +
+//     title + subtitle + chevron, with dividers.
+//  3. Donation card, collapsed by default (tutorial-accordion style):
+//     orange heart + bold title + muted chevron; expanded: the note,
+//     then USDT · BEP20 and TON in full, monospace, in 8pt inner boxes
+//     with a neutral square copy button. Only the heart is orange.
+//
+// Nested radius: 24 outer / 16 padding / 8 inner; capsule pills 11.
+// The old license line ("about.license") and the Soar / btb.onl rows
+// are no longer shown here.
 
 import SwiftUI
 
 public struct AboutView: View {
     @EnvironmentObject private var loc: LocalizationManager
+    @State private var donationExpanded = false
+    @State private var copiedToast = false
+
+    private let websiteURL = "https://unbar.cc"
+    private let telegramURL = "https://t.me/Unbarapp"
+    private let sourceURL = "https://github.com/viahamed/unbar"
+    private let usdtAddress = "0x46f872b46BFa471607ad0F0042bdFFCB2B9c702b"
+    private let tonAddress = "UQBdKaKX61k56IaJMbjTTMvXd7fskpbJnzGUPlQAyZT6RJn5"
 
     public init() {}
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Unbar logo and the Break The Barriers channel logo side
-                // by side, the channel logo to the right of the Unbar logo.
-                HStack(alignment: .center, spacing: 16) {
-                    // (1.0.2): brand kit wordmark S1 + tagline
-                    // (light/dark variants), transparent and wide
-                    // (1730x673), so it is sized by width.
-                    Image("Logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200)
-                    Image("ChannelLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 80)
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack(spacing: 14) {
+                    heroCard
+                    linksCard
+                    donationCard
+                    Spacer(minLength: 96)
                 }
-                VStack(spacing: 8) {
-                    Text(loc.tr("about.line1"))
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .multilineTextAlignment(.center)
-                    Text(loc.tr("about.line2"))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal)
-                VStack(spacing: 12) {
-                    Button(action: { openURL("https://btb.onl") }) {
-                        AboutRow(icon: "globe",
-                                 title: "Break The Barriers",
-                                 detail: "btb.onl")
-                    }
-                    Button(action: { openURL("https://t.me/Unbarapp") }) {
-                        AboutRow(icon: "paperplane",
-                                 title: loc.tr("about.telegram"),
-                                 detail: "t.me/Unbarapp")
-                    }
-                    Button(action: { openURL("https://github.com/viahamed/unbar") }) {
-                        AboutRow(icon: "chevron.left.slash.chevron.right",
-                                 title: loc.tr("about.source"),
-                                 detail: "github.com/viahamed/unbar")
-                    }
-                    Button(action: { openURL("https://github.com/getlantern/soar") }) {
-                        AboutRow(icon: "bolt",
-                                 title: loc.tr("about.soar"),
-                                 detail: "github.com/getlantern/soar")
-                    }
-                }
-                donationCard
-                // Tunnel protocol version + license, matching Android.
-                Text(loc.tr("about.soar_version"))
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                Text(loc.tr("about.license"))
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                Text(loc.tr("about.version", appVersion()))
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                Spacer()
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
             }
-            .padding()
+            if copiedToast {
+                Text(loc.tr("common.copied"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.black.opacity(0.75))
+                    .clipShape(Capsule())
+                    .padding(.bottom, 110)
+                    .transition(.opacity)
+            }
         }
-        // Page background (1.0.2 Cloud: light #F2F6FB, dark #101722).
-        .background(Color("AppBackground"))
+        // Page background (Cloud: light #F2F6FB, dark #101722).
+        .background(Color("AppBackground").edgesIgnoringSafeArea(.all))
         .navigationBarTitle(loc.tr("about.title"), displayMode: .inline)
     }
 
-    /// Donation: the heart is orange (the brand orange), never red.
-    private var donationCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 8) {
-                Image(systemName: "heart.fill")
-                    .foregroundColor(Color("BrandOrange"))
-                Text(loc.tr("about.donate_title"))
-                    .font(.headline)
+    // MARK: Hero
+
+    private var heroCard: some View {
+        VStack(spacing: 0) {
+            // Logos keep their order in RTL too (app first, then BTB).
+            HStack(spacing: 14) {
+                heroTile {
+                    Image("AboutAppIcon")
+                        .resizable()
+                        .scaledToFit()
+                }
+                Rectangle()
+                    .fill(Color.white.opacity(0.25))
+                    .frame(width: 1, height: 44)
+                heroTile {
+                    Image("ChannelLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 58)
+                }
             }
-            Text(loc.tr("about.donate_text"))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            .environment(\.layoutDirection, .leftToRight)
+            Image("WordmarkHero")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 30)
+                .padding(.top, 10)
+                .accessibility(label: Text("Unbar"))
+            Text(loc.tr("about.by_btb"))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(Color.white.opacity(0.85))
+            Text(loc.tr("about.line2"))
+                .font(.system(size: 14, weight: .medium))
+                .lineSpacing(4)
+                .foregroundColor(Color.white.opacity(0.95))
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
                 .fixedSize(horizontal: false, vertical: true)
-            Divider()
-            DonationAddressRow(label: loc.tr("about.donate_usdt"),
-                               address: "0x46f872b46BFa471607ad0F0042bdFFCB2B9c702b")
-            DonationAddressRow(label: loc.tr("about.donate_ton"),
-                               address: "UQBdKaKX61k56IaJMbjTTMvXd7fskpbJnzGUPlQAyZT6RJn5")
+                .padding(.top, 12)
+            HStack(spacing: 6) {
+                heroChip(loc.tr("about.chip_app", appVersion()))
+                heroChip(loc.tr("about.chip_core"))
+                heroChip(loc.tr("about.chip_license"))
+            }
+            .environment(\.layoutDirection, .leftToRight)
+            .padding(.top, 14)
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 22)
+        .padding(.bottom, 18)
+        .frame(maxWidth: .infinity)
+        .background(
+            ZStack(alignment: .bottomTrailing) {
+                Color("HeroBlue")
+                // Soft decorative circle, bottom-trailing (200pt, white 6%).
+                Circle()
+                    .fill(Color.white.opacity(0.06))
+                    .frame(width: 200, height: 200)
+                    .offset(x: 40, y: 70)
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.hero, style: .continuous))
+    }
+
+    /// 72pt logo tile, radius 20: white in light, #101722 in dark
+    /// ("AppBackground" dark is #101722).
+    private func heroTile<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        ZStack {
+            HeroTileBackground()
+            content()
+        }
+        .frame(width: 72, height: 72)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: Color.black.opacity(0.25), radius: 9, x: 0, y: 6)
+    }
+
+    /// Capsule pill, radius 11, centred text.
+    private func heroChip(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(.white)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(0.14))
+            .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+    }
+
+    // MARK: Links
+
+    private var linksCard: some View {
+        VStack(spacing: 0) {
+            Button(action: { openURL(websiteURL) }) {
+                AboutLinkRow(icon: Image(systemName: "globe"),
+                             title: loc.tr("about.link_website"),
+                             detail: "unbar.cc")
+            }
+            .buttonStyle(PlainButtonStyle())
+            Rectangle().fill(Color("Outline")).frame(height: 1).padding(.vertical, 10)
+            Button(action: { openURL(telegramURL) }) {
+                AboutLinkRow(icon: Image(systemName: "paperplane.fill"),
+                             title: loc.tr("about.link_telegram"),
+                             detail: "@Unbarapp")
+            }
+            .buttonStyle(PlainButtonStyle())
+            Rectangle().fill(Color("Outline")).frame(height: 1).padding(.vertical, 10)
+            Button(action: { openURL(sourceURL) }) {
+                AboutLinkRow(icon: Image(systemName: "chevron.left.slash.chevron.right"),
+                             title: loc.tr("about.source"),
+                             detail: "github.com/viahamed/unbar")
+            }
+            .buttonStyle(PlainButtonStyle())
         }
         .padding(UnbarRadius.cardPadding)
         .background(Color("Surface"))
         .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
+    }
+
+    // MARK: Donation
+
+    private var donationCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) { donationExpanded.toggle() }
+            }) {
+                HStack(alignment: .center, spacing: 8) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color("BrandOrange"))
+                    Text(loc.tr("about.donate_title"))
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(Color("Ink"))
+                    Spacer()
+                    Image(systemName: donationExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color("Muted"))
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            if donationExpanded {
+                Text(loc.tr("about.donate_text"))
+                    .font(.system(size: 13))
+                    .lineSpacing(3)
+                    .foregroundColor(Color("Muted"))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 12)
+                donationAddress(label: loc.tr("about.donate_usdt"), address: usdtAddress)
+                donationAddress(label: loc.tr("about.donate_ton"), address: tonAddress)
+            }
+        }
+        .padding(UnbarRadius.cardPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color("Surface"))
+        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
+    }
+
+    private func donationAddress(label: String, address: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(Color("Muted"))
+            // Address + copy button stay LTR in Persian too.
+            HStack(alignment: .center, spacing: 8) {
+                Text(address)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(Color("Ink"))
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color("SurfaceVariant"))
+                    .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.inner, style: .continuous))
+                Button(action: { copy(address) }) {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 15))
+                        .foregroundColor(Color("Ink"))
+                        .frame(width: 44, height: 44)
+                        .background(Color("SurfaceVariant"))
+                        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.inner, style: .continuous))
+                }
+                .buttonStyle(PlainButtonStyle())
+                .accessibility(label: Text(loc.tr("common.copy")))
+            }
+            .environment(\.layoutDirection, .leftToRight)
+        }
+        .padding(.top, 12)
+    }
+
+    private func copy(_ address: String) {
+        UIPasteboard.general.string = address
+        withAnimation { copiedToast = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation { copiedToast = false }
+        }
     }
 
     private func openURL(_ string: String) {
@@ -116,64 +268,50 @@ public struct AboutView: View {
     }
 
     private func appVersion() -> String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1"
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
-        return "\(version) (\(build))"
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
 }
 
-private struct AboutRow: View {
-    var icon: String
+/// The logo tile background: white in light, #101722 in dark.
+private struct HeroTileBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        colorScheme == .dark
+            ? Color(red: 16.0 / 255.0, green: 23.0 / 255.0, blue: 34.0 / 255.0)
+            : Color.white
+    }
+}
+
+private struct AboutLinkRow: View {
+    var icon: Image
     var title: String
     var detail: String
+    @Environment(\.layoutDirection) private var layoutDirection
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image(systemName: icon)
+        HStack(alignment: .center, spacing: 10) {
+            icon
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(Color("BrandBlue"))
-                .frame(width: 24)
+                .frame(width: 36, height: 36)
+                .background(Color("SurfaceVariant"))
+                .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.inner, style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(detail).font(.caption).foregroundColor(.secondary)
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Color("Ink"))
+                // Handles/URLs are Latin: wrapped in LRI…PDI so they
+                // read LTR, start-aligned in the screen's direction.
+                Text("\u{2066}\(detail)\u{2069}")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color("Muted"))
             }
             Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Image(systemName: layoutDirection == .rightToLeft ? "chevron.left" : "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Color("Muted"))
         }
-        .padding(UnbarRadius.cardPadding)
-        .background(Color("Surface"))
-        .clipShape(RoundedRectangle(cornerRadius: UnbarRadius.outer, style: .continuous))
-    }
-}
-
-/// One copyable donation address row.
-private struct DonationAddressRow: View {
-    var label: String
-    var address: String
-    @EnvironmentObject private var loc: LocalizationManager
-    @State private var copied = false
-
-    var body: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.system(size: 12, weight: .semibold))
-                Text(address)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            Spacer()
-            Button(action: {
-                UIPasteboard.general.string = address
-                copied = true
-            }) {
-                Text(copied ? loc.tr("common.copied") : loc.tr("common.copy"))
-                    .font(.caption)
-                    .foregroundColor(Color("BrandBlue"))
-            }
-        }
+        .contentShape(Rectangle())
     }
 }

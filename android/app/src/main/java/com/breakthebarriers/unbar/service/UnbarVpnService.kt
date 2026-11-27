@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import com.breakthebarriers.unbar.MainActivity
 import com.breakthebarriers.unbar.R
 import com.breakthebarriers.unbar.UnbarApplication
+import com.breakthebarriers.unbar.data.datastore.NetworkIdentity
 import com.breakthebarriers.unbar.data.db.ServerEntity
 import com.breakthebarriers.unbar.model.AppSettings
 import com.breakthebarriers.unbar.model.ConnectionMode
@@ -267,6 +268,10 @@ class UnbarVpnService : VpnService() {
 
             try {
                 val bridge = container.tunnelManager.bridge
+                // (1.0.3): per-network resolver memory — load this
+                // network's own pool (else the global pool) before
+                // the lists below are built from it.
+                refreshNetworkResolverPool(currentNetwork)
                 val resolvers = container.tunnelManager.resolveListForSettings(settings)
                 val discoveryEnabled = container.tunnelManager.isDiscoveryEnabled(settings)
 
@@ -274,6 +279,10 @@ class UnbarVpnService : VpnService() {
                 // Go tunnel BEFORE start() — Start() reads it when
                 // building the client config. Applies on next connect.
                 bridge.setMaxAnswer(settings.maxAnswer)
+                // (1.0.3): the background pool probe uses the scan
+                // transport too (a TCP-only resolver kept by a
+                // UDP + TCP scan must not be evicted by UDP probes).
+                bridge.setScanTransport(settings.scanUdpTcp)
 
                 // (1.0.53): the rest of the pool goes as Discovery
                 // candidates — also before start(), for the same
@@ -823,6 +832,23 @@ class UnbarVpnService : VpnService() {
         runCatching { cm.registerNetworkCallback(request, callback) }
     }
 
+    // (1.0.3): per-network resolver memory. The key is the carrier
+    // MCC-MNC on cellular or a hash of the gateway / IPv6 prefix on
+    // Wi-Fi (never the SSID: no location permission), null -> the
+    // global pool. The NetworkRequest above has NOT_VPN by default,
+    // so `network` is always the underlying network, never our own
+    // tunnel.
+    private suspend fun refreshNetworkResolverPool(network: Network?) {
+        val key = runCatching {
+            if (network != null) {
+                NetworkIdentity.keyFor(applicationContext, network)
+            } else {
+                NetworkIdentity.currentKey(applicationContext)
+            }
+        }.getOrNull()
+        container.tunnelManager.onUnderlyingNetworkChanged(key)
+    }
+
     private fun onNetworkAvailable(network: Network) {
         // Resume after an offline pause FIRST: the branch below
         // would swallow this (currentNetwork is null after the
@@ -832,6 +858,8 @@ class UnbarVpnService : VpnService() {
         // down the fresh tunnel.
         if (networkPaused) {
             currentNetwork = network
+            // (1.0.3): resolver memory follows the network in use.
+            serviceScope.launch { refreshNetworkResolverPool(network) }
             networkPaused = false
             if (userRequestedStop) return
             container.logStore.info(TAG, "Network available; resuming paused tunnel")
@@ -842,12 +870,15 @@ class UnbarVpnService : VpnService() {
         // tunnel is already on this network, no reconnect needed.
         if (currentNetwork == null) {
             currentNetwork = network
+            // (1.0.3): resolver memory follows the network in use.
+            serviceScope.launch { refreshNetworkResolverPool(network) }
             return
         }
         if (network == currentNetwork) return
         // A different network became available while connected: the
         // tunnel is bound to the old one, so re-establish it.
         currentNetwork = network
+        serviceScope.launch { refreshNetworkResolverPool(network) }
         if (!isTunnelUp || userRequestedStop) return
         container.logStore.info(TAG, "Network changed; reconnecting tunnel")
         scheduleNetworkReconnect()

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- (1.0.3) About hero app-icon glyph ("Ub", light: blue + orange) from branding/svg/icon.svg; the tile background is drawn by AboutScreen. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group android:translateX="160.914" android:translateY="698.482" android:scaleX="0.508820" android:scaleY="-0.508820">
+        <path android:fillColor="#1A5BAA" android:pathData="M267 708V309Q267 260 288.5 231.5Q310 203 358 203Q406 203 429.0 231.5Q452 260 452 309V708H673V309Q673 208 631.0 136.5Q589 65 516.0 29.0Q443 -7 353 -7Q263 -7 193.5 29.0Q124 65 85.0 136.0Q46 207 46 309V708Z" />
+    </group>
+    <group android:translateX="503.859" android:translateY="698.482" android:scaleX="0.508820" android:scaleY="-0.508820">
+        <path android:fillColor="#F7853A" android:pathData="M427 571Q493 571 546.0 536.5Q599 502 629.5 436.5Q660 371 660 282Q660 193 629.5 127.5Q599 62 546.0 27.5Q493 -7 427 -7Q372 -7 332.5 15.5Q293 38 272 77V0H50V740H272V487Q293 526 332.5 548.5Q372 571 427 571ZM353 377Q317 377 294.0 352.0Q271 327 271 282Q271 237 294.0 212.0Q317 187 353 187Q389 187 412.0 212.0Q435 237 435 282Q435 327 412.0 352.0Q389 377 353 377Z" />
+    </group>
+</vector>

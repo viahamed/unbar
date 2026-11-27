@@ -339,8 +339,8 @@ project_release = config("Release", "config:project:release",
 
 # One version for both targets (an app extension must match its host
 # app): Info.plists read these build settings.
-MARKETING_VERSION = "1.0.2"
-CURRENT_PROJECT_VERSION = "3"
+MARKETING_VERSION = "1.0.3"
+CURRENT_PROJECT_VERSION = "4"
 
 APP_COMMON = {
     "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",

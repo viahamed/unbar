@@ -25,7 +25,22 @@
 
 - وب‌سایت: [unbar.cc](https://unbar.cc)
 - کانال تلگرام: [@Unbarapp](https://t.me/Unbarapp)
-- نسخهٔ فعلی: **1.0.2** (بیلد 3) — اندروید و iOS
+- نسخهٔ فعلی: **1.0.3** (بیلد 4) — اندروید و iOS
+
+### تازه‌های 1.0.3
+
+- **حافظهٔ ریزالور برای هر شبکه:** ریزالورهای سالم برای هر اپراتور موبایل (MCC-MNC) و هر وای‌فای جداگانه به خاطر سپرده می‌شوند (وای‌فای با یک شناسهٔ هش‌شده، بدون دسترسی موقعیت مکانی و بدون ذخیرهٔ نام شبکه). اگر برای شبکه‌ای هنوز چیزی ذخیره نشده باشد، استخر کلی استفاده می‌شود.
+- **اسکن روی UDP یا UDP + TCP:** گزینهٔ تازه بالای «اسکن ریزالورها». ‏UDP (پیش‌فرض) همان اسکن قبلی است؛ UDP + TCP هر ریزالور را از راه TCP/53 هم امتحان می‌کند و ریزالورهایی را هم نگه می‌دارد که فقط از راه TCP جواب می‌دهند (اسکن طولانی‌تر می‌شود). کنار هر ریزالور ذخیره‌شده برچسب **UDP**، **TCP** یا **UDP·TCP** نشان می‌دهد با کدام انتقال تأیید شده است.
+- **متن درست حالت TCP:** حالت TCP برای هر ریزالور کنار UDP یک مسیر TCP/53 هم اضافه می‌کند — وقتی UDP مسدود است کمک می‌کند ولی باتری بیشتری مصرف می‌کند؛ در حالت خاموش، TCP فقط جایی به کار می‌رود که UDP جواب ندهد.
+- **اصلاحات اسکن:** «مکث» و «توقف» حداکثر پس از یک پروب اعمال می‌شوند؛ هر ریزالور فقط یک بار فهرست می‌شود حتی اگر هر دو مسیر UDP و TCP را داشته باشد؛ اعتبارسنجی دقیق‌تر پاسخ (شناسهٔ یکسان، تکرار سؤال، رکورد A واقعی)؛ لیست سفارشی / وارد کردن نشان می‌دهد چند ریزالور می‌دهد و اگر رنجی بزرگ‌تر از ‎/20‎ کنار گذاشته شود یا لیست به ۵۰۰۰ محدود شود هشدار می‌دهد.
+- **کش مشترک DNS با serve-stale:** یک کش DNS برای هر دو حالت VPN و SOCKS ‏(بر اساس TTL، ‏LRU)؛ اگر تونل لحظه‌ای قطع شود، نام‌هایی که در یک روز گذشته پیدا شده‌اند همچنان جواب می‌گیرند.
+- **بافرهای بزرگ‌تر سوکت UDP** (درخواست ۴ مگابایت دریافت / ۱ مگابایت ارسال) برای تحمل ترافیک ناگهانی.
+- **اندازهٔ جواب DNS:** گزینه‌های دستی حالا کنار «خودکار»، ۵۱۲، ۷۵۲ و ۹۹۲ هستند (پله‌های واقعی Soar)؛ ۱۲۳۲ همان «خودکار» است و حذف شد. مقدارهای قبلی خودکار منتقل می‌شوند (۷۶۸←۷۵۲، ۱۰۲۴←۹۹۲، ۱۲۳۲←خودکار). تغییر با اتصال بعدی اعمال می‌شود.
+- **MTU خودکار در iOS** حالا MTU همان رابط شبکهٔ فعال را می‌خواند.
+- **عیب‌یابی مسیرها:** در «سیستم و عیب‌یابی» وضعیت زندهٔ هر مسیر ریزالور (وضعیت، انتقال، RTT، اتلاف، پنجره، سقف پاسخ، طول نام) با دکمهٔ کپی.
+- **صفحهٔ «درباره»ٔ تازه:** کارت آبی با لوگوها، نسخه‌ها و چیپ لایسنس GPL-3.0؛ لینک وب‌سایت، کانال تلگرام و کد منبع؛ بخش حمایت مالی جمع‌شونده؛ wordmark پرکنتراست‌تر و دکمه‌های کپی بزرگ‌تر.
+- **آموزش‌ها به‌روز شدند:** پیشنهاد zone کوتاه، وارد کردن لیست ریزالور از فایل ‎.txt‎ (مثل ‎0.0.0.0/24‎)، حالت اسکن و برچسب‌های انتقال، متن درست حالت TCP، کش DNS، عیب‌یابی مسیرها.
+- **لایسنس:** آنبار تحت GPL-3.0 منتشر می‌شود (بخش لایسنس را ببینید).
 
 ## اسکرین‌شات‌ها
 
@@ -42,25 +57,29 @@
 
 برای استفاده از آنبار به یک سرور نیاز دارید. سرور را می‌توانید خودتان راه بیندازید یا از کسی که سرور دارد، کانفیگ بگیرید.
 
-همان‌طور که در صفحهٔ «درباره»ٔ برنامه آمده: «A DNS-tunnel VPN client based on Soar, by Break The Barriers.» نسخهٔ پروتکل تونل Soar هم در همان صفحه نمایش داده می‌شود: v0.2.5.
+آنبار یک کلاینت VPN تونل DNS بر پایهٔ Soar است، از Break The Barriers. صفحهٔ «درباره»ٔ برنامه نسخهٔ برنامه و نسخهٔ هستهٔ Soar ‏(v0.2.5) را نشان می‌دهد.
 
 ## ویژگی‌ها
 
 - **حالت VPN:** همهٔ ترافیک گوشی از تونل عبور می‌کند.
 - **حالت SOCKS (پروکسی):** فقط برنامه‌هایی که پروکسی را تنظیم کرده‌اند از تونل استفاده می‌کنند. پروکسی SOCKS محلی روی `127.0.0.1:1080` (قابل تغییر) اجرا می‌شود و رمز اختیاری دارد.
-- **اسکن ریزالورها:** ریزالورهای DNS را در سه مرحله بررسی می‌کند — غربال DNS و RTT، هندشیک Soar روی جواب‌دهنده‌ها، و رتبه‌بندی و ذخیرهٔ موارد تأییدشده در یک استخر. فقط ریزالورهایی که هندشیک Soar را با موفقیت پشت سر بگذارند «سالم» محسوب می‌شوند؛ ریزالورهای ازکارافتاده به‌صورت خودکار جایگزین می‌شوند.
-- **لیست داخلی ریزالورهای ایرانی:** در حالت داخلی، از لیست داخلی ریزالورهای ایران استفاده می‌شود؛ در حالت سفارشی فقط ریزالورهایی که خودتان وارد کرده‌اید به کار می‌روند. بازه‌های CIDR هم پشتیبانی می‌شوند.
+- **اسکن ریزالورها:** ریزالورهای DNS را در سه مرحله بررسی می‌کند — غربال DNS و RTT، هندشیک Soar روی جواب‌دهنده‌ها، و رتبه‌بندی و ذخیرهٔ موارد تأییدشده در یک استخر. فقط ریزالورهایی که هندشیک Soar را با موفقیت پشت سر بگذارند «سالم» محسوب می‌شوند؛ ریزالورهای ازکارافتاده به‌صورت خودکار جایگزین می‌شوند. اسکن روی UDP (پیش‌فرض) یا UDP + TCP (ریزالورهای فقط-TCP را هم نگه می‌دارد)؛ کنار هر ریزالور ذخیره‌شده برچسب UDP، ‏TCP یا UDP·TCP دیده می‌شود. مکث، ادامه و توقف در هر لحظه.
+- **حافظهٔ ریزالور برای هر شبکه:** ریزالورهای سالم برای هر اپراتور موبایل و هر وای‌فای جدا به خاطر سپرده می‌شوند و استخر کلی پشتیبان است. دسترسی موقعیت مکانی لازم نیست و نام وای‌فای هرگز ذخیره نمی‌شود.
+- **لیست داخلی ریزالورهای ایرانی:** در حالت داخلی، از لیست داخلی ریزالورهای ایران استفاده می‌شود؛ در حالت سفارشی فقط ریزالورهایی که خودتان وارد کرده‌اید به کار می‌روند. بازه‌های CIDR هم پشتیبانی می‌شوند. پیش از اسکن، لیست سفارشی و واردشده نشان می‌دهد چند ریزالور می‌دهد و اگر رنجی بزرگ‌تر از ‎/20‎ کنار برود یا لیست به ۵۰۰۰ محدود شود، هشدار می‌دهد.
 - **وارد کردن لیست ریزالور (Import):** یک فایل ‎.txt‎ با آی‌پی تکی و رنج (CIDR یا خط‌تیره‌دار) انتخاب کنید. برنامه لیست را خودکار تمیز می‌کند (عدد فارسی، فاصله و متن اضافه، ‎:53‎، تکراری‌ها، رنج‌های تودرتو)، مرتب می‌کند و گزارش اصلاحات را نشان می‌دهد. این لیست جدا از لیست سفارشی ذخیره می‌شود و دقیقاً مثل آن اسکن می‌شود. حداکثر ۱ مگابایت.
 - **ایمپورت و اشتراک‌گذاری کانفیگ:** لینک `unbar://`، فایل JSON، یا اسکن کد QR. خروجی کانفیگ هم به‌صورت لینک یا QR صادر می‌شود؛ رمز پروکسی SOCKS محلی هرگز در خروجی قرار نمی‌گیرد.
 - **اشتراک (Subscription):** با وارد کردن یک لینک HTTPS، لیست سرورها به‌صورت خودکار از آن لینک به‌روز می‌شود. سرورهایی که دستی اضافه کرده‌اید دست نمی‌خورند. فقط لینک‌های HTTPS پذیرفته می‌شوند.
 - **تست تأخیر و انتخاب خودکار:** تأخیر هر سرور از داخل تونل اندازه‌گیری می‌شود و انتخاب خودکار سریع‌ترین سرور را برای اتصال برمی‌گزیند.
 - **عبور مستقیم ایران:** دامنه‌های `.ir` و IPهای ایران مستقیم وصل می‌شوند و از تونل رد نمی‌شوند تا سایت‌های داخلی سریع‌تر باز شوند. اگر اتصال مستقیم در ۵ ثانیه جواب ندهد، به تونل برمی‌گردد. لیست عبور سفارشی و مسیریابی به‌ازای هر برنامه هم پشتیبانی می‌شود.
-- **حالت TCP:** کوئری‌های DNS را به‌جای UDP/53 از TCP/53 می‌فرستد؛ فقط وقتی استفاده کنید که UDP مسدود است، چون کندتر است. در حالت خاموش هم TCP همان‌جا که UDP جواب ندهد به کار می‌رود.
+- **حالت TCP:** برای هر ریزالور کنار UDP یک مسیر TCP/53 هم اضافه می‌کند؛ وقتی UDP مسدود است کمک می‌کند، ولی باتری بیشتری مصرف می‌کند. در حالت خاموش، TCP فقط جایی به کار می‌رود که UDP جواب ندهد.
 - **محدودیت پهنای باند:** سقف جداگانه برای آپلود و دانلود (کیلوبایت/ثانیه؛ صفر یعنی نامحدود).
-- **MTU خودکار و اندازهٔ جواب DNS:** هر دو به‌صورت خودکار بهترین مقدار را انتخاب می‌کنند؛ در صورت مشکل، مقدار دستی هم قابل تنظیم است.
+- **MTU خودکار و اندازهٔ جواب DNS:** هر دو به‌صورت خودکار بهترین مقدار را انتخاب می‌کنند؛ در صورت مشکل، مقدار دستی هم قابل تنظیم است (اندازهٔ جواب: خودکار، ۵۱۲، ۷۵۲ یا ۹۹۲ بایت؛ با اتصال بعدی اعمال می‌شود).
+- **کش مشترک DNS:** یک کش برای حالت VPN و SOCKS؛ اگر تونل لحظه‌ای قطع شود، نام‌هایی که در یک روز گذشته پیدا شده‌اند همچنان جواب می‌گیرند.
+- **عیب‌یابی مسیرها:** وضعیت زندهٔ هر مسیر ریزالور (وضعیت، انتقال، RTT، اتلاف، پنجره، سقف پاسخ) با دکمهٔ کپی.
 - **آمار زنده:** سرعت واقعی روی سیم، تأخیر از داخل تونل، امتیاز کیفیت اتصال (۰ تا ۱۰۰)، تعداد ریزالورهای فعال، مصرف امروز و این ماه، زمان اتصال، مجموع نشست و تعداد استریم‌ها. کارت وضعیت IP و کشور سرور را هم نشان می‌دهد.
 - **سابقهٔ اتصال**؛ در اندروید: کاشی تنظیمات سریع و ویجت صفحهٔ اصلی.
 - **فارسی و انگلیسی، تم روشن و تیرهٔ «ابری».**
+- **صفحهٔ «درباره»:** نسخهٔ برنامه و هستهٔ Soar، لایسنس GPL-3.0، لینک وب‌سایت، کانال تلگرام و کد منبع، و بخش حمایت مالی جمع‌شونده.
 - **بررسی به‌روزرسانی:** از صفحهٔ تنظیمات می‌توانید بررسی کنید نسخهٔ جدیدی منتشر شده یا نه. در iOS صفحهٔ ریلیز در سافاری باز می‌شود؛ نصب از داخل برنامه ممکن نیست.
 - همهٔ تنظیمات به‌صورت خودکار ذخیره می‌شوند؛ دکمهٔ ذخیرهٔ جداگانه‌ای وجود ندارد.
 
@@ -94,7 +113,7 @@
 **۱. دستی** — در صفحهٔ سرورها روی `+` بزنید و وارد کنید:
 
 - **نام سرور:** یک نام دلخواه
-- **Zone:** دامنهٔ اختصاصی سرور، مثلاً `t.example.com`
+- **Zone:** دامنهٔ اختصاصی سرور، مثلاً `t.example.com` — zone را کوتاه بگیرید: هر کوئری DNS نام zone را با خودش می‌برد، پس نام کوتاه‌تر یعنی جای بیشتر برای داده در هر کوئری
 - **کلید عمومی سرور:** کلید عمومی Ed25519 سرور به‌صورت Base64
 
 **۲. ایمپورت کانفیگ** — لینک `unbar://` یا JSON کانفیگ را بچسبانید، یا کد QR کانفیگ را اسکن کنید.
@@ -139,12 +158,12 @@ curl -fsSL https://raw.githubusercontent.com/viahamed/unbar-server/main/install.
 ## تنظیمات
 
 - **اتصال:** حالت VPN یا SOCKS، حالت TCP، ‏MTU‏، اندازهٔ جواب DNS؛ در iOS حالت فقط از تنظیمات عوض می‌شود
-- **ریزالورها:** حالت داخلی، سفارشی یا وارد کردن (فایل ‎.txt‎)، لیست ریزالورهای سفارشی، اسکن ریزالورها، ریزالورهای سالم ذخیره‌شده
+- **ریزالورها:** حالت داخلی، سفارشی یا وارد کردن (فایل ‎.txt‎)، لیست ریزالورهای سفارشی، اسکن روی UDP یا UDP + TCP، اسکن ریزالورها، ریزالورهای سالم ذخیره‌شده (برای هر شبکه، با برچسب انتقال)
 - **پروکسی SOCKS محلی:** پورت، نام کاربری و رمز (اختیاری)
 - **محدودیت پهنای باند:** سقف آپلود و دانلود
 - **مسیریابی:** عبور مستقیم ایران، لیست عبور سفارشی، مسیریابی به‌ازای هر برنامه
 - **ظاهر و زبان:** فارسی / انگلیسی / سیستم؛ روشن / تیره / سیستم
-- **سیستم و عیب‌یابی:** سرعت در اعلان، دسترسی اعلان‌ها، معافیت از بهینه‌سازی باتری، لاگ‌های عیب‌یابی (اختیاری)، مشاهدهٔ لاگ‌ها، سابقهٔ اتصال؛ در iOS به‌جای آن VPN درخواستی و انتخاب خودکار سریع‌ترین سرور هست
+- **سیستم و عیب‌یابی:** سرعت در اعلان، دسترسی اعلان‌ها، معافیت از بهینه‌سازی باتری، لاگ‌های عیب‌یابی (اختیاری)، مشاهدهٔ لاگ‌ها، سابقهٔ اتصال، عیب‌یابی مسیرها؛ در iOS به‌جای آن VPN درخواستی و انتخاب خودکار سریع‌ترین سرور هست
 - **به‌روزرسانی:** بررسی نسخهٔ جدید از صفحهٔ تنظیمات (در iOS صفحهٔ ریلیز در سافاری باز می‌شود)
 
 تغییرات اتصال با اتصال بعدی اعمال می‌شوند.
@@ -251,7 +270,22 @@ Unbar carries your internet traffic inside DNS queries, through a server of your
 
 - Website: [unbar.cc](https://unbar.cc)
 - Telegram channel: [@Unbarapp](https://t.me/Unbarapp)
-- Current version: **1.0.2** (build 3) — Android and iOS
+- Current version: **1.0.3** (build 4) — Android and iOS
+
+### What's new in 1.0.3
+
+- **Per-network resolver memory:** healthy resolvers are remembered separately for each mobile carrier (MCC-MNC) and each Wi-Fi network (a hashed id, obtained without the location permission; the network name is never stored). A network with nothing remembered yet uses the global pool.
+- **Scan over UDP or UDP + TCP:** a new choice above Scan resolvers. UDP (default) is the classic scan; UDP + TCP probes every resolver over TCP/53 as well and also keeps resolvers that answer only over TCP (the scan takes longer). Each remembered resolver shows a **UDP**, **TCP** or **UDP·TCP** tag for the transport that verified it.
+- **Corrected TCP Mode text:** TCP Mode adds a TCP/53 path for every resolver next to UDP — it helps when UDP is blocked but uses more battery; when off, TCP is used only where UDP fails.
+- **Scan fixes:** Pause and Stop take effect within one probe; each resolver is listed once even when it has both UDP and TCP paths; stricter reply validation (matching ID, echoed question, a real A record); Custom / Import lists show how many resolvers they give, with a warning when a range wider than /20 is skipped or the list is capped at 5000.
+- **Shared DNS cache with serve-stale:** one DNS cache for VPN and SOCKS mode (TTL-based, LRU); if the tunnel drops for a moment, names resolved in the last day still answer.
+- **Bigger UDP socket buffers** (4 MB receive / 1 MB send requested) to ride out bursts.
+- **DNS answer size:** the manual choices are now 512, 752 and 992 (Soar's real size steps) next to Auto; 1232 equals Auto and was removed. Stored values migrate automatically (768→752, 1024→992, 1232→Auto). A change applies on the next connect.
+- **iOS MTU Auto** now reads the MTU of the active network interface.
+- **Path diagnostics:** System & diagnostics shows the live state of every resolver path (state, transport, RTT, loss, window, answer limit, name length), with a Copy button.
+- **Redesigned About screen:** a blue hero card with the logos, versions and a GPL-3.0 license chip; links to the website, Telegram channel and source code; a collapsible donation card; higher-contrast wordmark and larger copy buttons.
+- **Tutorials updated:** short-zone advice, resolver .txt import (e.g. `0.0.0.0/24`), scan mode and transport tags, the corrected TCP Mode, the DNS cache, path diagnostics.
+- **License:** Unbar is GPL-3.0 (see [License](#license)).
 
 ## Screenshots
 
@@ -268,25 +302,29 @@ Unbar is not an ordinary VPN. Instead of connecting directly to a VPN server, th
 
 Using Unbar requires a server. You can run your own, or get a config from someone who runs one.
 
-As the About screen puts it: "A DNS-tunnel VPN client based on Soar, by Break The Barriers." The Soar tunnel protocol version (v0.2.5) is shown on the same screen.
+Unbar is a DNS-tunnel VPN client based on Soar, by Break The Barriers. The About screen shows the app version and the Soar core version (v0.2.5).
 
 ## Features
 
 - **VPN mode:** all of the phone's traffic goes through the tunnel.
 - **SOCKS (proxy) mode:** only apps configured to use the proxy use the tunnel. A local SOCKS proxy runs on `127.0.0.1:1080` (changeable) with optional credentials.
-- **Resolver scan:** checks DNS resolvers in three stages — DNS and RTT screening, a Soar handshake with every responder, then ranking and saving the verified ones into one pool. Only resolvers that pass the Soar handshake count as healthy; dead ones are replaced automatically.
-- **Built-in Iranian resolver list:** in Built-in mode the built-in list of Iranian resolvers is used; in Custom mode only the resolvers you entered are used. CIDR ranges are supported.
+- **Resolver scan:** checks DNS resolvers in three stages — DNS and RTT screening, a Soar handshake with every responder, then ranking and saving the verified ones into one pool. Only resolvers that pass the Soar handshake count as healthy; dead ones are replaced automatically. Scan over UDP (default) or UDP + TCP (also keeps TCP-only resolvers); each remembered resolver is tagged UDP, TCP or UDP·TCP. Pause, Resume and Stop at any time.
+- **Per-network resolver memory:** healthy resolvers are remembered separately for each mobile carrier and each Wi-Fi network, with the global pool as fallback. No location permission is needed and the Wi-Fi name is never stored.
+- **Built-in Iranian resolver list:** in Built-in mode the built-in list of Iranian resolvers is used; in Custom mode only the resolvers you entered are used. CIDR ranges are supported. Before a scan, Custom and Import lists show how many resolvers they give, with a warning when a range wider than /20 is skipped or the list is capped at 5000.
 - **Resolver import:** pick a .txt file of single IPs and ranges (CIDR or dash ranges). The app cleans it automatically (Persian digits, stray spaces and text, `:53`, duplicates, nested ranges), sorts it and shows a report of what it fixed. The imported list is stored separately from your Custom list and scanned exactly like it. Max 1 MB.
 - **Config import and sharing:** `unbar://` links, pasted JSON, or QR code scanning. Configs can also be exported as a link or QR code; local SOCKS proxy credentials are never included in exports.
 - **Subscriptions:** enter an HTTPS subscription link and the server list updates from it automatically. Manually added servers are left untouched. Only HTTPS links are accepted.
 - **Latency test and auto-select:** each server's latency is measured through the tunnel, and auto-select picks the fastest server for the connection.
 - **Iran geo bypass:** `.ir` domains and Iranian IPs connect directly, bypassing the tunnel so domestic sites open faster. If the direct connection fails within 5 seconds, it falls back to the tunnel. A custom bypass list and per-app routing are also supported.
-- **TCP mode:** sends DNS queries over TCP/53 instead of UDP/53; use it only when UDP is blocked, as it is slower. When off, TCP is still used wherever UDP fails.
+- **TCP mode:** adds a TCP/53 path for every resolver next to UDP. Helps when UDP is blocked, but uses more battery. When off, TCP is used only where UDP fails.
 - **Bandwidth limit:** separate upload and download caps (KB/s; 0 means unlimited).
-- **Auto MTU and DNS answer size:** both pick the best value automatically; manual values are available if you run into trouble.
+- **Auto MTU and DNS answer size:** both pick the best value automatically; manual values are available if you run into trouble (answer size: Auto, 512, 752 or 992 bytes, applied on the next connect).
+- **Shared DNS cache:** one cache for VPN and SOCKS mode; if the tunnel drops for a moment, names resolved in the last day still answer.
+- **Path diagnostics:** the live state of every resolver path (state, transport, RTT, loss, window, answer limit), with Copy.
 - **Live stats:** true wire speed, latency measured through the tunnel, a connection quality score (0–100), active resolver count, today and this-month usage, connection time, session total, and stream count. The status card also shows the server's IP and country.
 - **Connection history**; on Android: a Quick Settings tile and a home-screen widget.
 - **English and Persian, light and dark "Cloud" themes.**
+- **About screen:** app and Soar core versions, the GPL-3.0 license, links to the website, Telegram channel and source code, and a collapsible donation section.
 - **Check for update:** check for a newer release from the Settings page. On iOS the release page opens in Safari; installing from inside the app is not possible.
 - Every setting saves automatically; there is no separate Save button.
 
@@ -320,7 +358,7 @@ There are three ways to add a server:
 **1. Manually** — on the Servers page, tap `+` and enter:
 
 - **Server name:** any name you like
-- **Zone:** the server's dedicated domain, e.g. `t.example.com`
+- **Zone:** the server's dedicated domain, e.g. `t.example.com` — keep it short: every DNS query carries the zone name, so a shorter name leaves more room for data in each query
 - **Server public key:** the server's Ed25519 public key, in Base64
 
 **2. Import a config** — paste an `unbar://` link or config JSON, or scan a config QR code.
@@ -365,12 +403,12 @@ After install, `unbar` opens the menu and the Setup wizard walks you through it.
 ## Settings
 
 - **Connection:** VPN or SOCKS mode, TCP mode, MTU, DNS answer size; on iOS the mode is switched from Settings only
-- **Resolvers:** Built-in, Custom or Import (.txt file) mode, custom resolver list, resolver scan, remembered healthy resolvers
+- **Resolvers:** Built-in, Custom or Import (.txt file) mode, custom resolver list, scan over UDP or UDP + TCP, resolver scan, remembered healthy resolvers (per network, with transport tags)
 - **Local SOCKS proxy:** port, username and password (optional)
 - **Bandwidth limit:** upload and download caps
 - **Routing:** Iran geo bypass, custom bypass list, per-app routing
 - **Appearance & language:** English / Persian / System; Light / Dark / System
-- **System & diagnostics:** speeds in notification, notification permission, battery optimization exemption, diagnostic logs (optional), view logs, connection history; on iOS, on-demand VPN and auto-select fastest instead
+- **System & diagnostics:** speeds in notification, notification permission, battery optimization exemption, diagnostic logs (optional), view logs, connection history, path diagnostics; on iOS, on-demand VPN and auto-select fastest instead
 - **Update:** check for a new version from the Settings page (on iOS the release page opens in Safari)
 
 Connection changes apply on the next connect.

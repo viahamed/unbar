@@ -73,6 +73,10 @@ public final class VPNManager: ObservableObject {
     @Published public private(set) var scanVerifiedResolvers: [VerifiedResolver] = []
     /// Soar-verified count from the last scan.
     @Published public private(set) var scanVerifiedCount: Int = 0
+    /// (1.0.3): addresses the core left out of the scanned resolver
+    /// list (ranges larger than /20 skipped, or the 5000 cap) —
+    /// Stats() "resolverListDropped". 0 = nothing left out.
+    @Published public private(set) var scanListDropped: Int = 0
     /// Live stage-1 progress of the running scan: probes completed
     /// (from the throwaway tunnel's Stats() "testedResolvers") and
     /// the scan's total probe count. Reset at scan start.
@@ -453,6 +457,7 @@ public final class VPNManager: ObservableObject {
         scanRespondingCount = 0
         scanVerifiedResolvers = []
         scanVerifiedCount = 0
+        scanListDropped = 0
         scanQueue.async { [weak self] in
             guard let self = self else { return }
             guard let tunnel = CoreNewTunnel() else {
@@ -484,6 +489,8 @@ public final class VPNManager: ObservableObject {
                 tunnel.setVetCredentials(server.zone, serverKeyB64: server.serverKeyB64, country: "IR", tcpMode: settings.tcpModeString)
             }
             tunnel.setProbeResolvers(probeCsv, discoveryEnabled: discovery)
+            // (1.0.3): scan over UDP or UDP + TCP (Settings).
+            tunnel.setScanTransport(settings.scanTransportString)
             tunnel.testResolvers()
             let startedAt = Date()
             var sawRunning = false
@@ -548,6 +555,10 @@ public final class VPNManager: ObservableObject {
                 // not the live client's paths.
                 self.scanVerifiedResolvers = final?.scanVerifiedResolvers ?? []
                 self.scanVerifiedCount = final?.scanVerifiedCount ?? 0
+                self.scanListDropped = final?.resolverListDropped ?? 0
+                for warning in final?.resolverListWarnings ?? [] {
+                    SharedLog.append("Resolver list: \(warning)")
+                }
                 self.scanTestedCount = final?.testedResolvers ?? 0
                 self.scanTotalCount = final?.totalResolvers ?? 0
                 self.scanPaused = false
@@ -566,7 +577,7 @@ public final class VPNManager: ObservableObject {
                 if settings.resolverMode == .builtIn,
                    let verified = final?.scanVerifiedResolvers, !verified.isEmpty {
                     ResolverHealthStore.shared.merge(verified.map {
-                        RememberedResolver(addr: $0.addr, rttMs: Int($0.rttMs), checkedAtMs: 0)
+                        RememberedResolver(addr: $0.addr, rttMs: Int($0.rttMs), checkedAtMs: 0, transport: $0.transport)
                     })
                 }
                 if timedOut {
@@ -613,6 +624,7 @@ public final class VPNManager: ObservableObject {
         scanRespondingCount = 0
         scanVerifiedResolvers = []
         scanVerifiedCount = 0
+        scanListDropped = 0
     }
 
     /// Stops a running full scan (Stop button): the Go core cancels
@@ -640,5 +652,36 @@ public final class VPNManager: ObservableObject {
         scanQueue.async { [weak self] in
             self?.scanTunnel?.resumeScan()
         }
+    }
+
+}
+
+// MARK: - Resolver list check (1.0.3)
+
+/// What the core will make of a Custom / Import resolver list.
+public struct ResolverListCheck: Equatable {
+    public var count: Int
+    public var dropped: Int
+    public var warnings: [String]
+}
+
+extension VPNManager {
+    /// (1.0.3): the core's own expansion of a resolver list, without
+    /// a tunnel — gomobile `CoreCheckResolverList(_:)` (Go
+    /// CheckResolverList), JSON {"count","dropped","warnings"}.
+    /// nil for an empty list or an unparsable answer. Cheap (at most
+    /// 5000 entries), but call it off the main thread.
+    public static func checkResolverList(_ csv: String) -> ResolverListCheck? {
+        let trimmed = csv.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let raw = CoreCheckResolverList(trimmed)
+        guard let data = raw.data(using: .utf8),
+              let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            return nil
+        }
+        return ResolverListCheck(
+            count: (obj["count"] as? NSNumber)?.intValue ?? 0,
+            dropped: (obj["dropped"] as? NSNumber)?.intValue ?? 0,
+            warnings: (obj["warnings"] as? [String]) ?? [])
     }
 }
